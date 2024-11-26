@@ -1,10 +1,3 @@
-# template_py
-Template repository for python projects
+# Information system for HIGEO
 
-Includes:
-- Licence
-- README
-- main.py
-- github actions - lint with flake8
-- flake8 config
-- .gitignore
+http://higeo.ginras.ru/
