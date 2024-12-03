@@ -1,13 +1,11 @@
-.bg-higeo{
-    background-color: #d18e7b;
+.body {
+	background-color: #f8efec !important;
 }
 
-.border-md-right {
-    border-right: 1px solid silver;
-  }
-  
-  @media (max-width: 575px) {
-    .border-md-right {
-      border-right: none;
-    }
-  }
+.bg-higeo{
+	background-color: #d18e7b !important;
+}
+
+.higeo-color-1{
+	background-color: #996c87 !important;
+}
