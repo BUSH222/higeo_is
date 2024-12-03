@@ -1,3 +1,11 @@
+/* html *
+{
+   font-size: 1em !important;
+   color: #000 !important;
+   font-family: 'Times New Roman', Times, serif !important;
+} */
+
+
 .body {
 	background-color: #f8efec !important;
 }
@@ -9,3 +17,4 @@
 .higeo-color-1{
 	background-color: #996c87 !important;
 }
+
