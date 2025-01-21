@@ -14,6 +14,11 @@ def about():
     return render_template('about.html')
 
 
+@app.route('/view_organisation')
+def view_organization():
+    return render_template('view_organization.html')
+
+
 if __name__ == '__main__':
     app.jinja_env.auto_reload = True
     app.config['TEMPLATES_AUTO_RELOAD'] = True
