@@ -1,18 +1,18 @@
 {% extends "base.html" %}
 
-{% block title %}About{% endblock %}
+{% block title %}View organization{% endblock %}
 
 {% block content %}
 
 <div class="container">
     <div class="row mt-5">
-        <h1 class="d-flex justify-content-center">Просмотр организации</h1>
+        <h1 class="d-flex justify-content-center fw-bold">Организации и институты</h1>
     </div>
     <div class="row mt-5">
-        <div class="col-lg-2 fw-bold">Organisation name</div>
+        <div class="col-lg-2 fw-bold">Organization name</div>
         <div class="col-lg-10">
             <p class="text-break">
-                Organisation name and Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse euismod eros ante, eget feugiat nunc sodales sed. Integer eu libero in purus malesuada faucibus. Aliquam vitae leo maximus, mollis ante non, dapibus felis. Maecenas et blandit risus, eget elementum risus. Donec ut efficitur metus, sed vehicula nunc. Ut congue ex vel accumsan maximus. Cras porttitor rhoncus est sit amet interdum. Quisque condimentum orci justo. Ut placerat eu sem eu ornare.
+                {{data.org_name}}
             </p>
         </div>
     </div>
@@ -20,7 +20,7 @@
         <div class="col-lg-2 fw-bold">Description</div>
         <div class="col-lg-10">
             <p class="text-break">
-                Description and Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse euismod eros ante, eget feugiat nunc sodales sed. Integer eu libero in purus malesuada faucibus. Aliquam vitae leo maximus, mollis ante non, dapibus felis. Maecenas et blandit risus, eget elementum risus. Donec ut efficitur metus, sed vehicula nunc. Ut congue ex vel accumsan maximus. Cras porttitor rhoncus est sit amet interdum. Quisque condimentum orci justo. Ut placerat eu sem eu ornare.
+                {{data.description}}
             </p>
         </div>
     </div>
@@ -28,7 +28,7 @@
         <div class="col-lg-2 fw-bold">Associated people</div>
         <div class="col-lg-10">
             <p class="text-break">
-                Associated people and Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse euismod eros ante, eget feugiat nunc sodales sed. Integer eu libero in purus malesuada faucibus. Aliquam vitae leo maximus, mollis ante non, dapibus felis. Maecenas et blandit risus, eget elementum risus. Donec ut efficitur metus, sed vehicula nunc. Ut congue ex vel accumsan maximus. Cras porttitor rhoncus est sit amet interdum. Quisque condimentum orci justo. Ut placerat eu sem eu ornare.
+                {{data.associated_people}}
             </p>
         </div>
     </div>
@@ -36,7 +36,7 @@
         <div class="col-lg-2 fw-bold">Additional info</div>
         <div class="col-lg-10">
             <p class="text-break">
-                Additional info and Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse euismod eros ante, eget feugiat nunc sodales sed. Integer eu libero in purus malesuada faucibus. Aliquam vitae leo maximus, mollis ante non, dapibus felis. Maecenas et blandit risus, eget elementum risus. Donec ut efficitur metus, sed vehicula nunc. Ut congue ex vel accumsan maximus. Cras porttitor rhoncus est sit amet interdum. Quisque condimentum orci justo. Ut placerat eu sem eu ornare.
+                {{data.additional_info}}
             </p>
         </div>
     </div>
