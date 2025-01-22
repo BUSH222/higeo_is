@@ -14,17 +14,9 @@ def about():
     return render_template('about.html')
 
 
-@app.route('/view_org')
-def view_organization():
-    data = {'org_name': 'org_name',
-            'description': 'description',
-            'associated_people': 'associated_people',
-            'additional_info': 'additional_info'}
-    return render_template('view_organization.html', data=data)
-
-
-@app.route('/view_doc')
-def view_document():
+@app.route('/view')
+def view():  # universal view for organization, person, document
+    page = {'heading': 'Document heading', 'title': 'View document'}
     data = {'person': 'person',
             'source': 'source',
             'doc_name': 'doc_name',
@@ -33,7 +25,7 @@ def view_document():
             'file': 'file',
             'links': 'links'
             }
-    return render_template('view_document.html', data=data)
+    return render_template('view.html', data=data, page=page,)
 
 
 if __name__ == '__main__':
