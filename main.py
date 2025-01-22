@@ -28,6 +28,12 @@ def view():  # universal view for organization, person, document
     return render_template('view.html', data=data, page=page,)
 
 
+@app.route('/search')
+def search():  # universal search view for organization, person, document
+    page = {'heading': 'Search page', 'title': 'Search'}
+    return render_template('search.html', page=page)
+
+
 if __name__ == '__main__':
     app.jinja_env.auto_reload = True
     app.config['TEMPLATES_AUTO_RELOAD'] = True

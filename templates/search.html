@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}{{page.title}}{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    <div class="row mt-5">
+        <h1 class="d-flex justify-content-center fw-bold">{{page.heading}}</h1>
+    </div>
+
+    <div class="accordion mt-5" id="accordion1">
+        <div class="accordion-item">
+            <h2 class="accordion-header " id="heading1">
+                <button
+                    class="accordion-button"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#collapse1"
+                    aria-expanded="true"
+                    aria-controls="collapse1"
+                >
+                    Поиск по персоналиям:
+                </button>
+            </h2>
+            <div id="collapse1" class="accordion-collapse collapse show" aria-labelledby="heading1" data-bs-parent="#accordion1">
+                <div class="accordion-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="fullName" class="form-label">Фамилия Имя Отчество</label>
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="fullName" 
+                                placeholder="Введите ФИО">
+                            <small class="form-text text-muted">
+                                <a href="#" data-bs-toggle="collapse" data-bs-target="#nameDropdown" aria-expanded="false" aria-controls="nameDropdown">
+                                    Ввести по частям
+                                </a>
+                            </small>
+                        </div>
+                        <div class="collapse" id="nameDropdown">
+                            <div class="card card-body">
+                                <div class="mb-3">
+                                    <label for="firstName" class="form-label">Имя</label>
+                                    <input 
+                                        type="text" 
+                                        class="form-control" 
+                                        id="firstName" 
+                                        placeholder="Введите имя">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="lastName" class="form-label">Фамилия</label>
+                                    <input 
+                                        type="text" 
+                                        class="form-control" 
+                                        id="lastName" 
+                                        placeholder="Введите фамилию">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="patronymic" class="form-label">Отчество</label>
+                                    <input 
+                                        type="text" 
+                                        class="form-control" 
+                                        id="patronymic" 
+                                        placeholder="Введите отчество">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="birthYear" class="form-label">Год рождения</label>
+                            <input 
+                                type="number" 
+                                class="form-control" 
+                                id="birthYear" 
+                                name="birthYear" 
+                                placeholder="Введите год рождения" 
+                                min="1600" 
+                                max="2025" 
+                                required>
+                        </div>
+                        <button type="submit" class="btn higeo-color-1 mt-3">Поиск</button>
+                    </form>
+                    
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading2">
+                <button
+                    class="accordion-button collapsed"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#collapse2"
+                    aria-expanded="false"
+                    aria-controls="collapse2"
+                >
+                    Поиск по организациям:
+                </button>
+            </h2>
+            <div id="collapse2" class="accordion-collapse collapse" aria-labelledby="heading2" data-bs-parent="#accordion1">
+                <div class="accordion-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="" class="form-label">Название организации</label>
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="fullName" 
+                                placeholder="Введите название организации">
+                        </div>
+                        <button type="submit" class="btn higeo-color-1 mt-3">Поиск</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading3">
+                <button
+                    class="accordion-button collapsed"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#collapse3"
+                    aria-expanded="false"
+                    aria-controls="collapse3"
+                >
+                    Поиск по документам:
+                </button>
+            </h2>
+            <div id="collapse3" class="accordion-collapse collapse" aria-labelledby="heading3" data-bs-parent="#accordion1">
+                <div class="accordion-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="" class="form-label">Название документа</label>
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="fullName" 
+                                placeholder="Введите название организации">
+                        </div>
+                        <button type="submit" class="btn higeo-color-1 mt-3">Поиск</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-5">
+        <h5>Результаты поиска</h5>
+        <ul class="list-group">
+            <li class="list-group-item">
+                <a href="document1-link.html" class="text-decoration-none">John Doe</a>
+            </li>
+            <li class="list-group-item">
+                <a href="document2-link.html" class="text-decoration-none">Jane Smith</a>
+            </li>
+            <li class="list-group-item">
+                <a href="document3-link.html" class="text-decoration-none">Alan Turing</a>
+            </li>
+        </ul>
+    </div>
+    
+    
+</div>
+
+
+{% endblock %}
