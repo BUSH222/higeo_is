@@ -34,6 +34,20 @@ def search():  # universal search view for organization, person, document
     return render_template('search.html', page=page)
 
 
+@app.route('/new')
+def new():  # admin only new record generator
+    page = {'heading': 'New document', 'title': 'Search'}
+    data = {'person': 'person',
+            'source': 'source',
+            'doc_name': 'doc_name',
+            'year': 'year',
+            'comment': 'comment',
+            'file': 'file',
+            'links': 'links'
+            }
+    return render_template('new.html', page=page, data=data)
+
+
 if __name__ == '__main__':
     app.jinja_env.auto_reload = True
     app.config['TEMPLATES_AUTO_RELOAD'] = True

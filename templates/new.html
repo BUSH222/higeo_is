@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}{{page.title}}{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    <div class="row mt-5">
+        <h1 class="d-flex justify-content-center fw-bold">{{page.heading}}</h1>
+    </div>
+    <form>
+    {% for key, value in data.items() %}
+        <div class="row mt-5">
+            <div class="col-lg-2 fw-bold">{{key}}</div>
+            <div class="col-lg-10">
+                <input type="text" class="form-control" id="{{value}}">
+            </div>
+        </div>
+        {% endfor %}
+        <button type="submit" class="btn higeo-color-1 mt-5">Сохранить</button>
+    </form>
+</div>
+
+{% endblock %}
