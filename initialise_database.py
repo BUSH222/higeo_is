@@ -42,31 +42,31 @@ class Person(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(nullable=False)
     surname: Mapped[str] = mapped_column(nullable=False)
-    patronymic: Mapped[str] = mapped_column()
+    patronymic: Mapped[str | None] = mapped_column(nullable=True)
 
-    name_en: Mapped[str] = mapped_column()
-    surname_en: Mapped[str] = mapped_column()
-    patronymic_en: Mapped[str] = mapped_column()
+    name_en: Mapped[str | None] = mapped_column(nullable=True)
+    surname_en: Mapped[str | None] = mapped_column(nullable=True)
+    patronymic_en: Mapped[str | None] = mapped_column(nullable=True)
 
-    birth_date: Mapped[datetime] = mapped_column()
-    death_date: Mapped[datetime] = mapped_column()
-    birth_place: Mapped[str] = mapped_column()
-    death_place: Mapped[str] = mapped_column()
+    birth_date: Mapped[datetime | None] = mapped_column(nullable=True)
+    death_date: Mapped[datetime | None] = mapped_column(nullable=True)
+    birth_place: Mapped[str | None] = mapped_column(nullable=True)
+    death_place: Mapped[str | None] = mapped_column(nullable=True)
 
-    academic_degree: Mapped[str] = mapped_column()
-    field_of_study: Mapped[str] = mapped_column()
-    area_of_study: Mapped[str] = mapped_column()
+    academic_degree: Mapped[str | None] = mapped_column(nullable=True)
+    field_of_study: Mapped[str | None] = mapped_column(nullable=True)
+    area_of_study: Mapped[str | None] = mapped_column(nullable=True)
 
     organizations: Mapped[list["OrganizationMembership"]] = \
         relationship("OrganizationMembership", back_populates="person")
     documents: Mapped[list["DocumentAuthorship"]] = \
         relationship("DocumentAuthorship", back_populates="person")
 
-    biography: Mapped[str] = mapped_column()
-    bibliography: Mapped[str] = mapped_column()
+    biography: Mapped[str | None] = mapped_column(nullable=True)
+    bibliography: Mapped[str | None] = mapped_column(nullable=True)
 
-    photo: Mapped[str] = mapped_column()
-    comment: Mapped[str] = mapped_column()
+    photo: Mapped[str | None] = mapped_column(nullable=True)
+    comment: Mapped[str | None] = mapped_column(nullable=True)
 
 
 class Organization(Base):
@@ -75,18 +75,18 @@ class Organization(Base):
     name: Mapped[str] = mapped_column(nullable=False)
     members: Mapped[list["OrganizationMembership"]] = \
         relationship("OrganizationMembership", back_populates="organization")
-    comment: Mapped[str] = mapped_column()
+    comment: Mapped[str | None] = mapped_column(nullable=True)
 
 
 class Document(Base):
     __tablename__ = 'document'
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(nullable=False)
-    source: Mapped[str] = mapped_column()
+    source: Mapped[str | None] = mapped_column(nullable=True)
     authors: Mapped[list["DocumentAuthorship"]] = relationship("DocumentAuthorship", back_populates="document")
-    year: Mapped[str] = mapped_column()
-    file: Mapped[str] = mapped_column()
-    comment: Mapped[str] = mapped_column()
+    year: Mapped[str | None] = mapped_column(nullable=True)
+    file: Mapped[str | None] = mapped_column(nullable=True)
+    comment: Mapped[str | None] = mapped_column(nullable=True)
 
 
 class OrganizationMembership(Base):
