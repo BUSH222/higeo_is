@@ -1,4 +1,7 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, abort
+from initialise_database import engine, Organization, Person, Document
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 
 app = Flask(__name__)
@@ -16,15 +19,19 @@ def about():
 
 @app.route('/view')
 def view():  # universal view for organization, person, document
-    page = {'heading': 'Document heading', 'title': 'View document'}
-    data = {'person': 'person',
-            'source': 'source',
-            'doc_name': 'doc_name',
-            'year': 'year',
-            'comment': 'comment',
-            'file': 'file',
-            'links': 'links'
-            }
+    if request.args.get('type') not in ['org', 'person', 'doc'] or not request.args.get('id'):
+        abort(404)
+    viewtype_to_object = {'org': Organization, 'person': Person, 'doc': Document}
+    viewtype = request.args.get('type')
+    viewid = int(request.args.get('id'))
+    obj = viewtype_to_object[viewtype]
+    stmt = select(obj).where(obj.id == viewid)
+    with Session(engine) as session:
+        data = session.execute(stmt).scalar_one_or_none()
+        data.__dict__.pop('_sa_instance_state')
+
+    page = {'heading': f'{obj.__name__}', 'title': f'View {obj.__name__.lower()}'}
+    data = data.__dict__
     return render_template('view.html', data=data, page=page,)
 
 
