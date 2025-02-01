@@ -5,6 +5,7 @@ from psycopg2 import sql
 from datetime import datetime
 import logging
 from settings import DATABASE_USER, DATABASE_PASSWORD, DATABASE_NAME, DATABASE_HOST, DATABASE_PORT
+from helper import clean_dict
 
 
 DATABASE_URL = f"postgresql://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}"
@@ -55,7 +56,7 @@ class Person(Base):
 
     academic_degree: Mapped[str | None] = mapped_column(nullable=True)
     field_of_study: Mapped[str | None] = mapped_column(nullable=True)
-    area_of_study: Mapped[str | None] = mapped_column(nullable=True)
+    area_of_study: Mapped[str | None] = mapped_column(nullable=True)  # geography
 
     organizations: Mapped[list["OrganizationMembership"]] = \
         relationship("OrganizationMembership", back_populates="person")
@@ -68,6 +69,26 @@ class Person(Base):
     photo: Mapped[str | None] = mapped_column(nullable=True)
     comment: Mapped[str | None] = mapped_column(nullable=True)
 
+    def values_ru(self):
+        values = {'Имя': self.name,
+                  'Фамилия': self.surname,
+                  'Отчество': self.patronymic,
+                  'Дата рождения': self.birth_date,
+                  'Дата сметри': self.death_date,
+                  'Место рождения': self.birth_place,
+                  'Место смерти': self.death_date,
+                  'Академическое звание': self.academic_degree,
+                  'Область исследования': self.field_of_study,
+                  'Географи исследования': self.area_of_study,
+                  'Связанные организации':
+                  [[org.organization.id, org.organization.name] for org in self.organizations],
+                  'Документы': [[doc.document.id, doc.document.name] for doc in self.documents],
+                  'Биография': self.biography,
+                  'Библиография': self.bibliography,
+                  'Фотография': self.photo,
+                  'Комментарии': self.comment}
+        return clean_dict(values)
+
 
 class Organization(Base):
     __tablename__ = 'organization'
@@ -76,6 +97,12 @@ class Organization(Base):
     members: Mapped[list["OrganizationMembership"]] = \
         relationship("OrganizationMembership", back_populates="organization")
     comment: Mapped[str | None] = mapped_column(nullable=True)
+
+    def values_ru(self):
+        values = {'Название': self.name,
+                  'Связанные персоналии': [[member.person.id, member.person.name] for member in self.members],
+                  'Комментарий': self.comment}
+        return clean_dict(values)
 
 
 class Document(Base):
@@ -87,6 +114,15 @@ class Document(Base):
     year: Mapped[str | None] = mapped_column(nullable=True)
     file: Mapped[str | None] = mapped_column(nullable=True)
     comment: Mapped[str | None] = mapped_column(nullable=True)
+
+    def values_ru(self):
+        values = {'Название': self.name,
+                  'Источник': self.source,
+                  'Авторы': [[author.person.id, author.person.name] for author in self.authors],
+                  'Год издания': self.year,
+                  'Файл': self.file,
+                  'Комментарий': self.comment}
+        return clean_dict(values)
 
 
 class OrganizationMembership(Base):

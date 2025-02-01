@@ -28,10 +28,11 @@ def view():  # universal view for organization, person, document
     stmt = select(obj).where(obj.id == viewid)
     with Session(engine) as session:
         data = session.execute(stmt).scalar_one_or_none()
-        data.__dict__.pop('_sa_instance_state')
+        data = data.values_ru()
+        print(data)
 
     page = {'heading': f'{obj.__name__}', 'title': f'View {obj.__name__.lower()}'}
-    data = data.__dict__
+
     return render_template('view.html', data=data, page=page,)
 
 
