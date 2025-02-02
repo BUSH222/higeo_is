@@ -81,13 +81,16 @@ class Person(Base):
                   'Область исследования': self.field_of_study,
                   'Географи исследования': self.area_of_study,
                   'Связанные организации':
-                  [[org.organization.id, org.organization.name] for org in self.organizations],
-                  'Документы': [[doc.document.id, doc.document.name] for doc in self.documents],
+                  [['org', org.organization.id, str(org.organization)] for org in self.organizations],
+                  'Документы': [['doc', doc.document.id, str(doc.document)] for doc in self.documents],
                   'Биография': self.biography,
                   'Библиография': self.bibliography,
                   'Фотография': self.photo,
                   'Комментарии': self.comment}
         return clean_dict(values)
+
+    def __str__(self):
+        return ' '.join(filter(None, (self.surname, self.name, self.patronymic)))
 
 
 class Organization(Base):
@@ -100,9 +103,13 @@ class Organization(Base):
 
     def values_ru(self):
         values = {'Название': self.name,
-                  'Связанные персоналии': [[member.person.id, member.person.name] for member in self.members],
+                  'Связанные персоналии':
+                  [['person', member.person.id, str(member.person)] for member in self.members],
                   'Комментарий': self.comment}
         return clean_dict(values)
+
+    def __str__(self):
+        return self.name
 
 
 class Document(Base):
@@ -118,11 +125,14 @@ class Document(Base):
     def values_ru(self):
         values = {'Название': self.name,
                   'Источник': self.source,
-                  'Авторы': [[author.person.id, author.person.name] for author in self.authors],
+                  'Авторы': [['person', author.person.id, str(author.person)] for author in self.authors],
                   'Год издания': self.year,
                   'Файл': self.file,
                   'Комментарий': self.comment}
         return clean_dict(values)
+
+    def __str__(self):
+        return self.name
 
 
 class OrganizationMembership(Base):
