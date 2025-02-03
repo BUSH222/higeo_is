@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, abort
 from initialise_database import engine, Organization, Person, Document
-from sqlalchemy import select, func, extract
+from sqlalchemy import select, func, extract, and_
 from sqlalchemy.orm import Session
 
 
@@ -44,40 +44,38 @@ def search():  # universal search view for organization, person, document
     if request.args.get('type') == 'person':
         if len(set(request.args.keys()).intersection({'firstName', 'lastName', 'patronymic'})) == 0:
             query = request.args.get('fullName')
+            where_stmt = []
             if query is not None:
                 query_list = query.split()
                 if len(query_list) == 1:
-                    where_stmt = func.lower(Person.surname).startswith(query_list[0].lower())
+                    where_stmt.append(func.lower(Person.surname).startswith(query_list[0].lower()))
                 elif len(query_list) == 2:
-                    where_stmt = func.lower(Person.surname) == query_list[0].lower()\
-                        and func.lower(Person.name) == query_list[1].lower()
+                    where_stmt.append(func.lower(Person.surname) == query_list[0].lower()
+                                      & func.lower(Person.name) == query_list[1].lower())
                 elif len(query_list) == 3:
-                    where_stmt = func.lower(Person.surname) == query_list[0].lower()\
-                        and func.lower(Person.name) == query_list[1].lower()\
-                        and func.lower(Person.patronymic) == query_list[2].lower()
-                else:
-                    where_stmt = True
-            else:
-                where_stmt = True
+                    where_stmt.append(func.lower(Person.surname) == query_list[0].lower()
+                                      & func.lower(Person.name) == query_list[1].lower()
+                                      & func.lower(Person.patronymic) == query_list[2].lower())
             year_query = request.args.get('birthYear')
             if year_query is not None:
-                where_stmt = where_stmt and extract('year', Person.birth_date) == int(year_query)
+                where_stmt.append(extract('year', Person.birth_date) == int(year_query))
         else:
             firstname = request.args.get('firstName')
             lastname = request.args.get('lastName')
             patronymic = request.args.get('patronymic')
             year_query = request.args.get('birthYear')
-            where_stmt = True
+            where_stmt = []
             if firstname is not None:
-                where_stmt = where_stmt and func.lower(Person.name).startswith(firstname.lower())
+                where_stmt.append(func.lower(Person.name).startswith(firstname.lower()))
             if lastname is not None:
-                where_stmt = where_stmt and func.lower(Person.surname).startswith(lastname.lower())
+                where_stmt.append(func.lower(Person.surname).startswith(lastname.lower()))
             if patronymic is not None:
-                where_stmt = where_stmt and func.lower(Person.patronymic).startswith(patronymic.lower())
+                where_stmt.append(func.lower(Person.patronymic).startswith(patronymic.lower()))
             if year_query is not None:
-                where_stmt = where_stmt and extract('year', Person.birth_date) == int(year_query)
+                where_stmt.append(extract('year', Person.birth_date) == int(year_query))
 
-        stmt = select(Person).where(where_stmt)
+        final_where_stmt = and_(*where_stmt) if where_stmt else True
+        stmt = select(Person).where(final_where_stmt)
         results = []
         with Session(engine) as session:
             data = session.execute(stmt)
