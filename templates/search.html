@@ -25,13 +25,15 @@
             </h2>
             <div id="collapse1" class="accordion-collapse collapse show" aria-labelledby="heading1" data-bs-parent="#accordion1">
                 <div class="accordion-body">
-                    <form>
+                    <form action="search">
+                        <input type="hidden" id="person" name="person">
                         <div class="mb-3">
                             <label for="fullName" class="form-label">Фамилия Имя Отчество</label>
                             <input 
                                 type="text" 
                                 class="form-control" 
                                 id="fullName" 
+                                name="fullName"
                                 placeholder="Введите ФИО">
                             <small class="form-text text-muted">
                                 <a href="#" data-bs-toggle="collapse" data-bs-target="#nameDropdown" aria-expanded="false" aria-controls="nameDropdown">
@@ -47,6 +49,7 @@
                                         type="text" 
                                         class="form-control" 
                                         id="firstName" 
+                                        name="firstName"
                                         placeholder="Введите имя">
                                 </div>
                                 <div class="mb-3">
@@ -55,6 +58,7 @@
                                         type="text" 
                                         class="form-control" 
                                         id="lastName" 
+                                        name="lastName"
                                         placeholder="Введите фамилию">
                                 </div>
                                 <div class="mb-3">
@@ -63,6 +67,7 @@
                                         type="text" 
                                         class="form-control" 
                                         id="patronymic" 
+                                        name="patronymic"
                                         placeholder="Введите отчество">
                                 </div>
                             </div>
@@ -76,8 +81,7 @@
                                 name="birthYear" 
                                 placeholder="Введите год рождения" 
                                 min="1600" 
-                                max="2025" 
-                                required>
+                                max="2025">
                         </div>
                         <button type="submit" class="btn higeo-color-1 mt-3">Поиск</button>
                     </form>
@@ -101,13 +105,14 @@
             </h2>
             <div id="collapse2" class="accordion-collapse collapse" aria-labelledby="heading2" data-bs-parent="#accordion1">
                 <div class="accordion-body">
-                    <form>
+                    <form action="search">
                         <div class="mb-3">
                             <label for="" class="form-label">Название организации</label>
                             <input 
                                 type="text" 
                                 class="form-control" 
-                                id="fullName" 
+                                id="name"
+                                name="name" 
                                 placeholder="Введите название организации">
                         </div>
                         <button type="submit" class="btn higeo-color-1 mt-3">Поиск</button>
@@ -131,13 +136,15 @@
             </h2>
             <div id="collapse3" class="accordion-collapse collapse" aria-labelledby="heading3" data-bs-parent="#accordion1">
                 <div class="accordion-body">
-                    <form>
+                    <form action="search">
+                        <input type="hidden" id="doc" name="doc">
                         <div class="mb-3">
                             <label for="" class="form-label">Название документа</label>
                             <input 
                                 type="text" 
                                 class="form-control" 
-                                id="fullName" 
+                                id="name" 
+                                name="name"
                                 placeholder="Введите название организации">
                         </div>
                         <button type="submit" class="btn higeo-color-1 mt-3">Поиск</button>
@@ -148,22 +155,43 @@
     </div>
     
     <div class="mt-5">
-        <h5>Результаты поиска</h5>
+        <h5>Результаты поиска:</h5>
         <ul class="list-group">
-            <li class="list-group-item">
-                <a href="document1-link.html" class="text-decoration-none">John Doe</a>
-            </li>
-            <li class="list-group-item">
-                <a href="document2-link.html" class="text-decoration-none">Jane Smith</a>
-            </li>
-            <li class="list-group-item">
-                <a href="document3-link.html" class="text-decoration-none">Alan Turing</a>
-            </li>
+            {% if results %}
+                {% for item in results %}
+                <li class="list-group-item">
+                    <a href="/view?type={{item[0]}}&id={{item[1]}}">{{item[2]}}</a>
+                </li>
+                {% endfor %}
+            {% else %}
+                <h6>Поиск не дал результатов</h6>
+            {% endif %}
         </ul>
     </div>
     
     
 </div>
+
+<script>
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+    
+            const formData = new FormData(form);
+            const params = new URLSearchParams();
+    
+            for (const [key, value] of formData.entries()) {
+                if (['person', 'org', 'doc'].includes(key) && value.trim() == '') {
+                    params.append('type', key)
+                } else if (value.trim() !== '') {
+                    params.append(key, value);
+                }
+            }
+
+            window.location.href = form.action + '?' + params.toString();
+        });
+    });
+</script>
 
 
 {% endblock %}
