@@ -62,16 +62,29 @@ def search():  # universal search view for organization, person, document
             year_query = request.args.get('birthYear')
             if year_query is not None:
                 where_stmt = where_stmt and extract('year', Person.birth_date) == int(year_query)
-            stmt = select(Person.id, Person.name).where(where_stmt)
-
-            results = []
-            with Session(engine) as session:
-                data = session.execute(stmt)
-                for row in data:
-                    results.append(['person', row[0], row[1]])
-            return render_template('search.html', page=page, results=results)
         else:
-            return 'patronymic n stuff'
+            firstname = request.args.get('firstName')
+            lastname = request.args.get('lastName')
+            patronymic = request.args.get('patronymic')
+            year_query = request.args.get('birthYear')
+            where_stmt = True
+            if firstname is not None:
+                where_stmt = where_stmt and func.lower(Person.name).startswith(firstname.lower())
+            if lastname is not None:
+                where_stmt = where_stmt and func.lower(Person.surname).startswith(lastname.lower())
+            if patronymic is not None:
+                where_stmt = where_stmt and func.lower(Person.patronymic).startswith(patronymic.lower())
+            if year_query is not None:
+                where_stmt = where_stmt and extract('year', Person.birth_date) == int(year_query)
+
+        stmt = select(Person).where(where_stmt)
+        results = []
+        with Session(engine) as session:
+            data = session.execute(stmt)
+            for person_row in data:
+                person = person_row[0]
+                results.append(['person', person.id, str(person)])
+        return render_template('search.html', page=page, results=results)
     elif request.args.get('type') in ['org', 'doc']:  # Name only search
         obj_type = request.args.get('type')
         obj = {'org': Organization, 'doc': Document}[obj_type]
