@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, abort
 from initialise_database import engine, Organization, Person, Document
-from sqlalchemy import select
+from sqlalchemy import select, func, extract
 from sqlalchemy.orm import Session
 
 
@@ -39,7 +39,54 @@ def view():  # universal view for organization, person, document
 @app.route('/search')
 def search():  # universal search view for organization, person, document
     page = {'heading': 'Search page', 'title': 'Search'}
-    return render_template('search.html', page=page)
+    if len(request.args) == 0 or not request.args.get('type'):
+        return render_template('search.html', page=page)
+    if request.args.get('type') == 'person':
+        if len(set(request.args.keys()).intersection({'firstName', 'lastName', 'patronymic'})) == 0:
+            query = request.args.get('fullName')
+            if query is not None:
+                query_list = query.split()
+                if len(query_list) == 1:
+                    where_stmt = func.lower(Person.surname).startswith(query_list[0].lower())
+                elif len(query_list) == 2:
+                    where_stmt = func.lower(Person.surname) == query_list[0].lower()\
+                        and func.lower(Person.name) == query_list[1].lower()
+                elif len(query_list) == 3:
+                    where_stmt = func.lower(Person.surname) == query_list[0].lower()\
+                        and func.lower(Person.name) == query_list[1].lower()\
+                        and func.lower(Person.patronymic) == query_list[2].lower()
+                else:
+                    where_stmt = True
+            else:
+                where_stmt = True
+            year_query = request.args.get('birthYear')
+            if year_query is not None:
+                where_stmt = where_stmt and extract('year', Person.birth_date) == int(year_query)
+            stmt = select(Person.id, Person.name).where(where_stmt)
+
+            results = []
+            with Session(engine) as session:
+                data = session.execute(stmt)
+                for row in data:
+                    results.append(['person', row[0], row[1]])
+            return render_template('search.html', page=page, results=results)
+        else:
+            return 'patronymic n stuff'
+    elif request.args.get('type') in ['org', 'doc']:  # Name only search
+        obj_type = request.args.get('type')
+        obj = {'org': Organization, 'doc': Document}[obj_type]
+        query = request.args.get('name')
+        print(query)
+        if query is not None:
+            stmt = select(obj.id, obj.name).where(func.lower(obj.name).startswith(query.lower()))
+        else:
+            stmt = select(obj.id, obj.name)
+        results = []
+        with Session(engine) as session:
+            data = session.execute(stmt)
+            for row in data:
+                results.append([obj_type, row[0], row[1]])
+        return render_template('search.html', page=page, results=results)
 
 
 @app.route('/new')
