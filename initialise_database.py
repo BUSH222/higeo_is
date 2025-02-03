@@ -70,9 +70,7 @@ class Person(Base):
     comment: Mapped[str | None] = mapped_column(nullable=True)
 
     def values_ru(self):
-        values = {'Имя': self.name,
-                  'Фамилия': self.surname,
-                  'Отчество': self.patronymic,
+        values = {'ФИО': str(self),
                   'Дата рождения': self.birth_date,
                   'Дата сметри': self.death_date,
                   'Место рождения': self.birth_place,

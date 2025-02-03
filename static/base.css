@@ -42,3 +42,7 @@ p.GIN{
 	background-color: #f1d7cc !important;
 	color: black !important;
 }
+
+.hover-highlight:hover {
+	background-color: #fff8f8;
+}
