@@ -175,24 +175,55 @@
 
 <script>
     document.querySelectorAll('form').forEach(form => {
-        form.addEventListener('submit', function(event) {
+        form.addEventListener('submit', async function(event) {
             event.preventDefault();
-    
+
             const formData = new FormData(form);
             const params = new URLSearchParams();
-    
+
             for (const [key, value] of formData.entries()) {
-                if (['person', 'org', 'doc'].includes(key) && value.trim() == '') {
-                    params.append('type', key)
+                if (['person', 'org', 'doc'].includes(key) && value.trim() === '') {
+                    params.append('type', key);
                 } else if (value.trim() !== '') {
                     params.append(key, value);
                 }
             }
 
-            window.location.href = form.action + '?' + params.toString();
+            const url = form.action + '?' + params.toString();
+
+            try {
+                const response = await fetch(url, { method: 'GET' });
+
+                if (!response.ok) {
+                    throw new Error('request error');
+                }
+
+                const data = await response.json();
+                updateResults(data);
+            } catch (error) {
+                console.error('error fetching server results', error);
+            }
         });
     });
+
+    function updateResults(data) {
+        const resultsContainer = document.querySelector('.list-group');
+        resultsContainer.innerHTML = ''; 
+
+        if (data.length === 0) {
+            resultsContainer.innerHTML = '<h6>Поиск не дал результатов</h6>';
+            return;
+        }
+
+        data.forEach(item => {
+            const li = document.createElement('li');
+            li.classList.add('list-group-item');
+            li.innerHTML = `<a href="/view?type=${item[0]}&id=${item[1]}">${item[2]}</a>`;
+            resultsContainer.appendChild(li);
+        });
+    }
 </script>
+
 
 
 {% endblock %}

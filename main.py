@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, abort
+from flask import Flask, render_template, request, abort, jsonify
 from initialise_database import engine, Organization, Person, Document
 from sqlalchemy import select, func, extract, and_
 from sqlalchemy.orm import Session
@@ -82,7 +82,7 @@ def search():  # universal search view for organization, person, document
             for person_row in data:
                 person = person_row[0]
                 results.append(['person', person.id, str(person)])
-        return render_template('search.html', page=page, results=results)
+        return jsonify(results)
     elif request.args.get('type') in ['org', 'doc']:  # Name only search
         obj_type = request.args.get('type')
         obj = {'org': Organization, 'doc': Document}[obj_type]
@@ -97,7 +97,9 @@ def search():  # universal search view for organization, person, document
             data = session.execute(stmt)
             for row in data:
                 results.append([obj_type, row[0], row[1]])
-        return render_template('search.html', page=page, results=results)
+        return jsonify(results)
+    else:
+        abort(418)
 
 
 @app.route('/new')
