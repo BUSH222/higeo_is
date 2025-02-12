@@ -1,9 +1,18 @@
 from flask import Flask, render_template, request, abort, jsonify
-from initialise_database import engine, Organization, Person, Document
+from flask_login import login_required, current_user
+from helper.db.initialise_database import engine, Organization, Person, Document
+from helper.login.login import app_login, login_manager
 from sqlalchemy import select, func, extract, and_
 from sqlalchemy.orm import Session
+from secrets import token_urlsafe
+
 
 app = Flask(__name__)
+app.register_blueprint(app_login)
+app.config['SECRET_KEY'] = token_urlsafe(16)
+
+login_manager.init_app(app)
+login_manager.login_view = 'app_login.login'
 
 
 @app.route('/')
@@ -102,7 +111,9 @@ def search():  # universal search view for organization, person, document
 
 
 @app.route('/new')
+@login_required
 def new():  # admin only new record generator
+    print(current_user)
     page = {'heading': 'New document', 'title': 'Search'}
     data = {'person': 'person',
             'source': 'source_img',
@@ -118,4 +129,4 @@ def new():  # admin only new record generator
 if __name__ == '__main__':
     app.jinja_env.auto_reload = True
     app.config['TEMPLATES_AUTO_RELOAD'] = True
-    app.run(host='localhost', port=5000, debug=True)
+    app.run(host='localhost', port=5000, debug=True, ssl_context='adhoc')
