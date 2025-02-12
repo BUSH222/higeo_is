@@ -10,12 +10,21 @@
     </div>
     <form>
     {% for key, value in data.items() %}
-        <div class="row mt-5">
-            <div class="col-lg-2 fw-bold">{{key}}</div>
-            <div class="col-lg-10">
-                <input type="text" class="form-control" id="{{value}}">
+        {% if value.endswith('img') %}
+            <div class="row mt-5">
+                <div class="col-lg-2 fw-bold">{{key}}</div>
+                <div class="col-lg-10">
+                    <input type="file" class="form-control" id="{{value}}">
+                </div>
             </div>
-        </div>
+        {% else %}
+            <div class="row mt-5">
+                <div class="col-lg-2 fw-bold">{{key}}</div>
+                <div class="col-lg-10">
+                    <input type="text" class="form-control" id="{{value}}">
+                </div>
+            </div>
+        {% endif %}
         {% endfor %}
         <button type="submit" class="btn higeo-color-1 mt-5">Сохранить</button>
     </form>

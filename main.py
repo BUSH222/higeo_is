@@ -106,7 +106,7 @@ def search():  # universal search view for organization, person, document
 def new():  # admin only new record generator
     page = {'heading': 'New document', 'title': 'Search'}
     data = {'person': 'person',
-            'source': 'source',
+            'source': 'source_img',
             'doc_name': 'doc_name',
             'year': 'year',
             'comment': 'comment',
