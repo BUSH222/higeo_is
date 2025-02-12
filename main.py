@@ -113,7 +113,21 @@ def search():  # universal search view for organization, person, document
 @app.route('/new')
 @login_required
 def new():  # admin only new record generator
-    print(current_user)
+    page = {'heading': 'New document', 'title': 'Search'}
+    data = {'person': 'person',
+            'source': 'source_img',
+            'doc_name': 'doc_name',
+            'year': 'year',
+            'comment': 'comment',
+            'file': 'file',
+            'links': 'links'
+            }
+    return render_template('new.html', page=page, data=data)
+
+
+@app.route('/edit')
+@login_required
+def edit():  # admin only record editor, same template
     page = {'heading': 'New document', 'title': 'Search'}
     data = {'person': 'person',
             'source': 'source_img',
