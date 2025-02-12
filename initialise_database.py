@@ -4,8 +4,8 @@ import psycopg2
 from psycopg2 import sql
 from datetime import datetime
 import logging
-from settings import DATABASE_USER, DATABASE_PASSWORD, DATABASE_NAME, DATABASE_HOST, DATABASE_PORT
-from helper import clean_dict
+from helper import DATABASE_USER, DATABASE_PASSWORD, DATABASE_NAME, DATABASE_HOST, DATABASE_PORT
+from helper.cleanup.clean_dict import clean_dict
 
 
 DATABASE_URL = f"postgresql://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}"

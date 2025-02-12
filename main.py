@@ -3,7 +3,6 @@ from initialise_database import engine, Organization, Person, Document
 from sqlalchemy import select, func, extract, and_
 from sqlalchemy.orm import Session
 
-
 app = Flask(__name__)
 
 
