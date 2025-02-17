@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, abort, jsonify
-from flask_login import login_required, current_user
+from flask_login import login_required
 from helper.db.initialise_database import engine, Organization, Person, Document
 from helper.login.login import app_login, login_manager
 from sqlalchemy import select, func, extract, and_
@@ -121,7 +121,7 @@ def search():  # universal search view for organization, person, document
 @app.route('/new')
 @login_required
 def new():  # admin only new record generator
-    page = {'heading': 'New document', 'title': 'Search'}
+    page = {'heading': 'New document', 'title': 'New document'}
     data = {'person': 'person',
             'source': 'source_img',
             'doc_name': 'doc_name',
@@ -136,7 +136,7 @@ def new():  # admin only new record generator
 @app.route('/edit')
 @login_required
 def edit():  # admin only record editor, same template
-    page = {'heading': 'New document', 'title': 'Search'}
+    page = {'heading': 'Edit document', 'title': 'Edit document'}
     data = {'person': 'person',
             'source': 'source_img',
             'doc_name': 'doc_name',
