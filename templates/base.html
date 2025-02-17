@@ -58,10 +58,12 @@
                                 </a>
                             </li>
                         </ul>
-                    </div>                    
-					<form class="d-flex ms-auto" role="search" id="searchform">
-						<input class="form-control me-2" type="search" placeholder="Quick search" aria-label="Search">
-						<button class="btn higeo-color-1 mr-2" type="submit">Search</button>
+                    </div>
+					<form class="d-flex ms-auto" role="search" id="searchform" action="search">
+                        <input type="hidden" id="person" name="person">
+                        <input type="hidden" id="quicksearch" name="quicksearch">
+						<input class="form-control me-2" type="search" id="fullName" name="fullName" placeholder="Быстрый поиск" aria-label="Search">
+						<button class="btn higeo-color-1 mr-2" type="submit">Поиск</button>
 					</form>
 				</div>
 				
@@ -85,4 +87,27 @@
         </footer>
 </div>
 </body>
+<script>
+    form = document.getElementById('searchform')
+
+    form.addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        const formData = new FormData(form);
+        const params = new URLSearchParams();
+
+        for (const [key, value] of formData.entries()) {
+            if (['person', 'org', 'doc'].includes(key) && value.trim() === '') {
+                params.append('type', key);
+            } else if (key === 'quicksearch') {
+                params.append('quicksearch', 'quicksearch');
+            } else if (value.trim() !== '') {
+                params.append(key, value);
+            }
+        }
+
+        const url = form.action + '?' + params.toString();
+        window.location.href = url;
+    });
+</script>
 </html>

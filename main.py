@@ -5,6 +5,8 @@ from helper.login.login import app_login, login_manager
 from sqlalchemy import select, func, extract, and_
 from sqlalchemy.orm import Session
 from secrets import token_urlsafe
+import urllib.parse
+import requests
 
 
 app = Flask(__name__)
@@ -49,6 +51,12 @@ def search():  # universal search view for organization, person, document
     page = {'heading': 'Search page', 'title': 'Search'}
     if len(request.args) == 0 or not request.args.get('type'):
         return render_template('search.html', page=page)
+    if request.args.get('quicksearch'):
+        args = dict(request.args)
+        args.pop('quicksearch')
+        results = requests.get(request.base_url + '?' + urllib.parse.urlencode(args), verify=False)
+        out_res = list(results.json())
+        return render_template('search.html', page=page, results=out_res)
     if request.args.get('type') == 'person':
         if len(set(request.args.keys()).intersection({'firstName', 'lastName', 'patronymic'})) == 0:
             query = request.args.get('fullName')
