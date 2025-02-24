@@ -4,14 +4,14 @@ from helper.db.initialise_database import engine, Organization, Person, Document
 from helper.login.login import app_login, login_manager
 from sqlalchemy import select, func, extract, and_
 from sqlalchemy.orm import Session
-from secrets import token_urlsafe
+# from secrets import token_urlsafe
 import urllib.parse
 import requests
 
 
 app = Flask(__name__)
 app.register_blueprint(app_login)
-app.config['SECRET_KEY'] = token_urlsafe(16)
+app.config['SECRET_KEY'] = '123'  # token_urlsafe(16)
 
 login_manager.init_app(app)
 login_manager.login_view = 'app_login.login'
@@ -39,11 +39,9 @@ def view():  # universal view for organization, person, document
     with Session(engine) as session:
         data = session.execute(stmt).scalar_one_or_none()
         data = data.values_ru()
-        print(data)
-
-    page = {'heading': f'{obj.__name__}', 'title': f'View {obj.__name__.lower()}'}
-
-    return render_template('view.html', data=data, page=page,)
+    page = {'heading': f'{obj.__name__}', 'title': f'View {obj.__name__.lower()}',
+            'id': viewid, 'type': viewtype}
+    return render_template('view.html', data=data, page=page)
 
 
 @app.route('/search')
@@ -113,7 +111,6 @@ def search():  # universal search view for organization, person, document
         obj_type = request.args.get('type')
         obj = {'org': Organization, 'doc': Document}[obj_type]
         query = request.args.get('name')
-        print(query)
         if query is not None:
             stmt = select(obj.id, obj.name).where(func.lower(obj.name).startswith(query.lower()))
         else:
@@ -147,14 +144,17 @@ def new():  # admin only new record generator
 @login_required
 def edit():  # admin only record editor, same template
     page = {'heading': 'Edit document', 'title': 'Edit document'}
-    data = {'person': 'person',
-            'source': 'source_img',
-            'doc_name': 'doc_name',
-            'year': 'year',
-            'comment': 'comment',
-            'file': 'file',
-            'links': 'links'
-            }
+    if len(request.args) != 2 or not request.args.get('type') or not request.args.get('id'):
+        abort(501)
+    obj_type = request.args.get('type')
+    obj_id = request.args.get('id')
+    obj = {'org': Organization, 'person': Person, 'doc': Document}[obj_type]
+
+    stmt = select(obj).where(obj.id == obj_id)
+    with Session(engine) as session:
+        data = session.execute(stmt).scalar_one_or_none()
+        data = data.values_ru()
+
     return render_template('new.html', page=page, data=data)
 
 
