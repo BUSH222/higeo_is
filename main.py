@@ -91,7 +91,7 @@ def search():  # universal search view for organization, person, document
                 where_stmt.append(extract('year', Person.birth_date) == int(year_query))
 
         final_where_stmt = and_(*where_stmt) if where_stmt else True
-        stmt = select(Person).where(final_where_stmt)
+        stmt = select(Person).where(final_where_stmt).order_by(Person.surname)
         results = []
         with Session(engine) as session:
             data = session.execute(stmt)
@@ -110,7 +110,7 @@ def search():  # universal search view for organization, person, document
             stmt = select(obj.id, obj.name)
         results = []
         with Session(engine) as session:
-            data = session.execute(stmt)
+            data = session.execute(stmt.order_by(obj.name))
             for row in data:
                 results.append([obj_type, row[0], row[1]])
         return jsonify(results)
