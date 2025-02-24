@@ -57,7 +57,17 @@ def search():  # universal search view for organization, person, document
         results = requests.get(request.base_url + '?' + urllib.parse.urlencode(args), verify=False)
         out_res = list(results.json())
         return render_template('search.html', page=page, results=out_res)
-    if request.args.get('type') == 'person':
+    elif request.args.get('content'):
+        content = request.args.get('content')
+        query = select(Person).filter(Person.bibliography.ilike(f'%{content}%'))
+        results = []
+        with Session(engine) as session:
+            data = session.execute(query)
+            for person_row in data:
+                person = person_row[0]
+                results.append(['person', person.id, str(person)])
+        return jsonify(results)
+    elif request.args.get('type') == 'person':
         if len(set(request.args.keys()).intersection({'firstName', 'lastName', 'patronymic'})) == 0:
             query = request.args.get('fullName')
             where_stmt = []
