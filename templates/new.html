@@ -1,27 +1,109 @@
 {% extends "base.html" %}
 
-{% block title %}{{page.title}}{% endblock %}
+{% block title %}{{ page.title }}{% endblock %}
 
 {% block content %}
-
 <div class="container">
     <div class="row mt-5">
-        <h1 class="d-flex justify-content-center fw-bold">{{page.heading}}</h1>
+        <h1 class="d-flex justify-content-center fw-bold">{{ page.heading }}</h1>
     </div>
-    <form>
-    {% for key, value in data1.items() %}
-        <div class="row mt-5">
-            <div class="col-lg-2 fw-bold">{{key}}</div>
+    <form id="edit-form">
+        {% for key, value in data1.items() %}
+        <div class="row mt-3">
+            <div class="col-lg-2 fw-bold">{{ key }}</div>
             <div class="col-lg-10">
-                <textarea class="form-control" id="{{key}}">{{value}}</textarea>
+                <textarea class="form-control" id="{{ key }}" name="{{ key }}">{{ value }}</textarea>
             </div>
         </div>
-    {% endfor %}
-    {% for key, value in data2.items() %}
-        
-    {% endfor %}
+        {% endfor %}
+
+        {% for key, values in data2.items() %}
+        <div class="row mt-4">
+            <div class="col-lg-2 fw-bold">{{ key }}</div>
+            <div class="col-lg-10">
+                <!-- Search bar for adding new connections -->
+                <input type="text" class="form-control search-input" placeholder="Поиск..." 
+                       data-type="{{ values[0]['type'] if values else '' }}" data-key="{{ key }}">
+                <div class="search-results dropdown-menu"></div>
+
+                <!-- List of existing connections -->
+                <ul class="list-group mt-2 connection-list" data-key="{{ key }}">
+                    {% for obj in values %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ obj.name }}
+                        <input type="hidden" name="{{ key }}" value="{{ obj.type }}:{{ obj.id }}">
+                        <button type="button" class="btn btn-danger btn-sm remove-connection">Удалить</button>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endfor %}
+
         <button type="submit" class="btn higeo-color-1 mt-5">Сохранить</button>
     </form>
 </div>
 
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".search-input").forEach(input => {
+        let resultsDropdown = input.nextElementSibling;
+        let connectionList = input.closest(".row").querySelector(".connection-list");
+
+        input.addEventListener("input", function () {
+            let query = input.value.trim();
+            let type = input.dataset.type;
+            if (query.length < 2) {
+                resultsDropdown.classList.remove("show");
+                return;
+            }
+
+            fetch(`/search?type=${type}&name=${query}`)
+                .then(response => response.json())
+                .then(results => {
+                    resultsDropdown.innerHTML = "";
+                    results.forEach(item => {
+                        let option = document.createElement("a");
+                        option.classList.add("dropdown-item");
+                        option.textContent = item[2];  
+                        option.dataset.id = item[1];
+                        option.dataset.type = item[0];
+                        option.dataset.name = item[2];
+                        option.href = "#";
+                        resultsDropdown.appendChild(option);
+                    });
+
+                    resultsDropdown.classList.add("show");
+                });
+        });
+
+        resultsDropdown.addEventListener("click", function (event) {
+            event.preventDefault();
+            if (event.target.tagName === "A") {
+                let name = event.target.dataset.name;
+                let id = event.target.dataset.id;
+                let type = event.target.dataset.type;
+
+                let listItem = document.createElement("li");
+                listItem.classList.add("list-group-item", "d-flex", "justify-content-between", "align-items-center");
+                listItem.innerHTML = `
+                    ${name}
+                    <input type="hidden" name="${input.dataset.key}" value="${type}:${id}">
+                    <button type="button" class="btn btn-danger btn-sm remove-connection">Удалить</button>
+                `;
+
+                connectionList.appendChild(listItem);
+                resultsDropdown.classList.remove("show");
+                input.value = "";
+            }
+        });
+
+        connectionList.addEventListener("click", function (event) {
+            if (event.target.classList.contains("remove-connection")) {
+                event.target.closest("li").remove();
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

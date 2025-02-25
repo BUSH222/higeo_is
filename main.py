@@ -159,7 +159,19 @@ def edit():  # admin only record editor, same template
             if not isinstance(getattr(data, column.key), list):
                 data_fin[column.key] = getattr(data, column.key)
     data_fin = {k: v for k, v in data_fin.items() if not isinstance(v, list)}
-    return render_template('new.html', page=page, data1=data_fin, data2=[])
+
+    data2 = {
+        "Связанные организации": [
+            {"type": "org", "id": 1, "name": "Институт математики"},
+            {"type": "org", "id": 2, "name": "Российская академия наук"}
+        ],
+        "Документы": [
+            {"type": "doc", "id": 1, "name": "Теория графов"},
+            {"type": "doc", "id": 2, "name": "Алгебраические структуры"}
+        ]
+    }
+
+    return render_template('new.html', page=page, data1=data_fin, data2=data2)
 
 
 if __name__ == '__main__':
