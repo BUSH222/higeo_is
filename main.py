@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, abort, jsonify
 from flask_login import login_required
 from helper.db.initialise_database import engine, Organization, Person, Document
 from helper.login.login import app_login, login_manager
-from sqlalchemy import select, func, extract, and_
+from sqlalchemy import select, func, extract, and_, inspect
 from sqlalchemy.orm import Session
 # from secrets import token_urlsafe
 import urllib.parse
@@ -153,9 +153,13 @@ def edit():  # admin only record editor, same template
     stmt = select(obj).where(obj.id == obj_id)
     with Session(engine) as session:
         data = session.execute(stmt).scalar_one_or_none()
-        data = data.values_ru()
+        mapper = inspect(obj)
+        data_fin = dict()
+        for column in mapper.attrs:
+            if not isinstance(getattr(data, column.key), list):
+                data_fin[column.key] = getattr(data, column.key)
 
-    return render_template('new.html', page=page, data=data)
+    return render_template('new.html', page=page, data=data_fin)
 
 
 if __name__ == '__main__':
