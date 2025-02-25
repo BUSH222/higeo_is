@@ -137,7 +137,7 @@ def new():  # admin only new record generator
             'file': 'file',
             'links': 'links'
             }
-    return render_template('new.html', page=page, data=data)
+    return render_template('new.html', page=page, data1=data)
 
 
 @app.route('/edit')
@@ -158,8 +158,8 @@ def edit():  # admin only record editor, same template
         for column in mapper.attrs:
             if not isinstance(getattr(data, column.key), list):
                 data_fin[column.key] = getattr(data, column.key)
-
-    return render_template('new.html', page=page, data=data_fin)
+    data_fin = {k: v for k, v in data_fin.items() if not isinstance(v, list)}
+    return render_template('new.html', page=page, data1=data_fin, data2=[])
 
 
 if __name__ == '__main__':
