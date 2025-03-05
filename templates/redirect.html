@@ -3,10 +3,9 @@
 <body>
     <h2>Success! you will soon be redirected</h2>
     <p id = "result"></p>
-    <button onclick = "redirect()">ok</button>
+    <button onclick = "myURL()">ok</button>
     <script>
-        setTimeout(myURL, 5000);
-        var result = document.getElementById("result");
+        setTimeout(myURL, 2000);
         function myURL() {
             document.location.href = '{{ url }}';
         }

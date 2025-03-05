@@ -131,16 +131,16 @@ def search():  # universal search view for organization, person, document
 @app.route('/new')
 @login_required
 def new():  # admin only new record generator
+    if len(request.args) != 1 or not request.args.get('type'):
+        abort(501)
     page = {'heading': 'New document', 'title': 'New document'}
-    data = {'person': 'person',
-            'source': 'source_img',
-            'doc_name': 'doc_name',
-            'year': 'year',
-            'comment': 'comment',
-            'file': 'file',
-            'links': 'links'
-            }
-    return render_template('new.html', page=page, data1=data)
+    obj_type = request.args.get('type')
+    data2 = {}
+    if obj_type == 'person':
+        data2 = {'doc': [], 'org': []}
+    elif obj_type == 'doc':
+        pass
+    return render_template('new.html', page=page, data1=data, data2=data2)
 
 
 @app.route('/edit')
@@ -187,11 +187,11 @@ def edit():  # admin only record editor, same template
         elif obj_type == 'org':
             data2 = {'person': []}
             for person in obj_real.members:
-                data2['person'].append({'type': 'person', 'id': person.id, 'name': person.fullname})
+                data2['person'].append({'type': 'person', 'id': person.id, 'name': str(person)})
         elif obj_type == 'doc':
             data2 = {'person': []}
             for person in obj_real.members:
-                data2['person'].append({'type': 'person', 'id': person.id, 'name': person.fullname})
+                data2['person'].append({'type': 'person', 'id': person.id, 'name': str(person)})
 
     return render_template('new.html', page=page, data1=data_fin2, data2=data2, obj_type=obj_type)
 
@@ -247,6 +247,33 @@ def save():
             elif obj == Document:
                 session.add(DocumentAuthorship(document_id=obj_id, person_id=connection_id))
                 session.commit()
+    return render_template('redirect.html', url='/search')
+
+
+@app.route('/delete')
+@login_required
+def delete():
+    if len(request.args) != 2 or not request.args.get('type') or not request.args.get('id'):
+        abort(501)
+    obj_type = request.args.get('type')
+    obj_id = request.args.get('id')
+    obj = {'org': Organization, 'person': Person, 'doc': Document}[obj_type]
+    stmt = select(obj).where(obj.id == obj_id)
+    with Session(engine) as session:
+        data = session.execute(stmt).scalar_one_or_none()
+        if data:
+            if obj_type == 'person':
+                session.query(DocumentAuthorship).filter(DocumentAuthorship.person_id == obj_id).delete()
+                session.query(OrganizationMembership).filter(OrganizationMembership.person_id == obj_id).delete()
+            elif obj_type == 'org':
+                session.query(OrganizationMembership).filter(OrganizationMembership.organization_id == obj_id).delete()
+            elif obj_type == 'doc':
+                session.query(DocumentAuthorship).filter(DocumentAuthorship.document_id == obj_id).delete()
+            session.delete(data)
+            session.commit()
+        else:
+            abort(404)
+
     return render_template('redirect.html', url='/search')
 
 
