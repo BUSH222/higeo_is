@@ -7,7 +7,7 @@
     <div class="row mt-5">
         <h1 class="d-flex justify-content-center fw-bold">{{ page.heading }}</h1>
     </div>
-    <form id="edit-form">
+    <form id="edit-form" method="POST" action="/save?type={{ obj_type }}">
         {% for key, value in data1.items() %}
         <div class="row mt-3">
             <div class="col-lg-2 fw-bold">{{ key }}</div>
@@ -31,7 +31,7 @@
                     {% for obj in values %}
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         {{ obj.name }}
-                        <input type="hidden" name="{{ key }}" value="{{ obj.type }}:{{ obj.id }}">
+                        <input type="hidden" name="connection" value="{{ obj.type }}:{{ obj.id }}">
                         <button type="button" class="btn btn-danger btn-sm remove-connection">Удалить</button>
                     </li>
                     {% endfor %}
@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 listItem.classList.add("list-group-item", "d-flex", "justify-content-between", "align-items-center");
                 listItem.innerHTML = `
                     ${name}
-                    <input type="hidden" name="${input.dataset.key}" value="${type}:${id}">
+                    <input type="hidden" name="connection" value="${type}:${id}">
                     <button type="button" class="btn btn-danger btn-sm remove-connection">Удалить</button>
                 `;
 

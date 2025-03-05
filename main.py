@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, abort, jsonify
 from flask_login import login_required
 from helper.db.initialise_database import engine, Organization, Person, Document
+from helper.db.initialise_database import DocumentAuthorship, OrganizationMembership
 from helper.login.login import app_login, login_manager
 from sqlalchemy import select, func, extract, and_, inspect
 from sqlalchemy.orm import Session
@@ -160,18 +161,77 @@ def edit():  # admin only record editor, same template
                 data_fin[column.key] = getattr(data, column.key)
     data_fin = {k: v for k, v in data_fin.items() if not isinstance(v, list)}
 
-    data2 = {
-        "Связанные организации": [
-            {"type": "org", "id": 1, "name": "Институт математики"},
-            {"type": "org", "id": 2, "name": "Российская академия наук"}
-        ],
-        "Документы": [
-            {"type": "doc", "id": 1, "name": "Теория графов"},
-            {"type": "doc", "id": 2, "name": "Алгебраические структуры"}
-        ]
-    }
+    data2 = {}
+    with Session(engine) as session:
+        obj_real = session.query(obj).filter(obj.id == obj_id).one_or_none()
+        assert obj_real is not None
+        if obj_type == 'person':
+            data2 = {"org": [], "doc": []}
+            for doc_authorship in obj_real.documents:  # doc_authorship is DocumentAuthorship
+                doc = doc_authorship.document
+                data2['doc'].append({'type': 'doc', 'id': doc.id, 'name': doc.name})
+            for org_membership in obj_real.organizations:
+                org = org_membership.organization
+                data2['org'].append({'type': 'org', 'id': org.id, 'name': org.name})
+        elif obj_type == 'org':
+            data2 = {'person': []}
+            for person in obj_real.members:
+                data2['person'].append({'type': 'person', 'id': person.id, 'name': person.fullname})
+        elif obj_type == 'doc':
+            data2 = {'person': []}
+            for person in obj_real.members:
+                data2['person'].append({'type': 'person', 'id': person.id, 'name': person.fullname})
 
-    return render_template('new.html', page=page, data1=data_fin, data2=data2)
+    return render_template('new.html', page=page, data1=data_fin, data2=data2, obj_type=obj_type)
+
+
+@app.route('/save', methods=['POST'])
+@login_required
+def save():
+    formdata = request.form.to_dict()
+    formdata.pop('connection')
+    connections = request.form.getlist('connection')
+    obj_type = request.args.get('type')
+    obj = {'org': Organization, 'person': Person, 'doc': Document}[obj_type]
+    if formdata.get('id'):
+        obj_id = formdata.pop('id')
+        stmt = select(obj).where(obj.id == obj_id)
+        with Session(engine) as session:
+            data = session.execute(stmt).scalar_one_or_none()
+            for key, value in formdata.items():
+                setattr(data, key, value)
+            session.commit()
+    else:
+        data = obj(**formdata)
+        with Session(engine) as session:
+            session.add(data)
+            session.commit()
+
+    with Session(engine) as session:
+        if obj_type == 'person':
+            session.query(DocumentAuthorship).filter(DocumentAuthorship.person_id == obj_id).delete()
+            session.query(OrganizationMembership).filter(OrganizationMembership.person_id == obj_id).delete()
+        elif obj_type == 'org':
+            session.query(OrganizationMembership).filter(OrganizationMembership.organization_id == obj_id).delete()
+        elif obj_type == 'doc':
+            session.query(DocumentAuthorship).filter(DocumentAuthorship.document_id == obj_id).delete()
+        session.commit()
+        for connection in connections:
+            connection_type, connection_id = connection.split(':')
+            if obj == Person:
+                if connection_type == 'doc':
+                    session.add(DocumentAuthorship(document_id=connection_id, person_id=obj_id))
+                    session.commit()
+                elif connection_type == 'org':
+                    session.add(OrganizationMembership(organization_id=connection_id, person_id=obj_id))
+                    session.commit()
+            elif obj == Organization:
+                session.add(OrganizationMembership(organization_id=obj_id, person_id=connection_id))
+                session.commit()
+            elif obj == Document:
+                session.add(DocumentAuthorship(document_id=obj_id, person_id=connection_id))
+                session.commit()
+    return 'OK'
 
 
 if __name__ == '__main__':
