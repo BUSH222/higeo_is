@@ -217,6 +217,7 @@ def save():
     formdata = request.form.to_dict()
     if 'connection' in formdata.keys():
         formdata.pop('connection')
+    formdata = {key: (value if value != '' else None) for key, value in formdata.items()}
     connections = request.form.getlist('connection')
     obj_type = request.args.get('type')
     obj = {'org': Organization, 'person': Person, 'doc': Document}[obj_type]
@@ -237,6 +238,7 @@ def save():
         with Session(engine) as session:
             session.add(data)
             session.commit()
+            obj_id = data.id
 
     with Session(engine) as session:
         if obj_type == 'person':

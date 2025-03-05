@@ -23,7 +23,7 @@
             <div class="col-lg-10">
                 <!-- Search bar for adding new connections -->
                 <input type="text" class="form-control search-input" placeholder="Поиск..." 
-                       data-type="{{ values[0]['type'] if values else '' }}" data-key="{{ key }}">
+                       data-type="{{ values[0]['type'] if values else key }}" data-key="{{ key }}">
                 <div class="search-results dropdown-menu"></div>
 
                 <!-- List of existing connections -->
