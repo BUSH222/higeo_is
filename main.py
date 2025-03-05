@@ -133,14 +133,27 @@ def search():  # universal search view for organization, person, document
 def new():  # admin only new record generator
     if len(request.args) != 1 or not request.args.get('type'):
         abort(501)
-    page = {'heading': 'New document', 'title': 'New document'}
     obj_type = request.args.get('type')
+    title_converter = {'org': 'organization', 'person': 'person', 'doc': 'document'}
+    page = {'heading': f'New {title_converter[obj_type]}', 'title': f'New {title_converter[obj_type]}'}
+    obj_dict = {'org': Organization, 'person': Person, 'doc': Document}
+    obj = obj_dict[obj_type]
+
+    mapper = inspect(obj)
+    data_fin = dict()
+    for column in mapper.attrs:
+        if column.key not in ['organizations', 'documents', 'members', 'authors'] and column.key != 'id':
+            data_fin[column.key] = ''
+    print(data_fin)
     data2 = {}
     if obj_type == 'person':
         data2 = {'doc': [], 'org': []}
     elif obj_type == 'doc':
-        pass
-    return render_template('new.html', page=page, data1=data, data2=data2)
+        data2 = {'person': []}
+    elif obj_type == 'org':
+        data2 = {'person': []}
+
+    return render_template('new.html', page=page, data1=data_fin, data2=data2, obj_type=obj_type)
 
 
 @app.route('/edit')
@@ -186,11 +199,13 @@ def edit():  # admin only record editor, same template
                 data2['org'].append({'type': 'org', 'id': org.id, 'name': org.name})
         elif obj_type == 'org':
             data2 = {'person': []}
-            for person in obj_real.members:
+            for obj_person in obj_real.members:
+                person = obj_person.person
                 data2['person'].append({'type': 'person', 'id': person.id, 'name': str(person)})
         elif obj_type == 'doc':
             data2 = {'person': []}
-            for person in obj_real.members:
+            for obj_person in obj_real.authors:
+                person = obj_person.person
                 data2['person'].append({'type': 'person', 'id': person.id, 'name': str(person)})
 
     return render_template('new.html', page=page, data1=data_fin2, data2=data2, obj_type=obj_type)
