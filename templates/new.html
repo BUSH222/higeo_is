@@ -58,7 +58,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
-            fetch(`/search?type=${type}&name=${query}`)
+            let searchUrl = type === 'person' ? `/search?type=${type}&fullName=${query}` : `/search?type=${type}&name=${query}`;
+
+            fetch(searchUrl)
                 .then(response => response.json())
                 .then(results => {
                     resultsDropdown.innerHTML = "";
