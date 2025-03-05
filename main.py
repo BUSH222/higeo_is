@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session
 # from secrets import token_urlsafe
 import urllib.parse
 import requests
+from datetime import datetime
+from dateutil.parser import parse
 
 
 app = Flask(__name__)
@@ -159,7 +161,16 @@ def edit():  # admin only record editor, same template
         for column in mapper.attrs:
             if not isinstance(getattr(data, column.key), list):
                 data_fin[column.key] = getattr(data, column.key)
-    data_fin = {k: v for k, v in data_fin.items() if not isinstance(v, list)}
+    data_fin2 = {}
+    for k, v in data_fin.items():
+        if isinstance(v, list):
+            continue
+        elif v is None:
+            data_fin2[k] = ''
+        elif k.endswith('date'):
+            data_fin2[k] = parse(str(v)).date()
+        else:
+            data_fin2[k] = str(v)
 
     data2 = {}
     with Session(engine) as session:
@@ -182,14 +193,15 @@ def edit():  # admin only record editor, same template
             for person in obj_real.members:
                 data2['person'].append({'type': 'person', 'id': person.id, 'name': person.fullname})
 
-    return render_template('new.html', page=page, data1=data_fin, data2=data2, obj_type=obj_type)
+    return render_template('new.html', page=page, data1=data_fin2, data2=data2, obj_type=obj_type)
 
 
 @app.route('/save', methods=['POST'])
 @login_required
 def save():
     formdata = request.form.to_dict()
-    formdata.pop('connection')
+    if 'connection' in formdata.keys():
+        formdata.pop('connection')
     connections = request.form.getlist('connection')
     obj_type = request.args.get('type')
     obj = {'org': Organization, 'person': Person, 'doc': Document}[obj_type]
@@ -199,6 +211,10 @@ def save():
         with Session(engine) as session:
             data = session.execute(stmt).scalar_one_or_none()
             for key, value in formdata.items():
+                if value == '' or value == 'None':
+                    value = None
+                if key.endswith('date') and value is not None:
+                    value = datetime.strptime(value, '%Y-%m-%d')
                 setattr(data, key, value)
             session.commit()
     else:
@@ -231,7 +247,7 @@ def save():
             elif obj == Document:
                 session.add(DocumentAuthorship(document_id=obj_id, person_id=connection_id))
                 session.commit()
-    return 'OK'
+    return render_template('redirect.html', url='/search')
 
 
 if __name__ == '__main__':

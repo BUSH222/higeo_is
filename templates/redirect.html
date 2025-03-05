@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h2>Success! you will soon be redirected</h2>
+    <p id = "result"></p>
+    <button onclick = "redirect()">ok</button>
+    <script>
+        setTimeout(myURL, 5000);
+        var result = document.getElementById("result");
+        function myURL() {
+            document.location.href = '{{ url }}';
+        }
+    </script>
+</body>
+</html>

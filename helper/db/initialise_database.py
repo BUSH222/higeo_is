@@ -153,6 +153,6 @@ class DocumentAuthorship(Base):
     document: Mapped["Document"] = relationship("Document", back_populates="authors")
 
 
-Base.metadata.create_all(engine)
-
-logging.info('Tables ensured.')
+def create_tables():
+    Base.metadata.create_all(engine)
+    logging.info('Tables ensured.')
