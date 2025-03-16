@@ -72,8 +72,8 @@ class Person(Base):
     def values_ru(self):
         values = {'ФИО': str(self),
                   'Дата рождения': self.birth_date,
-                  'Дата сметри': self.death_date,
                   'Место рождения': self.birth_place,
+                  'Дата сметри': self.death_date,
                   'Место смерти': self.death_date,
                   'Академическое звание': self.academic_degree,
                   'Область исследования': self.field_of_study,
@@ -97,12 +97,16 @@ class Organization(Base):
     name: Mapped[str] = mapped_column(nullable=False)
     members: Mapped[list["OrganizationMembership"]] = \
         relationship("OrganizationMembership", back_populates="organization")
+    org_type: Mapped[str | None] = mapped_column(nullable=True)
+    history: Mapped[str | None] = mapped_column(nullable=True)
     comment: Mapped[str | None] = mapped_column(nullable=True)
 
     def values_ru(self):
-        values = {'Название': self.name,
-                  'Связанные персоналии':
+        values = {'Связанные персоналии':
                   [['person', member.person.id, str(member.person)] for member in self.members],
+                  'Название': self.name,
+                  'Тип организации': self.org_type,
+                  'История': self.history,
                   'Комментарий': self.comment}
         return clean_dict(values)
 
@@ -114,6 +118,8 @@ class Document(Base):
     __tablename__ = 'document'
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(nullable=False)
+    doc_type: Mapped[str] = mapped_column(nullable=False)
+    language: Mapped[str] = mapped_column(nullable=False)
     source: Mapped[str | None] = mapped_column(nullable=True)
     authors: Mapped[list["DocumentAuthorship"]] = relationship("DocumentAuthorship", back_populates="document")
     year: Mapped[str | None] = mapped_column(nullable=True)
@@ -121,9 +127,11 @@ class Document(Base):
     comment: Mapped[str | None] = mapped_column(nullable=True)
 
     def values_ru(self):
-        values = {'Название': self.name,
+        values = {'Авторы': [['person', author.person.id, str(author.person)] for author in self.authors],
                   'Источник': self.source,
-                  'Авторы': [['person', author.person.id, str(author.person)] for author in self.authors],
+                  'Название': self.name,
+                  'Тип документа': self.doc_type,
+                  'Язык': self.language,
                   'Год издания': self.year,
                   'Файл': self.file,
                   'Комментарий': self.comment}

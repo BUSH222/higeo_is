@@ -40,7 +40,7 @@ def insert_data(table, columns, values):
 
 def clean_name(name):
     name = re.sub(r'[\[\]\(\)]', '', name)
-    name = ''.join(e for e in name if e.isalpha() or e.isspace())
+    name = ''.join(e for e in name if e.isalpha() or e.isspace() or e == '-')
     name = re.sub(r'\s+', ' ', name)
     name = name.strip()
     return name
@@ -114,50 +114,69 @@ def clean_date(date_str):
     return None, date_str
 
 
-with open(csv_files['person'], 'r') as file:
-    reader = csv.reader(file)
-    for row in reader:
-        comment = row[21]
+def convert_person():
+    with open(csv_files['person'], 'r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            comment = row[21]
 
-        patronymic = row[5]
-        patronymic_en = translit_ru(patronymic, reversed=True)
+            patronymic = row[5]
+            patronymic_en = translit_ru(patronymic, reversed=True)
 
-        birth_date, birth_date_str = clean_date(row[10])
-        death_date, death_date_str = clean_date(row[12])
+            birth_date, birth_date_str = clean_date(row[10])
+            death_date, death_date_str = clean_date(row[12])
 
-        if birth_date is None:
-            comment += f'\n Birth date: {birth_date_str}'
+            if birth_date is None:
+                comment += f'\n Birth date: {birth_date_str}'
 
-        if death_date is None:
-            comment += f'\n Death date: {birth_date_str}'
+            if death_date is None:
+                comment += f'\n Death date: {birth_date_str}'
 
-        surname = row[6]
-        if surname is None or surname == '':
-            surname = row[1].strip().split()[0]
+            surname = row[6]
+            if surname is None or surname == '':
+                surname = row[1].strip().split()[0]
 
-        data = {
-            '_oldid': int(row[0]),
-            'name': clean_name(row[4]),
-            'surname': clean_name(surname),
-            'patronymic': patronymic,
-            'name_en': clean_name(row[7]),
-            'surname_en': clean_name(row[8]),
-            'patronymic_en': patronymic_en,
-            'birth_date': birth_date,
-            'birth_place': row[11],
-            'death_date': death_date,
-            'death_place': row[13],
-            'academic_degree': row[14],
-            'field_of_study': row[15],
-            'area_of_study': row[16],
-            'biography': row[18],
-            'bibliography': row[19],
-            'photo': row[20],
-            'comment': comment
-        }
-        data = {k: (v if v != '' else None) for k, v in data.items()}
+            data = {
+                '_oldid': int(row[0]),
+                'name': clean_name(row[4]),
+                'surname': clean_name(surname),
+                'patronymic': patronymic,
+                'name_en': clean_name(row[7]),
+                'surname_en': clean_name(row[8]),
+                'patronymic_en': patronymic_en,
+                'birth_date': birth_date,
+                'birth_place': row[11],
+                'death_date': death_date,
+                'death_place': row[13],
+                'academic_degree': row[14],
+                'field_of_study': row[15],
+                'area_of_study': row[16],
+                'biography': row[18],
+                'bibliography': row[19],
+                'photo': row[20],
+                'comment': comment
+            }
+            data = {k: (v if v != '' else None) for k, v in data.items()}
 
-        insert_data('person', data.keys(), data.values())
+            insert_data('person', data.keys(), data.values())
+
+
+def convert_org():
+    with open(csv_files['org'], 'r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+
+            data = {
+                '_oldid': int(row[0]),
+                'name': row[1],
+                'org_type': row[4],
+                'history': row[5],
+                'comment': row[7]
+            }
+            data = {k: (v if v != '' else None) for k, v in data.items()}
+
+            insert_data('organization', data.keys(), data.values())
+
 
 conn.commit()
 cur.close()

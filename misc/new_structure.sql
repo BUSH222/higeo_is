@@ -22,17 +22,19 @@ CREATE TABLE IF NOT EXISTS person (
 
 CREATE TABLE IF NOT EXISTS organization (
     id SERIAL PRIMARY KEY,
-    type TEXT,
-    history TEXT,
     _oldid INT,
     name VARCHAR(255) NOT NULL,
+    org_type VARCHAR(255),
+    history TEXT,
     comment TEXT
 );
 
 CREATE TABLE IF NOT EXISTS document (
     id SERIAL PRIMARY KEY,
     _oldid INT,
-    name VARCHAR(255) NOT NULL,
+    name TEXT NOT NULL,
+    doc_type VARCHAR(255) NOT NULL,
+    language VARCHAR(255) NOT NULL,
     source VARCHAR(255),
     year VARCHAR(4),
     file VARCHAR(255),

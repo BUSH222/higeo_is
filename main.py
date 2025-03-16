@@ -60,7 +60,7 @@ def search():  # universal search view for organization, person, document
         return render_template('search.html', page=page, results=out_res)
     elif request.args.get('content'):
         content = request.args.get('content')
-        query = select(Person).filter(Person.bibliography.ilike(f'%{content}%'))
+        query = select(Person).filter(Person.bibliography.ilike(f'%{content}%')).order_by(Person.surname)
         results = []
         with Session(engine) as session:
             data = session.execute(query)
@@ -115,12 +115,12 @@ def search():  # universal search view for organization, person, document
         obj = {'org': Organization, 'doc': Document}[obj_type]
         query = request.args.get('name')
         if query is not None:
-            stmt = select(obj.id, obj.name).where(func.lower(obj.name).startswith(query.lower()))
+            stmt = select(obj.id, obj.name).where(func.lower(obj.name).startswith(query.lower())).order_by(obj.name)
         else:
-            stmt = select(obj.id, obj.name)
+            stmt = select(obj.id, obj.name).order_by(obj.name)
         results = []
         with Session(engine) as session:
-            data = session.execute(stmt.order_by(obj.name))
+            data = session.execute(stmt)
             for row in data:
                 results.append([obj_type, row[0], row[1]])
         return jsonify(results)
