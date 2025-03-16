@@ -44,6 +44,11 @@ def view():  # universal view for organization, person, document
         data = data.values_ru()
     page = {'heading': f'{obj.__name__}', 'title': f'View {obj.__name__.lower()}',
             'id': viewid, 'type': viewtype}
+    if "Фотография" in data:
+        if data['Фотография'].startswith('/hosted-files'):
+            data["Фотография"] = f'<img src="http://higeo.ginras.ru{data["Фотография"]}" alt="Фотография" />'
+        else:
+            data["Фотография"] = f'<img src="{data["Фотография"]}" alt="Фотография" />'
     return render_template('view.html', data=data, page=page)
 
 

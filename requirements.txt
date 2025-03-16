@@ -1,7 +1,9 @@
-Flask==3.1.0
-Flask_Login==0.6.3
+Flask==2.2.5
+Flask_Login==0.6.2
 oauthlib==3.2.2
-psycopg2==2.9.9
+psycopg2_binary==2.9.9
 python-dotenv==1.0.1
+python_dateutil==2.9.0.post0
 Requests==2.32.3
-SQLAlchemy==2.0.36
+SQLAlchemy==2.0.37
+transliterate==1.10.2

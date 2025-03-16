@@ -5,41 +5,28 @@ import re
 from transliterate import get_translit_function
 from datetime import datetime
 import sys
+import zipfile
+import os
+import io
+
 csv.field_size_limit(sys.maxsize)
 
 translit_ru = get_translit_function('ru')
-
-
-# Define the connection string for PostgreSQL
 postgres_connection_string = 'postgresql://postgres:12345678@localhost:5432/geology'
-
-# Create a SQLAlchemy engine
 engine = create_engine(postgres_connection_string)
-
-
-# Define file paths
-csv_files = {
-    'author': '/Users/tedvtorov/data/author.csv',
-    'employ': '/Users/tedvtorov/data/employ.csv',
-    'org': '/Users/tedvtorov/data/org.csv',
-    'person': '/Users/tedvtorov/data/person.csv',
-    'pub': '/Users/tedvtorov/data/pub.csv',
-    'source': '/Users/tedvtorov/data/source.csv'
-}
+zip_file_path = os.path.join(os.path.dirname(__file__), 'data.zip')
+conn = psycopg2.connect(postgres_connection_string)
+cur = conn.cursor()
 
 
 def load_sources():
     sources = {}
-    with open(csv_files['source'], 'r') as file:
-        reader = csv.reader(file)
-        for row in reader:
-            sources[int(row[0])] = row[1]
+    with zipfile.ZipFile(zip_file_path, 'r') as z:
+        with z.open('source.csv') as file:
+            reader = csv.reader(io.TextIOWrapper(file, encoding='utf-8'))
+            for row in reader:
+                sources[int(row[0])] = row[1]
     return sources
-
-
-# Connect to the PostgreSQL database using psycopg2
-conn = psycopg2.connect(postgres_connection_string)
-cur = conn.cursor()
 
 
 def insert_data(table, columns, values):
@@ -147,126 +134,131 @@ def clean_date(date_str):
 
 
 def convert_person():
-    with open(csv_files['person'], 'r') as file:
-        reader = csv.reader(file)
-        for row in reader:
-            comment = row[21]
+    with zipfile.ZipFile(zip_file_path, 'r') as z:
+        with z.open('person.csv') as file:
+            reader = csv.reader(io.TextIOWrapper(file, encoding='utf-8'))
+            for row in reader:
+                comment = row[21]
 
-            patronymic = row[5]
-            patronymic_en = translit_ru(patronymic, reversed=True)
+                patronymic = row[5]
+                patronymic_en = translit_ru(patronymic, reversed=True)
 
-            birth_date, birth_date_str = clean_date(row[10])
-            death_date, death_date_str = clean_date(row[12])
+                birth_date, birth_date_str = clean_date(row[10])
+                death_date, death_date_str = clean_date(row[12])
 
-            if birth_date is None:
-                comment += f'\n Birth date: {birth_date_str}'
+                if birth_date is None:
+                    comment += f'\n Birth date: {birth_date_str}'
 
-            if death_date is None:
-                comment += f'\n Death date: {birth_date_str}'
+                if death_date is None:
+                    comment += f'\n Death date: {birth_date_str}'
 
-            surname = row[6]
-            if surname is None or surname == '':
-                surname = row[1].strip().split()[0]
+                surname = row[6]
+                if surname is None or surname == '':
+                    surname = row[1].strip().split()[0]
 
-            data = {
-                '_oldid': int(row[0]),
-                'name': clean_name(row[4]),
-                'surname': clean_name(surname),
-                'patronymic': patronymic,
-                'name_en': clean_name(row[7]),
-                'surname_en': clean_name(row[8]),
-                'patronymic_en': patronymic_en,
-                'birth_date': birth_date,
-                'birth_place': row[11],
-                'death_date': death_date,
-                'death_place': row[13],
-                'academic_degree': row[14],
-                'field_of_study': row[15],
-                'area_of_study': row[16],
-                'biography': row[18],
-                'bibliography': row[19],
-                'photo': row[20],
-                'comment': comment
-            }
-            data = {k: (v if v != '' else None) for k, v in data.items()}
+                data = {
+                    '_oldid': int(row[0]),
+                    'name': clean_name(row[4]),
+                    'surname': clean_name(surname),
+                    'patronymic': patronymic,
+                    'name_en': clean_name(row[7]),
+                    'surname_en': clean_name(row[8]),
+                    'patronymic_en': patronymic_en,
+                    'birth_date': birth_date,
+                    'birth_place': row[11],
+                    'death_date': death_date,
+                    'death_place': row[13],
+                    'academic_degree': row[14],
+                    'field_of_study': row[15],
+                    'area_of_study': row[16],
+                    'biography': row[18],
+                    'bibliography': row[19],
+                    'photo': row[20],
+                    'comment': comment
+                }
+                data = {k: (v if v != '' else None) for k, v in data.items()}
 
-            insert_data('person', data.keys(), data.values())
+                insert_data('person', data.keys(), data.values())
 
 
 def convert_org():
-    with open(csv_files['org'], 'r') as file:
-        reader = csv.reader(file)
-        for row in reader:
+    with zipfile.ZipFile(zip_file_path, 'r') as z:
+        with z.open('org.csv') as file:
+            reader = csv.reader(io.TextIOWrapper(file, encoding='utf-8'))
+            for row in reader:
 
-            data = {
-                '_oldid': int(row[0]),
-                'name': row[1],
-                'org_type': row[4],
-                'history': row[5],
-                'comment': row[7]
-            }
-            data = {k: (v if v != '' else None) for k, v in data.items()}
+                data = {
+                    '_oldid': int(row[0]),
+                    'name': row[1],
+                    'org_type': row[4],
+                    'history': row[5],
+                    'comment': row[7]
+                }
+                data = {k: (v if v != '' else None) for k, v in data.items()}
 
-            insert_data('organization', data.keys(), data.values())
+                insert_data('organization', data.keys(), data.values())
 
 
 def convert_doc():
     sources_dict = load_sources()
 
-    with open(csv_files['pub'], 'r') as file:
-        reader = csv.reader(file)
-        for row in reader:
-            source_id = int(row[1])
-            source_text = sources_dict.get(source_id, None)
+    with zipfile.ZipFile(zip_file_path, 'r') as z:
+        with z.open('pub.csv') as file:
+            reader = csv.reader(io.TextIOWrapper(file, encoding='utf-8'))
+            for row in reader:
+                source_id = int(row[1])
+                source_text = sources_dict.get(source_id, None)
 
-            data = {
-                '_oldid': int(row[0]),
-                'name': row[2],
-                'doc_type': row[4],
-                'language': row[5],
-                'source': source_text,
-                'year': row[6],
-                'comment': row[8]
-            }
-            data = {k: (v if v != '' else None) for k, v in data.items()}
+                data = {
+                    '_oldid': int(row[0]),
+                    'name': row[2],
+                    'doc_type': row[4],
+                    'language': row[5],
+                    'source': source_text,
+                    'year': row[6],
+                    'comment': row[8]
+                }
+                data = {k: (v if v != '' else None) for k, v in data.items()}
 
-            insert_data('document', data.keys(), data.values())
+                insert_data('document', data.keys(), data.values())
 
 
 def convert_document_authorship():
-    with open(csv_files['author'], 'r') as file:
-        reader = csv.reader(file)
-        for row in reader:
-            old_document_id = int(row[0])
-            old_person_id = int(row[1])
+    with zipfile.ZipFile(zip_file_path, 'r') as z:
+        with z.open('author.csv') as file:
+            reader = csv.reader(io.TextIOWrapper(file, encoding='utf-8'))
+            for row in reader:
+                old_document_id = int(row[0])
+                old_person_id = int(row[1])
 
-            new_person_id = get_new_person_id(old_person_id)
-            new_document_id = get_new_document_id(old_document_id)
+                new_person_id = get_new_person_id(old_person_id)
+                new_document_id = get_new_document_id(old_document_id)
 
-            if new_person_id and new_document_id:
-                data = {
-                    'document_id': new_document_id,
-                    'person_id': new_person_id
-                }
-                insert_data('document_authorship', data.keys(), data.values())
+                if new_person_id and new_document_id:
+                    data = {
+                        'document_id': new_document_id,
+                        'person_id': new_person_id
+                    }
+                    insert_data('document_authorship', data.keys(), data.values())
 
 
 def convert_organization_membership():
-    with open(csv_files['employ'], 'r') as file:
-        reader = csv.reader(file)
-        for row in reader:
-            old_person_id = int(row[0])
-            old_org_id = int(row[1])
+    with zipfile.ZipFile(zip_file_path, 'r') as z:
+        with z.open('employ.csv') as file:
+            reader = csv.reader(io.TextIOWrapper(file, encoding='utf-8'))
+            for row in reader:
+                old_person_id = int(row[0])
+                old_org_id = int(row[1])
 
-            new_person_id = get_new_person_id(old_person_id)
-            new_org_id = get_new_org_id(old_org_id)
+                new_person_id = get_new_person_id(old_person_id)
+                new_org_id = get_new_org_id(old_org_id)
 
-            if new_person_id and new_org_id:
-                data = {
-                    'person_id': new_person_id,
-                    'organization_id': new_org_id
-                }
-                insert_data('organization_membership', data.keys(), data.values())
+                if new_person_id and new_org_id:
+                    data = {
+                        'person_id': new_person_id,
+                        'organization_id': new_org_id
+                    }
+                    insert_data('organization_membership', data.keys(), data.values())
 
 
 if __name__ == '__main__':
@@ -287,3 +279,4 @@ if __name__ == '__main__':
     print("Data has been successfully imported and transformed.")
 cur.close()
 conn.close()
+engine.dispose()
