@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS document (
     _oldid INT,
     name TEXT NOT NULL,
     doc_type VARCHAR(255) NOT NULL,
-    language VARCHAR(255) NOT NULL,
+    language VARCHAR(255),
     source VARCHAR(255),
     year VARCHAR(4),
     file VARCHAR(255),

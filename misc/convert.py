@@ -23,8 +23,19 @@ csv_files = {
     'employ': '/Users/tedvtorov/data/employ.csv',
     'org': '/Users/tedvtorov/data/org.csv',
     'person': '/Users/tedvtorov/data/person.csv',
-    'pub': '/Users/tedvtorov/data/pub.csv'
+    'pub': '/Users/tedvtorov/data/pub.csv',
+    'source': '/Users/tedvtorov/data/source.csv'
 }
+
+
+def load_sources():
+    sources = {}
+    with open(csv_files['source'], 'r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            sources[int(row[0])] = row[1]
+    return sources
+
 
 # Connect to the PostgreSQL database using psycopg2
 conn = psycopg2.connect(postgres_connection_string)
@@ -44,6 +55,27 @@ def clean_name(name):
     name = re.sub(r'\s+', ' ', name)
     name = name.strip()
     return name
+
+
+def get_new_person_id(old_person_id):
+    query = "SELECT id FROM person WHERE _oldid = %s"
+    cur.execute(query, (old_person_id,))
+    result = cur.fetchone()
+    return result[0] if result else None
+
+
+def get_new_document_id(old_document_id):
+    query = "SELECT id FROM document WHERE _oldid = %s"
+    cur.execute(query, (old_document_id,))
+    result = cur.fetchone()
+    return result[0] if result else None
+
+
+def get_new_org_id(old_org_id):
+    query = "SELECT id FROM organization WHERE _oldid = %s"
+    cur.execute(query, (old_org_id,))
+    result = cur.fetchone()
+    return result[0] if result else None
 
 
 def clean_date(date_str):
@@ -178,8 +210,80 @@ def convert_org():
             insert_data('organization', data.keys(), data.values())
 
 
-conn.commit()
+def convert_doc():
+    sources_dict = load_sources()
+
+    with open(csv_files['pub'], 'r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            source_id = int(row[1])
+            source_text = sources_dict.get(source_id, None)
+
+            data = {
+                '_oldid': int(row[0]),
+                'name': row[2],
+                'doc_type': row[4],
+                'language': row[5],
+                'source': source_text,
+                'year': row[6],
+                'comment': row[8]
+            }
+            data = {k: (v if v != '' else None) for k, v in data.items()}
+
+            insert_data('document', data.keys(), data.values())
+
+
+def convert_document_authorship():
+    with open(csv_files['author'], 'r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            old_document_id = int(row[0])
+            old_person_id = int(row[1])
+
+            new_person_id = get_new_person_id(old_person_id)
+            new_document_id = get_new_document_id(old_document_id)
+
+            if new_person_id and new_document_id:
+                data = {
+                    'document_id': new_document_id,
+                    'person_id': new_person_id
+                }
+                insert_data('document_authorship', data.keys(), data.values())
+
+
+def convert_organization_membership():
+    with open(csv_files['employ'], 'r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            old_person_id = int(row[0])
+            old_org_id = int(row[1])
+
+            new_person_id = get_new_person_id(old_person_id)
+            new_org_id = get_new_org_id(old_org_id)
+
+            if new_person_id and new_org_id:
+                data = {
+                    'person_id': new_person_id,
+                    'organization_id': new_org_id
+                }
+                insert_data('organization_membership', data.keys(), data.values())
+
+
+if __name__ == '__main__':
+    assert input('proceed? (y/n) ') == 'y'
+    cur.execute("TRUNCATE TABLE person CASCADE")
+    cur.execute("TRUNCATE TABLE organization CASCADE")
+    cur.execute("TRUNCATE TABLE document CASCADE")
+    cur.execute("TRUNCATE TABLE organization_membership CASCADE")
+    cur.execute("TRUNCATE TABLE document_authorship CASCADE")
+    conn.commit()
+    convert_person()
+    convert_org()
+    convert_doc()
+    conn.commit()
+    convert_document_authorship()
+    convert_organization_membership()
+    conn.commit()
+    print("Data has been successfully imported and transformed.")
 cur.close()
 conn.close()
-
-print("Data has been successfully imported and transformed.")

@@ -119,7 +119,7 @@ class Document(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(nullable=False)
     doc_type: Mapped[str] = mapped_column(nullable=False)
-    language: Mapped[str] = mapped_column(nullable=False)
+    language: Mapped[str] = mapped_column(nullable=True)
     source: Mapped[str | None] = mapped_column(nullable=True)
     authors: Mapped[list["DocumentAuthorship"]] = relationship("DocumentAuthorship", back_populates="document")
     year: Mapped[str | None] = mapped_column(nullable=True)
