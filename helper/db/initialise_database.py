@@ -28,7 +28,6 @@ def create_database():
         - The database is created with the following configuration:
             - Owner: postgres
             - Encoding: UTF8
-            - Locale provider: libc
             - Connection limit: -1 (unlimited)
             - Is template: False
     """
@@ -44,7 +43,6 @@ def create_database():
         query = sql.SQL("CREATE DATABASE {} WITH\
                         OWNER = postgres\
                         ENCODING = 'UTF8'\
-                        LOCALE_PROVIDER = 'libc'\
                         CONNECTION LIMIT = -1\
                         IS_TEMPLATE = False;").format(sql.Identifier(DATABASE_NAME))
         cursor.execute(query)
