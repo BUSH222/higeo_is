@@ -98,6 +98,7 @@ class Person(Base):
     """
     __tablename__ = 'person'
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    _oldid: Mapped[int] = mapped_column(nullable=True)
     name: Mapped[str] = mapped_column(nullable=False)
     surname: Mapped[str] = mapped_column(nullable=False)
     patronymic: Mapped[str] = mapped_column(nullable=True)
@@ -166,6 +167,7 @@ class Organization(Base):
     """
     __tablename__ = 'organization'
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    _oldid: Mapped[int] = mapped_column(nullable=True)
     name: Mapped[str] = mapped_column(nullable=False)
     members: Mapped[list["OrganizationMembership"]] = \
         relationship("OrganizationMembership", back_populates="organization")
@@ -208,6 +210,7 @@ class Document(Base):
 
     __tablename__ = 'document'
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    _oldid: Mapped[int] = mapped_column(nullable=True)
     name: Mapped[str] = mapped_column(nullable=False)
     doc_type: Mapped[str] = mapped_column(nullable=False)
     language: Mapped[str] = mapped_column(nullable=True)
