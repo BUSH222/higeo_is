@@ -8,11 +8,20 @@ import sys
 import zipfile
 import os
 import io
+from dotenv import load_dotenv
 
 csv.field_size_limit(sys.maxsize)
 
 translit_ru = get_translit_function('ru')
-postgres_connection_string = 'postgresql://postgres:12345678@localhost:5432/geology'
+load_dotenv()
+
+postgres_connection_string = (
+    f"postgresql://{os.getenv('DATABASE_USER')}:"
+    f"{os.getenv('DATABASE_PASSWORD')}@"
+    f"{os.getenv('DATABASE_HOST')}:"
+    f"{os.getenv('DATABASE_PORT')}/"
+    f"{os.getenv('DATABASE_NAME')}"
+)
 engine = create_engine(postgres_connection_string)
 zip_file_path = os.path.join(os.path.dirname(__file__), 'data.zip')
 conn = psycopg2.connect(postgres_connection_string)
