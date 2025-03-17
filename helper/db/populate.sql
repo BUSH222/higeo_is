@@ -10,11 +10,11 @@ VALUES
      'Biography of Bob Johnson', 'Bibliography of Bob Johnson', 'photo3.jpg', 'No comments');
 
 -- Insert dummy organizations
-INSERT INTO organization (name, comment)
+INSERT INTO organization (name, org_type, history, comment)
 VALUES 
-    ('NASA', 'Space research organization'),
-    ('MIT', 'Massachusetts Institute of Technology'),
-    ('OpenAI', 'Artificial Intelligence Research Lab');
+    ('NASA', 'Space Research', 'Founded in 1958', 'Space research organization'),
+    ('MIT', 'Educational', 'Founded in 1861', 'Massachusetts Institute of Technology'),
+    ('OpenAI', 'Research Lab', 'Founded in 2015', 'Artificial Intelligence Research Lab');
 
 -- Insert dummy organization memberships
 INSERT INTO organization_membership (person_id, organization_id)
@@ -25,11 +25,11 @@ VALUES
     (1, 3); -- John Doe is also in OpenAI
 
 -- Insert dummy documents
-INSERT INTO document (name, source, year, file, comment)
+INSERT INTO document (name, doc_type, language, source, year, file, comment)
 VALUES 
-    ('Quantum Computing Basics', 'Springer', '2020', 'quantum_basics.pdf', 'Introduction to Quantum Computing'),
-    ('AI and Ethics', 'Oxford Press', '2022', 'ai_ethics.pdf', 'Discussion on AI Ethics'),
-    ('Mathematical Proofs and Theorems', 'Cambridge University Press', '2018', 'math_proofs.pdf', 'Advanced mathematical proofs');
+    ('Quantum Computing Basics', 'Book', 'English', 'Springer', '2020', 'quantum_basics.pdf', 'Introduction to Quantum Computing'),
+    ('AI and Ethics', 'Book', 'English', 'Oxford Press', '2022', 'ai_ethics.pdf', 'Discussion on AI Ethics'),
+    ('Mathematical Proofs and Theorems', 'Book', 'English', 'Cambridge University Press', '2018', 'math_proofs.pdf', 'Advanced mathematical proofs');
 
 -- Insert dummy document authorship records
 INSERT INTO document_authorship (person_id, document_id)

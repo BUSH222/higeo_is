@@ -22,16 +22,51 @@ login_manager.login_view = 'app_login.login'
 
 @app.route('/')
 def index():
+    """
+    Renders the 'Index' page.
+
+    This route handles the display of the 'Index' page, which provides an overview of the
+    information system. The page includes a brief description of the system's purpose and
+    its main functionalities.
+
+    Returns:
+    - Renders the 'index.html' template.
+    """
     return render_template('index.html')
 
 
 @app.route('/about')
 def about():
+    """
+    Renders the 'About' page.
+
+    This route handles the display of the 'About' page, which provides information about the
+    information system. The page includes details about the  system's purpose, instructions for searching,
+    publications about the system, and information about the software development and content support.
+
+    Returns:
+    - Renders the 'about.html' template.
+    """
     return render_template('about.html')
 
 
 @app.route('/view')
-def view():  # universal view for organization, person, document
+def view():
+    """
+    Universal view for organization, person, and document.
+
+    This route handles the display of detailed information for an organization, person, or document
+    based on the query parameters provided in the request. It expects 'type' and 'id' parameters
+    in the request arguments.
+
+    Query Parameters:
+    - type (str): The type of object to view ('org', 'person', 'doc').
+    - id (int): The ID of the object to view.
+
+    Returns:
+    - Renders the 'view.html' template with the data and page context if the object is found.
+    - Aborts with a 404 status code if the 'type' is not one of the expected values or if the 'id' is missing.
+    """
     if request.args.get('type') not in ['org', 'person', 'doc'] or not request.args.get('id'):
         abort(404)
     viewtype_to_object = {'org': Organization, 'person': Person, 'doc': Document}
@@ -53,7 +88,30 @@ def view():  # universal view for organization, person, document
 
 
 @app.route('/search')
-def search():  # universal search view for organization, person, document
+def search():
+    """
+    Universal search view for organization, person, and document.
+
+    This route handles the search functionality for organizations, persons, and documents based on the
+    query parameters provided in the request. It supports various search types including quick search,
+    content search, and specific attribute search.
+
+    Query Parameters:
+    - type (str): The type of object to search ('org', 'person', 'doc').
+    - quicksearch (str): A quick search term.
+    - content (str): A term to search within the bibliography content.
+    - fullName (str): The full name of the person to search.
+    - firstName (str): The first name of the person to search.
+    - lastName (str): The last name of the person to search.
+    - patronymic (str): The patronymic of the person to search.
+    - birthYear (int): The birth year of the person to search.
+    - name (str): The name of the organization or document to search.
+
+    Returns:
+    - Renders the 'search.html' template with the search results if any.
+    - Returns a JSON response with the search results if applicable.
+    - Aborts with a 404 status code if the search type is not recognized.
+    """
     page = {'heading': 'Search page', 'title': 'Search'}
     if len(request.args) == 0 or not request.args.get('type'):
         return render_template('search.html', page=page)
@@ -130,12 +188,26 @@ def search():  # universal search view for organization, person, document
                 results.append([obj_type, row[0], row[1]])
         return jsonify(results)
     else:
-        abort(418)
+        abort(404)
 
 
 @app.route('/new')
 @login_required
-def new():  # admin only new record generator
+def new():
+    """
+    Renders the 'New' page for creating a new organization, person, or document.
+
+    This route handles the display of the 'New' page, which allows users to create a new entry
+    for an organization, person, or document based on the query parameters provided in the request.
+    It expects a 'type' parameter in the request arguments.
+
+    Query Parameters:
+    - type (str): The type of object to create ('org', 'person', 'doc').
+
+    Returns:
+    - Renders the 'new.html' template with the necessary data for creating the specified object type.
+    - Aborts with a 501 status code if the 'type' parameter is missing or invalid.
+    """
     if len(request.args) != 1 or not request.args.get('type'):
         abort(501)
     obj_type = request.args.get('type')
@@ -163,7 +235,23 @@ def new():  # admin only new record generator
 
 @app.route('/edit')
 @login_required
-def edit():  # admin only record editor, same template
+def edit():
+    """
+    Renders the 'Edit' page for editing an existing organization, person, or document.
+    Admin only
+
+    This route handles the display of the 'Edit' page, which allows users to edit an existing entry
+    for an organization, person, or document based on the query parameters provided in the request.
+    It expects 'type' and 'id' parameters in the request arguments.
+
+    Query Parameters:
+    - type (str): The type of object to edit ('org', 'person', 'doc').
+    - id (int): The ID of the object to edit.
+
+    Returns:
+    - Renders the 'new.html' template with the necessary data for editing the specified object type.
+    - Aborts with a 501 status code if the 'type' or 'id' parameter is missing or invalid.
+    """
     page = {'heading': 'Edit document', 'title': 'Edit document'}
     if len(request.args) != 2 or not request.args.get('type') or not request.args.get('id'):
         abort(501)
@@ -219,6 +307,23 @@ def edit():  # admin only record editor, same template
 @app.route('/save', methods=['POST'])
 @login_required
 def save():
+    """
+    Saves a new or edited organization, person, or document.
+
+    This route handles the saving of a new or edited entry for an organization, person, or document
+    based on the form data provided in the request. It expects a 'type' parameter in the request arguments
+    and form data in the request body.
+
+    Query Parameters:
+    - type (str): The type of object to save ('org', 'person', 'doc').
+
+    Form Data:
+    - Various fields corresponding to the attributes of the specified object type.
+    - connection (list): A list of connections to other objects.
+
+    Returns:
+    - Renders the 'redirect.html' template to redirect to the search page after saving. [TO BE REMOVED]
+    """
     formdata = request.form.to_dict()
     if 'connection' in formdata.keys():
         formdata.pop('connection')
@@ -275,6 +380,22 @@ def save():
 @app.route('/delete')
 @login_required
 def delete():
+    """
+    Deletes an existing organization, person, or document.
+
+    This route handles the deletion of an existing entry for an organization, person, or document
+    based on the query parameters provided in the request. It expects 'type' and 'id' parameters
+    in the request arguments.
+
+    Query Parameters:
+    - type (str): The type of object to delete ('org', 'person', 'doc').
+    - id (int): The ID of the object to delete.
+
+    Returns:
+    - Renders the 'redirect.html' template to redirect to the search page after deletion.
+    - Aborts with a 501 status code if the 'type' or 'id' parameter is missing or invalid.
+    - Aborts with a 404 status code if the object to delete is not found.
+    """
     if len(request.args) != 2 or not request.args.get('type') or not request.args.get('id'):
         abort(501)
     obj_type = request.args.get('type')
