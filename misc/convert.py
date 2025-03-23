@@ -144,7 +144,7 @@ def clean_date(date_str):
          r'января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря|'
          r'январь|февраль|март|апрель|май|июнь|июль|август|сентябрь|октябрь|ноябрь|декабрь|'
          r'дкабря|нояб.|агуста|июн)\s*$', '%Y, %d %B'),
-        (r'^\s*(\d{4})-(\d{2})-(\d{2})\s*$', '%Y-%m-%d'),
+        (r'^\s*(\d{4})-(\d{1,2})-(\d{1,2})\s*$', '%Y-%m-%d'),
         (r'^\s*(\d{4})\s*г\.\s*,\s*(\d{1,2})\s*('
          r'января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря|'
          r'январь|февраль|март|апрель|май|июнь|июль|август|сентябрь|октябрь|ноябрь|декабрь|'
@@ -230,16 +230,19 @@ def convert_person():
 
                 birth_date, birth_date_str = clean_date(row[10])
                 death_date, death_date_str = clean_date(row[12])
-
-                if birth_date is None:
-                    comment += f'\n Birth date: {birth_date_str}'
-
-                if death_date is None:
-                    comment += f'\n Death date: {birth_date_str}'
+                if birth_date is None and birth_date_str is not None:
+                    comment += f'Дата рождения: {birth_date_str}. '
+                if death_date is None and death_date_str is not None:
+                    comment += f'Дата смерти: {death_date_str}. '
 
                 surname = row[6]
                 if surname is None or surname == '':
                     surname = row[1].strip().split()[0]
+
+                photo = row[20]
+                if photo is not None:
+                    if photo.startswith('/higeo/hosted-files') or photo.startswith('/hosted-files'):
+                        photo = 'http://higeo.ginras.ru' + photo
 
                 data = {
                     '_oldid': int(row[0]),
@@ -258,7 +261,7 @@ def convert_person():
                     'area_of_study': row[16],
                     'biography': row[18],
                     'bibliography': row[19],
-                    'photo': row[20],
+                    'photo': photo,
                     'comment': comment
                 }
                 data = {k: (v if v != '' else None) for k, v in data.items()}

@@ -6,8 +6,8 @@
 } */
 
 
-.body {
-	background-color: #f8efec !important;
+body {
+	background-color: #f8f9fa !important;
 }
 
 .bg-higeo{
@@ -45,4 +45,8 @@ p.GIN{
 
 .hover-highlight:hover {
 	background-color: #fff8f8;
+}
+
+.card-header {
+	background-color: #f1d7cc !important;
 }

@@ -132,7 +132,7 @@ class Person(Base):
                   'Дата рождения': self.birth_date,
                   'Место рождения': self.birth_place,
                   'Дата сметри': self.death_date,
-                  'Место смерти': self.death_date,
+                  'Место смерти': self.death_place,
                   'Академическое звание': self.academic_degree,
                   'Область исследования': self.field_of_study,
                   'Географи исследования': self.area_of_study,
