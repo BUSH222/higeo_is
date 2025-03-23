@@ -220,6 +220,7 @@
     });
 
     function updateResults(data) {
+        
         const resultsContainer = document.querySelector('.list-group');
         resultsContainer.innerHTML = ''; 
 
@@ -234,6 +235,8 @@
             li.innerHTML = `<a href="/view?type=${item[0]}&id=${item[1]}">${item[2]}</a>`;
             resultsContainer.appendChild(li);
         });
+
+        resultsContainer.scrollIntoView({ behavior: 'smooth' });
     }
 </script>
 

@@ -109,7 +109,7 @@ def search():
     - Returns a JSON response with the search results if applicable.
     - Aborts with a 404 status code if the search type is not recognized.
     """
-    page = {'heading': 'Search page', 'title': 'Search'}
+    page = {'heading': 'Поиск', 'title': 'Search'}
     if len(request.args) == 0 or not request.args.get('type'):
         return render_template('search.html', page=page)
     if request.args.get('quicksearch'):
