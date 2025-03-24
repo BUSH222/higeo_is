@@ -428,7 +428,7 @@ def convert_organization_membership():
 
 
 if __name__ == '__main__':
-    assert input('proceed? (y/n) ') == 'y'
+    assert input('proceed with data conversion? (y/n) ') == 'y'
     cur.execute("TRUNCATE TABLE person CASCADE")
     cur.execute("TRUNCATE TABLE organization CASCADE")
     cur.execute("TRUNCATE TABLE document CASCADE")
