@@ -1,5 +1,7 @@
 # Information System for HIGEO
 
+#### View the running version of the website! [higeo.ru](https://higeo.ru)
+
 This project is a web-based information system for the Department of History of Geology of the Russian Academy of Sciences. It allows users to view, search, and manage information about organizations, people, and documents related to the department.
 
 ## Features
@@ -39,13 +41,9 @@ This project is a web-based information system for the Department of History of 
         DATABASE_HOST=localhost
         DATABASE_PORT=5432
         ```
-    - Initialize the database:
+    - Initialize the database and fill database with old data:
         ```sh
-        python3 -m helper
-        ```
-    - Fill database with old database data:
-        ```sh
-        python3 misc/convert.py
+        sh quicksetup.sh
         ```
 
 ## Usage
@@ -58,14 +56,15 @@ This project is a web-based information system for the Department of History of 
 2. **Access the application**:
     Open your web browser and go to `http://localhost:5000`.
 
+> This will run the app in debug mode. Proper hosting is required for normal operation.
 ## Configuration
 
 - **Environment **Variables:
-    - [DATABASE_USER](http://_vscodecontentref_/0): Database username.
-    - [DATABASE_PASSWORD](http://_vscodecontentref_/1): Database password.
-    - [DATABASE_NAME](http://_vscodecontentref_/2): Database name.
-    - [DATABASE_HOST](http://_vscodecontentref_/3): Database host.
-    - [DATABASE_PORT](http://_vscodecontentref_/4): Database port.
+    - DATABASE_USER: Database username.
+    - DATABASE_PASSWORD: Database password.
+    - DATABASE_NAME: Database name.
+    - DATABASE_HOST: Database host.
+    - DATABASE_PORT: Database port.
 
 ## Contributing
 
@@ -88,7 +87,3 @@ This project is a web-based information system for the Department of History of 
 ## License
 
 This project is licensed under the MIT License.
-
-## Contact
-
-For any questions or inquiries, please contact the maintainers at [your-email@example.com].
