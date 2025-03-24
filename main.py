@@ -5,7 +5,7 @@ from helper.db.initialise_database import DocumentAuthorship, OrganizationMember
 from helper.login.login import app_login, login_manager
 from sqlalchemy import select, func, extract, and_, inspect
 from sqlalchemy.orm import Session
-# from secrets import token_urlsafe
+from secrets import token_urlsafe
 import urllib.parse
 import requests
 from datetime import datetime
@@ -14,7 +14,7 @@ from dateutil.parser import parse
 
 app = Flask(__name__)
 app.register_blueprint(app_login)
-app.config['SECRET_KEY'] = '123'  # token_urlsafe(16)
+app.config['SECRET_KEY'] = token_urlsafe(16)
 
 login_manager.init_app(app)
 login_manager.login_view = 'app_login.login'
