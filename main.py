@@ -5,7 +5,7 @@ from helper.db.initialise_database import DocumentAuthorship, OrganizationMember
 from helper.login.login import app_login, login_manager
 from sqlalchemy import select, func, extract, and_, inspect
 from sqlalchemy.orm import Session
-# from secrets import token_urlsafe
+from secrets import token_urlsafe
 import urllib.parse
 import requests
 from datetime import datetime
@@ -14,7 +14,7 @@ from dateutil.parser import parse
 
 app = Flask(__name__)
 app.register_blueprint(app_login)
-app.config['SECRET_KEY'] = '123'  # token_urlsafe(16)
+app.config['SECRET_KEY'] = token_urlsafe(16)
 
 login_manager.init_app(app)
 login_manager.login_view = 'app_login.login'
@@ -70,6 +70,7 @@ def view():
     if request.args.get('type') not in ['org', 'person', 'doc'] or not request.args.get('id'):
         abort(404)
     viewtype_to_object = {'org': Organization, 'person': Person, 'doc': Document}
+    viewtype_to_str = {'org': 'Организация', 'person': 'Персоналия', 'doc': 'Документ'}
     viewtype = request.args.get('type')
     viewid = int(request.args.get('id'))
     obj = viewtype_to_object[viewtype]
@@ -77,13 +78,10 @@ def view():
     with Session(engine) as session:
         data = session.execute(stmt).scalar_one_or_none()
         data = data.values_ru()
-    page = {'heading': f'{obj.__name__}', 'title': f'View {obj.__name__.lower()}',
+    page = {'heading': f'{viewtype_to_str[viewtype]}', 'title': f'View {obj.__name__.lower()}',
             'id': viewid, 'type': viewtype}
     if "Фотография" in data:
-        if data['Фотография'].startswith('/hosted-files'):
-            data["Фотография"] = f'<img src="http://higeo.ginras.ru{data["Фотография"]}" alt="Фотография" />'
-        else:
-            data["Фотография"] = f'<img src="{data["Фотография"]}" alt="Фотография" />'
+        data["Фотография"] = f'<img src="{data["Фотография"]}" alt="Фотография" />'
     return render_template('view.html', data=data, page=page)
 
 
@@ -112,7 +110,7 @@ def search():
     - Returns a JSON response with the search results if applicable.
     - Aborts with a 404 status code if the search type is not recognized.
     """
-    page = {'heading': 'Search page', 'title': 'Search'}
+    page = {'heading': 'Поиск', 'title': 'Search'}
     if len(request.args) == 0 or not request.args.get('type'):
         return render_template('search.html', page=page)
     if request.args.get('quicksearch'):
@@ -123,7 +121,7 @@ def search():
         return render_template('search.html', page=page, results=out_res)
     elif request.args.get('content'):
         content = request.args.get('content')
-        query = select(Person).filter(Person.bibliography.ilike(f'%{content}%')).order_by(Person.surname)
+        query = select(Person).filter(Person.bibliography.ilike(f'%{content}%')).order_by(func.lower(Person.surname))
         results = []
         with Session(engine) as session:
             data = session.execute(query)
@@ -165,7 +163,7 @@ def search():
                 where_stmt.append(extract('year', Person.birth_date) == int(year_query))
 
         final_where_stmt = and_(*where_stmt) if where_stmt else True
-        stmt = select(Person).where(final_where_stmt).order_by(Person.surname)
+        stmt = select(Person).where(final_where_stmt).order_by(Person.surname.collate('C'))
         results = []
         with Session(engine) as session:
             data = session.execute(stmt)
@@ -178,9 +176,11 @@ def search():
         obj = {'org': Organization, 'doc': Document}[obj_type]
         query = request.args.get('name')
         if query is not None:
-            stmt = select(obj.id, obj.name).where(func.lower(obj.name).startswith(query.lower())).order_by(obj.name)
+            stmt = select(obj.id, obj.name)\
+                .where(func.lower(obj.name)
+                       .startswith(query.lower())).order_by(func.lower(obj.name))
         else:
-            stmt = select(obj.id, obj.name).order_by(obj.name)
+            stmt = select(obj.id, obj.name).order_by(func.lower(obj.name).collate('C'))
         results = []
         with Session(engine) as session:
             data = session.execute(stmt)

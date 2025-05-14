@@ -43,6 +43,9 @@ def create_database():
         query = sql.SQL("CREATE DATABASE {} WITH\
                         OWNER = postgres\
                         ENCODING = 'UTF8'\
+                        TEMPLATE = template0\
+                        LC_COLLATE='ru_RU.UTF-8'\
+                        LC_CTYPE='ru_RU.UTF-8'\
                         CONNECTION LIMIT = -1\
                         IS_TEMPLATE = False;").format(sql.Identifier(DATABASE_NAME))
         cursor.execute(query)
@@ -132,7 +135,7 @@ class Person(Base):
                   'Дата рождения': self.birth_date,
                   'Место рождения': self.birth_place,
                   'Дата сметри': self.death_date,
-                  'Место смерти': self.death_date,
+                  'Место смерти': self.death_place,
                   'Академическое звание': self.academic_degree,
                   'Область исследования': self.field_of_study,
                   'Географи исследования': self.area_of_study,
