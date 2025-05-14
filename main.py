@@ -70,6 +70,7 @@ def view():
     if request.args.get('type') not in ['org', 'person', 'doc'] or not request.args.get('id'):
         abort(404)
     viewtype_to_object = {'org': Organization, 'person': Person, 'doc': Document}
+    viewtype_to_str = {'org': 'Организация', 'person': 'Персоналия', 'doc': 'Документ'}
     viewtype = request.args.get('type')
     viewid = int(request.args.get('id'))
     obj = viewtype_to_object[viewtype]
@@ -77,7 +78,7 @@ def view():
     with Session(engine) as session:
         data = session.execute(stmt).scalar_one_or_none()
         data = data.values_ru()
-    page = {'heading': f'{obj.__name__}', 'title': f'View {obj.__name__.lower()}',
+    page = {'heading': f'{viewtype_to_str[viewtype]}', 'title': f'View {obj.__name__.lower()}',
             'id': viewid, 'type': viewtype}
     if "Фотография" in data:
         data["Фотография"] = f'<img src="{data["Фотография"]}" alt="Фотография" />'
@@ -162,7 +163,7 @@ def search():
                 where_stmt.append(extract('year', Person.birth_date) == int(year_query))
 
         final_where_stmt = and_(*where_stmt) if where_stmt else True
-        stmt = select(Person).where(final_where_stmt).order_by(func.lower(Person.surname))
+        stmt = select(Person).where(final_where_stmt).order_by(Person.surname.collate('C'))
         results = []
         with Session(engine) as session:
             data = session.execute(stmt)
@@ -179,7 +180,7 @@ def search():
                 .where(func.lower(obj.name)
                        .startswith(query.lower())).order_by(func.lower(obj.name))
         else:
-            stmt = select(obj.id, obj.name).order_by(func.lower(obj.name))
+            stmt = select(obj.id, obj.name).order_by(func.lower(obj.name).collate('C'))
         results = []
         with Session(engine) as session:
             data = session.execute(stmt)
