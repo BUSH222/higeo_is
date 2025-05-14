@@ -120,7 +120,7 @@ def search():
         return render_template('search.html', page=page, results=out_res)
     elif request.args.get('content'):
         content = request.args.get('content')
-        query = select(Person).filter(Person.bibliography.ilike(f'%{content}%')).order_by(Person.surname)
+        query = select(Person).filter(Person.bibliography.ilike(f'%{content}%')).order_by(func.lower(Person.surname))
         results = []
         with Session(engine) as session:
             data = session.execute(query)
@@ -162,7 +162,7 @@ def search():
                 where_stmt.append(extract('year', Person.birth_date) == int(year_query))
 
         final_where_stmt = and_(*where_stmt) if where_stmt else True
-        stmt = select(Person).where(final_where_stmt).order_by(Person.surname)
+        stmt = select(Person).where(final_where_stmt).order_by(func.lower(Person.surname))
         results = []
         with Session(engine) as session:
             data = session.execute(stmt)
@@ -175,9 +175,11 @@ def search():
         obj = {'org': Organization, 'doc': Document}[obj_type]
         query = request.args.get('name')
         if query is not None:
-            stmt = select(obj.id, obj.name).where(func.lower(obj.name).startswith(query.lower())).order_by(obj.name)
+            stmt = select(obj.id, obj.name)\
+                .where(func.lower(obj.name)
+                       .startswith(query.lower())).order_by(func.lower(obj.name))
         else:
-            stmt = select(obj.id, obj.name).order_by(obj.name)
+            stmt = select(obj.id, obj.name).order_by(func.lower(obj.name))
         results = []
         with Session(engine) as session:
             data = session.execute(stmt)

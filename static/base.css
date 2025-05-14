@@ -50,3 +50,8 @@ p.GIN{
 .card-header {
 	background-color: #f1d7cc !important;
 }
+
+.m-02 {
+	margin-top: 0.1rem !important;
+	margin-bottom: 0.1rem !important;
+}

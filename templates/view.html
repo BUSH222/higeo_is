@@ -4,7 +4,7 @@
 
 {% block content %}
 
-<div class="container mt-5">
+<div class="container mt-3">
     <div class="row">
         <div class="col-12">
             <div class="card rounded">
@@ -17,15 +17,15 @@
                         <a name="" id="" class="btn mt-2 mb-2 bg-danger" href="/delete?type={{page.type}}&id={{page.id}}" role="button">Delete</a>
                     {% endif %}
                     {% for key, value in data.items() %}
-                    <div class="row hover-highlight">
+                    <div class="row hover-highlight g-0">
                         <div class="col-lg-3 fw-bold">{{ key }}</div>
                         <div class="col-lg-9">
                             {% if value is iterable and value is not string %}
                                 {% for item in value %}
-                                <li class="list-group-item"><a href="/view?type={{item[0]}}&id={{item[1]}}">{{item[2]}}</a></li>
+                                <li class="list-group-item p-1"><a href="/view?type={{item[0]}}&id={{item[1]}}">{{item[2]}}</a></li>
                                 {% endfor %}
                             {% else %}
-                                <p class="text-break">
+                                <p class="text-break m-02">
                                     {{ value|safe }}
                                 </p>
                             {% endif %}
