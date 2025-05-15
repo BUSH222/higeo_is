@@ -121,7 +121,7 @@ def search():
         return render_template('search.html', page=page, results=out_res)
     elif request.args.get('content'):
         content = request.args.get('content')
-        query = select(Person).filter(Person.bibliography.ilike(f'%{content}%')).order_by(func.lower(Person.surname))
+        query = select(Person).filter(Person.bibliography.ilike(f'%{content}%')).order_by(Person.surname.collate('C'))
         results = []
         with Session(engine) as session:
             data = session.execute(query)
@@ -138,12 +138,12 @@ def search():
                 if len(query_list) == 1:
                     where_stmt.append(func.lower(Person.surname).startswith(query_list[0].lower()))
                 elif len(query_list) == 2:
-                    where_stmt.append(func.lower(Person.surname) == query_list[0].lower()
-                                      & func.lower(Person.name) == query_list[1].lower())
+                    where_stmt.append((func.lower(Person.surname) == query_list[0].lower())
+                                      & (func.lower(Person.name) == query_list[1].lower()))
                 elif len(query_list) == 3:
-                    where_stmt.append(func.lower(Person.surname) == query_list[0].lower()
-                                      & func.lower(Person.name) == query_list[1].lower()
-                                      & func.lower(Person.patronymic) == query_list[2].lower())
+                    where_stmt.append((func.lower(Person.surname) == query_list[0].lower())
+                                      & (func.lower(Person.name) == query_list[1].lower())
+                                      & (func.lower(Person.patronymic) == query_list[2].lower()))
             year_query = request.args.get('birthYear')
             if year_query is not None:
                 where_stmt.append(extract('year', Person.birth_date) == int(year_query))

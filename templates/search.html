@@ -184,6 +184,29 @@
 </div>
 
 <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const defaultOpen = urlParams.get('defaultopen');
+
+        if (defaultOpen) {
+            const targetAccordion = document.querySelector(`#collapse${defaultOpen}`);
+            const targetButton = document.querySelector(`[data-bs-target="#collapse${defaultOpen}"]`);
+            
+            if (targetAccordion && targetButton) {
+                document.querySelectorAll('.accordion-collapse').forEach(accordion => {
+                    accordion.classList.remove('show');
+                });
+                document.querySelectorAll('.accordion-button').forEach(button => {
+                    button.classList.add('collapsed');
+                    button.setAttribute('aria-expanded', 'false');
+                });
+                targetAccordion.classList.add('show');
+                targetButton.classList.remove('collapsed');
+                targetButton.setAttribute('aria-expanded', 'true');
+            }
+        }
+    });
+
     document.querySelectorAll('form').forEach(form => {
         form.addEventListener('submit', async function(event) {
             event.preventDefault();
