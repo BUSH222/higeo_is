@@ -55,3 +55,10 @@ p.GIN{
 	margin-top: 0.1rem !important;
 	margin-bottom: 0.1rem !important;
 }
+
+.results-box {
+    background-color: #ffffff; /* Matches the accordion background color */
+    border-radius: 10px; /* Adds rounded corners */
+    border: 1px solid rgb(222, 226, 230); /* Removes the border to match the accordion */
+    padding: 1rem; /* Adds internal spacing */
+}
