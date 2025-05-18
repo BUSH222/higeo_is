@@ -251,7 +251,6 @@
         });
     });
 
-    //// filepath: /Users/tedvtorov/Desktop/py-proj/new/higeo_is/templates/search.html
 function updateResults(data) {
     const resultsContainer = document.querySelector('.row');
     resultsContainer.innerHTML = '';
@@ -265,28 +264,22 @@ function updateResults(data) {
 
     let currentLetter = '';
     let letterItems = [];
-    const numColumns = 4; // Adjust for how many columns you want
+    const numColumns = 4;
 
-    // Helper to render columns for the accumulated items
     function flushLetterColumns(items) {
         if (items.length === 0) return;
 
         const letterRow = document.createElement('div');
         letterRow.classList.add('row');
-
-        // Calculate how many items should go into each column
         const columnSize = Math.ceil(items.length / numColumns);
 
         for (let colIndex = 0; colIndex < numColumns; colIndex++) {
             const column = document.createElement('div');
             column.classList.add('col-12', 'col-md-6', 'col-lg-3', 'mb-1');
-
-            // Determine the slice for this column
             const start = colIndex * columnSize;
             const end = start + columnSize;
             const columnItems = items.slice(start, end);
 
-            // Create each result item
             columnItems.forEach((item) => {
                 const resultItem = document.createElement('div');
                 resultItem.classList.add('result-item', 'mb-2');
@@ -302,8 +295,6 @@ function updateResults(data) {
 
     data.forEach((item) => {
         const firstLetter = item[2][0].toUpperCase();
-
-        // Start a new set of columns if the letter changes
         if (firstLetter !== currentLetter) {
             if (letterItems.length > 0) {
                 flushLetterColumns(letterItems);
@@ -312,7 +303,6 @@ function updateResults(data) {
 
             currentLetter = firstLetter;
 
-            // Letter heading
             const letterHeading = document.createElement('div');
             letterHeading.classList.add('col-12');
             letterHeading.innerHTML = `<h3 class="mt-2 mb-1">${currentLetter}</h3>`;
@@ -322,7 +312,6 @@ function updateResults(data) {
         letterItems.push(item);
     });
 
-    // Flush the remaining items
     if (letterItems.length > 0) {
         flushLetterColumns(letterItems);
     }

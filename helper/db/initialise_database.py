@@ -141,10 +141,10 @@ class Person(Base):
                   'Районы работ': self.area_of_study,
                   'Связанные организации':
                   [['org', org.organization.id, str(org.organization)] for org in self.organizations],
-                  'Документы': [['doc', doc.document.id, str(doc.document)] for doc in self.documents],
                   'Биография': self.biography,
                   'Библиография': self.bibliography,
                   'Фотография': self.photo,
+                  'Документы': [['doc', doc.document.id, str(doc.document)] for doc in self.documents],
                   'Комментарии': self.comment}
         return clean_dict(values)
 
