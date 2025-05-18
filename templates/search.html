@@ -167,30 +167,27 @@
             
 <div class="mt-3">
     <div class="results-box p-3">
-        <h5 class="mb-2 mt-3 text-center" style="font-size: 1.5rem;">Результаты поиска</h5>
+        <h5 class="mb-2 mt-3 text-center result-counter" style="font-size: 1.5rem;">Результаты поиска</h5>
         <div class="row">
-            {% if results %}
-                <div class="col-12">
-                    <div class="row">
-                        {% set last_letter = {'l': None} %}
-                        {% for item in results %}
-                            {% if last_letter.l is none or item[2][0] != last_letter.l %}
-                                {% if last_letter.update({'l': item[2][0]}) %}{% endif %}
-                                <div class="col-12">
-                                    <h3 class="mt-2 mb-1">{{ last_letter.l }}</h3>
-                                </div>
-                            {% endif %}
-                            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-1">
-                                <div class="result-item">
-                                    <a href="/view?type={{ item[0] }}&id={{ item[1] }}">{{ item[2] }}</a>
-                                </div>
+            <h6 class="text-center">Нажмите поиск</h6>
+            <div class="col-12">
+                <div class="row">
+                    {% set last_letter = {'l': None} %}
+                    {% for item in results %}
+                        {% if last_letter.l is none or item[2][0] != last_letter.l %}
+                            {% if last_letter.update({'l': item[2][0]}) %}{% endif %}
+                            <div class="col-12">
+                                <h3 class="mt-2 mb-1">{{ last_letter.l }}</h3>
                             </div>
-                        {% endfor %}
-                    </div>
+                        {% endif %}
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-1">
+                            <div class="result-item">
+                                <a href="/view?type={{ item[0] }}&id={{ item[1] }}">{{ item[2] }}</a>
+                            </div>
+                        </div>
+                    {% endfor %}
                 </div>
-            {% else %}
-                <h6 class="text-center">Поиск не дал результатов</h6>
-            {% endif %}
+            </div>
         </div>
     </div>
 </div>
@@ -261,6 +258,8 @@
         if (data.length === 0) {
             resultsContainer.innerHTML = '<h6 class="text-center">Поиск не дал результатов</h6>';
             return;
+        } else {
+            resultsContainer.innerHTML = `<h6 class="text-center">Найдено ${data.length} результатов</h6>`;
         }
 
         let currentLetter = '';
