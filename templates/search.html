@@ -164,26 +164,61 @@
         <a name="" id="" class="btn mt-2 mb-2 higeo-color-1" href="/new?type=org" role="button">New organization</a>
         <a name="" id="" class="btn mt-2 mb-2 higeo-color-1" href="/new?type=doc" role="button">New document</a>
     {% endif %}
-    
-    <div class="mt-3">
-        <h5 class="mb-2 mt-3 text-center" style="font-size: 1.5rem;">Результаты поиска</h5>
-        <ul class="list-group">
-            {% if results %}
-                {% for item in results %}
-                <li class="list-group-item py-1 px-2">
-                    <a href="/view?type={{item[0]}}&id={{item[1]}}">{{item[2]}}</a>
-                </li>
-                {% endfor %}
-            {% else %}
-                <h6>Поиск не дал результатов</h6>
-            {% endif %}
-        </ul>
+            
+<div class="mt-3">
+    <div class="results-box p-3">
+        <h5 class="mb-2 mt-3 text-center result-counter" style="font-size: 1.5rem;">Результаты поиска</h5>
+        <div class="row">
+            <h6 class="text-center">Нажмите поиск</h6>
+            <div class="col-12">
+                <div class="row">
+                    {% set last_letter = {'l': None} %}
+                    {% for item in results %}
+                        {% if last_letter.l is none or item[2][0] != last_letter.l %}
+                            {% if last_letter.update({'l': item[2][0]}) %}{% endif %}
+                            <div class="col-12">
+                                <h3 class="mt-2 mb-1">{{ last_letter.l }}</h3>
+                            </div>
+                        {% endif %}
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-1">
+                            <div class="result-item">
+                                <a href="/view?type={{ item[0] }}&id={{ item[1] }}">{{ item[2] }}</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
     </div>
+</div>
     
     
 </div>
 
 <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const defaultOpen = urlParams.get('defaultopen');
+
+        if (defaultOpen) {
+            const targetAccordion = document.querySelector(`#collapse${defaultOpen}`);
+            const targetButton = document.querySelector(`[data-bs-target="#collapse${defaultOpen}"]`);
+            
+            if (targetAccordion && targetButton) {
+                document.querySelectorAll('.accordion-collapse').forEach(accordion => {
+                    accordion.classList.remove('show');
+                });
+                document.querySelectorAll('.accordion-button').forEach(button => {
+                    button.classList.add('collapsed');
+                    button.setAttribute('aria-expanded', 'false');
+                });
+                targetAccordion.classList.add('show');
+                targetButton.classList.remove('collapsed');
+                targetButton.setAttribute('aria-expanded', 'true');
+            }
+        }
+    });
+
     document.querySelectorAll('form').forEach(form => {
         form.addEventListener('submit', async function(event) {
             event.preventDefault();
@@ -216,25 +251,73 @@
         });
     });
 
-    function updateResults(data) {
-        
-        const resultsContainer = document.querySelector('.list-group');
-        resultsContainer.innerHTML = ''; 
+function updateResults(data) {
+    const resultsContainer = document.querySelector('.row');
+    resultsContainer.innerHTML = '';
 
-        if (data.length === 0) {
-            resultsContainer.innerHTML = '<h6>Поиск не дал результатов</h6>';
-            return;
+    if (data.length === 0) {
+        resultsContainer.innerHTML = '<h6 class="text-center">Поиск не дал результатов</h6>';
+        return;
+    } else {
+        resultsContainer.innerHTML = `<h6 class="text-center">Найдено ${data.length} результатов</h6>`;
+    }
+
+    let currentLetter = '';
+    let letterItems = [];
+    const numColumns = 4;
+
+    function flushLetterColumns(items) {
+        if (items.length === 0) return;
+
+        const letterRow = document.createElement('div');
+        letterRow.classList.add('row');
+        const columnSize = Math.ceil(items.length / numColumns);
+
+        for (let colIndex = 0; colIndex < numColumns; colIndex++) {
+            const column = document.createElement('div');
+            column.classList.add('col-12', 'col-md-6', 'col-lg-3', 'mb-1');
+            const start = colIndex * columnSize;
+            const end = start + columnSize;
+            const columnItems = items.slice(start, end);
+
+            columnItems.forEach((item) => {
+                const resultItem = document.createElement('div');
+                resultItem.classList.add('result-item', 'mb-2');
+                resultItem.innerHTML = `<a href="/view?type=${item[0]}&id=${item[1]}">${item[2]}</a>`;
+                column.appendChild(resultItem);
+            });
+
+            letterRow.appendChild(column);
         }
 
-        data.forEach(item => {
-            const li = document.createElement('li');
-            li.classList.add('list-group-item');
-            li.innerHTML = `<a href="/view?type=${item[0]}&id=${item[1]}">${item[2]}</a>`;
-            resultsContainer.appendChild(li);
-        });
-
-        resultsContainer.scrollIntoView({ behavior: 'smooth' });
+        resultsContainer.appendChild(letterRow);
     }
+
+    data.forEach((item) => {
+        const firstLetter = item[2][0].toUpperCase();
+        if (firstLetter !== currentLetter) {
+            if (letterItems.length > 0) {
+                flushLetterColumns(letterItems);
+                letterItems = [];
+            }
+
+            currentLetter = firstLetter;
+
+            const letterHeading = document.createElement('div');
+            letterHeading.classList.add('col-12');
+            letterHeading.innerHTML = `<h3 class="mt-2 mb-1">${currentLetter}</h3>`;
+            resultsContainer.appendChild(letterHeading);
+        }
+
+        letterItems.push(item);
+    });
+
+    if (letterItems.length > 0) {
+        flushLetterColumns(letterItems);
+    }
+
+    resultsContainer.scrollIntoView({ behavior: 'smooth' });
+}
 </script>
 
 

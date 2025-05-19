@@ -131,20 +131,20 @@ class Person(Base):
     comment: Mapped[str] = mapped_column(nullable=True)
 
     def values_ru(self):
-        values = {'ФИО': str(self),
+        values = {'Фамилия Имя Отчество': '<b>' + str(self) + '</b>',
                   'Дата рождения': self.birth_date,
                   'Место рождения': self.birth_place,
                   'Дата сметри': self.death_date,
                   'Место смерти': self.death_place,
                   'Академическое звание': self.academic_degree,
                   'Область исследования': self.field_of_study,
-                  'Географи исследования': self.area_of_study,
+                  'Районы работ': self.area_of_study,
                   'Связанные организации':
                   [['org', org.organization.id, str(org.organization)] for org in self.organizations],
-                  'Документы': [['doc', doc.document.id, str(doc.document)] for doc in self.documents],
                   'Биография': self.biography,
                   'Библиография': self.bibliography,
                   'Фотография': self.photo,
+                  'Документы': [['doc', doc.document.id, str(doc.document)] for doc in self.documents],
                   'Комментарии': self.comment}
         return clean_dict(values)
 
@@ -179,12 +179,12 @@ class Organization(Base):
     comment: Mapped[str] = mapped_column(nullable=True)
 
     def values_ru(self):
-        values = {'Связанные персоналии':
-                  [['person', member.person.id, str(member.person)] for member in self.members],
-                  'Название': self.name,
+        values = {'Название': '<b>' + self.name + '</b>',
                   'Тип организации': self.org_type,
                   'История': self.history,
-                  'Комментарий': self.comment}
+                  'Комментарий': self.comment,
+                  'Связанные персоналии':
+                  [['person', member.person.id, str(member.person)] for member in self.members]}
         return clean_dict(values)
 
     def __str__(self):
@@ -226,7 +226,7 @@ class Document(Base):
     def values_ru(self):
         values = {'Авторы': [['person', author.person.id, str(author.person)] for author in self.authors],
                   'Источник': self.source,
-                  'Название': self.name,
+                  'Название': '<b>' + self.name + '</b>',
                   'Тип документа': self.doc_type,
                   'Язык': self.language,
                   'Год издания': self.year,
