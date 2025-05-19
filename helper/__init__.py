@@ -1,6 +1,7 @@
 import os
 from json import loads
 from dotenv import load_dotenv, find_dotenv
+from secrets import token_urlsafe
 
 load_dotenv(find_dotenv())
 
@@ -15,3 +16,5 @@ GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_DISCOVERY_URL = os.environ.get("GOOGLE_DISCOVERY_URL")
 
 ADMIN_DATA = loads(os.environ.get('ADMIN_DATA'))
+
+SECRET_KEY = os.environ.get("SECRET_KEY", token_urlsafe(16))

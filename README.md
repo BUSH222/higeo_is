@@ -1,5 +1,5 @@
 # Information System for HIGEO
-
+> README SLIGHTLY OUT OF DATE
 #### View the running version of the website! [higeo.ru](https://higeo.ru)
 
 This project is a web-based information system for the Department of History of Geology of the Russian Academy of Sciences. It allows users to view, search, and manage information about organizations, people, and documents related to the department.
