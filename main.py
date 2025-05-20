@@ -10,6 +10,7 @@ import urllib.parse
 import requests
 from datetime import datetime
 from dateutil.parser import parse
+import re
 
 
 app = Flask(__name__)
@@ -83,6 +84,38 @@ def view():
             'id': viewid, 'type': viewtype}
     if "Фотография" in data:
         data["Фотография"] = f'<img src="{data["Фотография"]}" alt="Фотография" />'
+    # If "Дата рождения" is missing, try to extract "Дата смерти" from "Комментарии"
+    if "Дата рождения" not in data and "Комментарии" in data and data["Комментарии"]:
+        match = re.search(r'Дата рождения:\s*([^\.\n]+)', data["Комментарии"])
+        if match:
+            fio_key = "Фамилия Имя Отчество"
+            birth_key = "Дата рождения"
+            birth_value = '<i>' + match.group(1).strip() + '</i>'
+            if fio_key in data:
+                items = list(data.items())
+                idx = next(i for i, (k, _) in enumerate(items) if k == fio_key)
+                items.insert(idx + 1, (birth_key, birth_value))
+                data = dict(items)
+            else:
+                items = [(birth_key, birth_value)] + list(data.items())
+                data = dict(items)
+    if "Дата смерти" not in data and "Комментарии" in data and data["Комментарии"]:
+        match = re.search(r'Дата смерти:\s*([^\.\n]+)', data["Комментарии"])
+        if match:
+            death_key = "Дата смерти"
+            death_value = '<i>' + match.group(1).strip() + '</i>'
+            keys_priority = ["Место рождения", "Дата рождения", "Фамилия Имя Отчество"]
+            items = list(data.items())
+            insert_idx = 0
+            for key in keys_priority:
+                try:
+                    idx = next(i for i, (k, _) in enumerate(items) if k == key)
+                    insert_idx = idx + 1
+                    break
+                except StopIteration:
+                    continue
+            items.insert(insert_idx, (death_key, death_value))
+            data = dict(items)
     return render_template('view.html', data=data, page=page)
 
 

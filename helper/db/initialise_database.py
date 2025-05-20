@@ -282,3 +282,11 @@ def create_tables():
     """
     Base.metadata.create_all(engine)
     print('Tables created.')
+
+
+def drop_tables():
+    """
+    Drops all tables defined in the metadata.
+    """
+    Base.metadata.drop_all(engine)
+    print('Tables dropped.')

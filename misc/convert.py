@@ -230,9 +230,9 @@ def convert_person():
 
                 birth_date, birth_date_str = clean_date(row[10])
                 death_date, death_date_str = clean_date(row[12])
-                if birth_date is None and birth_date_str is not None:
+                if birth_date is None and birth_date_str is not None and birth_date_str != '':
                     comment += f'Дата рождения: {birth_date_str}. '
-                if death_date is None and death_date_str is not None:
+                if death_date is None and death_date_str is not None and death_date_str != '':
                     comment += f'Дата смерти: {death_date_str}. '
 
                 surname = row[6]
