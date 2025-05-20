@@ -87,7 +87,10 @@
                                 min="1600" 
                                 max="2025">
                         </div>
-                        <button type="submit" class="btn higeo-color-1 mt-3">Поиск</button>
+                        <button type="submit" class="btn higeo-color-1 mt-3" id="searchBtn">
+                            <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true" id="searchSpinner"></span>
+                            Поиск
+                        </button>
                     </form>
                     
                 </div>
@@ -120,7 +123,10 @@
                                 name="name" 
                                 placeholder="Введите название организации">
                         </div>
-                        <button type="submit" class="btn higeo-color-1 mt-3">Поиск</button>
+                        <button type="submit" class="btn higeo-color-1 mt-3" id="searchBtn">
+                            <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true" id="searchSpinner"></span>
+                            Поиск
+                        </button>
                     </form>
                 </div>
             </div>
@@ -152,7 +158,10 @@
                                 name="name"
                                 placeholder="Введите название организации">
                         </div>
-                        <button type="submit" class="btn higeo-color-1 mt-3">Поиск</button>
+                        <button type="submit" class="btn higeo-color-1 mt-3" id="searchBtn">
+                            <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true" id="searchSpinner"></span>
+                            Поиск
+                        </button>
                     </form>
                 </div>
             </div>
@@ -223,6 +232,12 @@
         form.addEventListener('submit', async function(event) {
             event.preventDefault();
 
+            // Spinner logic
+            const searchBtn = form.querySelector('button[type="submit"]');
+            const spinner = searchBtn.querySelector('.spinner-border');
+            if (spinner) spinner.classList.remove('d-none');
+            searchBtn.setAttribute('disabled', 'disabled');
+
             const formData = new FormData(form);
             const params = new URLSearchParams();
 
@@ -247,6 +262,10 @@
                 updateResults(data);
             } catch (error) {
                 console.error('error fetching server results', error);
+                alert('Ошибка при выполнении запроса. Пожалуйста, попробуйте позже.');
+            } finally {
+                if (spinner) spinner.classList.add('d-none');
+                searchBtn.removeAttribute('disabled');
             }
         });
     });
