@@ -25,7 +25,9 @@
                         <div class="col-lg-9">
                             {% if value is iterable and value is not string and value is not none %}
                                 {% for item in value %}
-                                <a href="/view?type={{item[0]}}&id={{item[1]}}">{{item[2]}}</a>
+                                <div>
+                                    <a href="/view?type={{item[0]}}&id={{item[1]}}">{{item[2]}}</a>
+                                </div>
                                 {% endfor %}
                             {% else %}
                                 <p class="text-break m-02">
