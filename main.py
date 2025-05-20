@@ -15,6 +15,7 @@ from dateutil.parser import parse
 app = Flask(__name__)
 app.register_blueprint(app_login)
 app.config['SECRET_KEY'] = SECRET_KEY
+app.config['SESSION_COOKIE_DOMAIN'] = False
 
 login_manager.init_app(app)
 login_manager.login_view = 'app_login.login'
