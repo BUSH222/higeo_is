@@ -399,7 +399,7 @@ def convert_field_of_study():
 
     for name in options:
         cur.execute(
-            "INSERT INTO field_of_study (name) VALUES (%s) ON CONFLICT (name) DO NOTHING",
+            "INSERT INTO field_of_study (name) VALUES (%s)",
             (name,)
         )
     conn.commit()
