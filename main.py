@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, abort, jsonify
 from flask_login import login_required
 from helper import SECRET_KEY
 from helper.db.initialise_database import engine, Organization, Person, Document, FieldOfStudy
-from helper.db.initialise_database import DocumentAuthorship, OrganizationMembership
+from helper.db.initialise_database import DocumentAuthorship, OrganizationMembership, PersonFieldOfStudy
 from helper.login.login import app_login, login_manager
 from sqlalchemy import select, func, extract, and_, inspect
 from sqlalchemy.orm import Session
@@ -206,9 +206,9 @@ def search():
                 person = person_row[0]
                 results.append(['person', person.id, str(person)])
         return jsonify(results)
-    elif request.args.get('type') in ['org', 'doc']:  # Name only search
+    elif request.args.get('type') in ['org', 'doc', 'field_of_study']:  # Name only search
         obj_type = request.args.get('type')
-        obj = {'org': Organization, 'doc': Document}[obj_type]
+        obj = {'org': Organization, 'doc': Document, 'field_of_study': FieldOfStudy}[obj_type]
         query = request.args.get('name')
         if query is not None:
             stmt = select(obj.id, obj.name)\
@@ -254,12 +254,13 @@ def new():
     mapper = inspect(obj)
     data_fin = dict()
     for column in mapper.attrs:
-        if column.key not in ['organizations', 'documents', 'members', 'authors'] and column.key != 'id':
+        if column.key not in ['organizations', 'documents', 'members', 'authors', 'field_of_study'] and \
+                column.key != 'id':
             data_fin[column.key] = ''
     print(data_fin)
     data2 = {}
     if obj_type == 'person':
-        data2 = {'doc': [], 'org': []}
+        data2 = {'doc': [], 'org': [], 'field_of_study': []}
     elif obj_type == 'doc':
         data2 = {'person': []}
     elif obj_type == 'org':
@@ -292,6 +293,8 @@ def edit():
         abort(501)
     obj_type = request.args.get('type')
     obj_id = request.args.get('id')
+    title_converter = {'org': 'organization', 'person': 'person', 'doc': 'document'}
+    page = {'heading': f'Edit {title_converter[obj_type]}', 'title': f'Edit {title_converter[obj_type]}'}
     obj = {'org': Organization, 'person': Person, 'doc': Document}[obj_type]
 
     stmt = select(obj).where(obj.id == obj_id)
@@ -318,13 +321,16 @@ def edit():
         obj_real = session.query(obj).filter(obj.id == obj_id).one_or_none()
         assert obj_real is not None
         if obj_type == 'person':
-            data2 = {"org": [], "doc": []}
+            data2 = {"org": [], "doc": [], "field_of_study": []}
             for doc_authorship in obj_real.documents:  # doc_authorship is DocumentAuthorship
                 doc = doc_authorship.document
                 data2['doc'].append({'type': 'doc', 'id': doc.id, 'name': doc.name})
             for org_membership in obj_real.organizations:
                 org = org_membership.organization
                 data2['org'].append({'type': 'org', 'id': org.id, 'name': org.name})
+            for field_relationship in obj_real.field_of_study:
+                field = field_relationship.field_of_study
+                data2['field_of_study'].append({'type': 'field_of_study', 'id': field.id, 'name': field.name})
         elif obj_type == 'org':
             data2 = {'person': []}
             for obj_person in obj_real.members:
@@ -389,6 +395,7 @@ def save():
         if obj_type == 'person':
             session.query(DocumentAuthorship).filter(DocumentAuthorship.person_id == obj_id).delete()
             session.query(OrganizationMembership).filter(OrganizationMembership.person_id == obj_id).delete()
+            session.query(PersonFieldOfStudy).filter(PersonFieldOfStudy.person_id == obj_id).delete()
         elif obj_type == 'org':
             session.query(OrganizationMembership).filter(OrganizationMembership.organization_id == obj_id).delete()
         elif obj_type == 'doc':
@@ -402,6 +409,9 @@ def save():
                     session.commit()
                 elif connection_type == 'org':
                     session.add(OrganizationMembership(organization_id=connection_id, person_id=obj_id))
+                    session.commit()
+                elif connection_type == 'field_of_study':
+                    session.add(PersonFieldOfStudy(field_of_study_id=connection_id, person_id=obj_id))
                     session.commit()
             elif obj == Organization:
                 session.add(OrganizationMembership(organization_id=obj_id, person_id=connection_id))
