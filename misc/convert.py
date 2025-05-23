@@ -257,7 +257,7 @@ def convert_person():
                     'death_date': death_date,
                     'death_place': row[13],
                     'academic_degree': row[14],
-                    'field_of_study': row[15],
+                    # 'field_of_study': row[15],s
                     'area_of_study': row[16],
                     'biography': row[18],
                     'bibliography': row[19],
@@ -350,6 +350,61 @@ def convert_doc():
                 insert_data('document', data.keys(), data.values())
 
 
+def convert_field_of_study():
+    options = [
+        "Общие проблемы естествознания",
+        "Геология / Общие вопросы",
+        "Геология / Минералогия",
+        "Геология / Литология",
+        "Геология / Палеонтология",
+        "Геология / Стратиграфия",
+        "Геология / Тектоника",
+        "Геология / Геофизика",
+        "Геология / Геоморфология",
+        "Геология / Петрография",
+        "Геология / Геохимия",
+        "Геология / Петрология",
+        "Геология / Геология полезных ископаемых",
+        "Геология / Гидрогеология",
+        "Геология / Инженерная геология и мерзлотоведение",
+        "Геология / Геология нефти и газа",
+        "Геология / Кристаллография",
+        "Геология / История геологических наук",
+        "Геология / Антропогеновый период",
+        "Геология / Региональная геология",
+        "Геология / Морская геология",
+        "Геология / Океанология",
+        "Физика /",
+        "Горное дело / Общие вопросы",
+        "Горное дело / Разработка месторождений полезных ископаемых",
+        "Горное дело / Техника и технология",
+        "Горное дело / Обогащение полезных ископаемых",
+        "Горное дело / Охрана окружающей среды",
+        "Химия /",
+        "Биология /",
+        "География /",
+        "Металлургия /",
+        "Сельское и лесное хозяйство / Почвоведение",
+        "Палеогеография",
+        "Антропология",
+        "Вулканология",
+        "Геофизика /",
+        "Астрономия /",
+        "Науковедение /",
+        "История и исторические науки / Археология",
+        "Культура / Музейное дело. Музееведение",
+        "Биология / Экология",
+        "Математика /",
+    ]
+
+    for name in options:
+        cur.execute(
+            "INSERT INTO field_of_study (name) VALUES (%s) ON CONFLICT (name) DO NOTHING",
+            (name,)
+        )
+    conn.commit()
+
+
 def convert_document_authorship():
     """
     Converts document authorship data from a CSV file within a ZIP archive.
@@ -427,20 +482,73 @@ def convert_organization_membership():
                     insert_data('organization_membership', data.keys(), data.values())
 
 
+def convert_person_field_of_study():
+    """
+    Converts and establishes relationships between persons and fields of study.
+
+    This function:
+    1. Gets the field of study from each person record in the zipped CSV file
+    2. Processes the field_of_study string by splitting it by commas
+    3. For each field, looks up the corresponding field_of_study ID from the database
+    4. Creates a relationship entry in person_field_of_study table
+
+    The function assumes convert_field_of_study() has been called before to populate
+    the field_of_study table.
+    """
+    field_map = {}
+    cur.execute("SELECT id, name FROM field_of_study")
+    for row in cur.fetchall():
+        field_map[row[1]] = row[0]
+
+    with zipfile.ZipFile(zip_file_path, 'r') as z:
+        with z.open('person.csv') as file:
+            reader = csv.reader(io.TextIOWrapper(file, encoding='utf-8'))
+            for row in reader:
+                old_person_id = int(row[0])
+                field_of_study_text = row[15]
+                if not field_of_study_text or field_of_study_text == '':
+                    continue
+
+                new_person_id = get_new_person_id(old_person_id)
+                if not new_person_id:
+                    continue
+
+                fields = [field.strip() for field in field_of_study_text.split(',')]
+                for field in fields:
+                    field_id = None
+                    for db_field, db_id in field_map.items():
+                        if field in db_field or db_field in field:
+                            field_id = db_id
+                            break
+                    if field_id:
+                        data = {
+                            'person_id': new_person_id,
+                            'field_of_study_id': field_id
+                        }
+                        try:
+                            insert_data('person_field_of_study', data.keys(), data.values())
+                        except Exception as e:
+                            print(f"Error inserting field of study '{field}' for person {new_person_id}: {e}")
+
+
 if __name__ == '__main__':
     assert input('proceed with data conversion? (y/n) ') == 'y'
     cur.execute("TRUNCATE TABLE person CASCADE")
     cur.execute("TRUNCATE TABLE organization CASCADE")
     cur.execute("TRUNCATE TABLE document CASCADE")
+    cur.execute("TRUNCATE TABLE field_of_study CASCADE")
     cur.execute("TRUNCATE TABLE organization_membership CASCADE")
     cur.execute("TRUNCATE TABLE document_authorship CASCADE")
+    cur.execute("TRUNCATE TABLE person_field_of_study CASCADE")
     conn.commit()
     convert_person()
     convert_org()
     convert_doc()
+    convert_field_of_study()
     conn.commit()
     convert_document_authorship()
     convert_organization_membership()
+    convert_person_field_of_study()
     conn.commit()
     print("Data has been successfully imported and transformed.")
 cur.close()
