@@ -141,7 +141,7 @@ class Person(Base):
                   'Место смерти': self.death_place,
                   'Академическое звание': self.academic_degree,
                   'Область исследования':
-                  [['field_of_study', f.field_of_study.id, str(f.field_of_study.id)] for f in self.field_of_study],
+                  [['field_of_study', f.field_of_study.id, str(f.field_of_study)] for f in self.field_of_study],
                   'Районы работ': self.area_of_study,
                   'Связанные организации':
                   [['org', org.organization.id, str(org.organization)] for org in self.organizations],
@@ -258,10 +258,13 @@ class FieldOfStudy(Base):
     __tablename__ = 'field_of_study'
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(nullable=False)
-    comment: Mapped[str] = mapped_column(nullable=True)
+    members: Mapped[list["OrganizationMembership"]] = \
+        relationship("PersonFieldOfStudy", back_populates="field_of_study")
 
     def values_ru(self):
-        values = {'Название': self.name}
+        values = {'Название': self.name,
+                  'Связанные персоналии':
+                  [['person', member.person.id, str(member.person)] for member in self.members]}
         return clean_dict(values)
 
     def __str__(self):

@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, abort, jsonify
 from flask_login import login_required
 from helper import SECRET_KEY
-from helper.db.initialise_database import engine, Organization, Person, Document
+from helper.db.initialise_database import engine, Organization, Person, Document, FieldOfStudy
 from helper.db.initialise_database import DocumentAuthorship, OrganizationMembership
 from helper.login.login import app_login, login_manager
 from sqlalchemy import select, func, extract, and_, inspect
@@ -69,10 +69,11 @@ def view():
     - Renders the 'view.html' template with the data and page context if the object is found.
     - Aborts with a 404 status code if the 'type' is not one of the expected values or if the 'id' is missing.
     """
-    if request.args.get('type') not in ['org', 'person', 'doc'] or not request.args.get('id'):
+    if request.args.get('type') not in ['org', 'person', 'doc', 'field_of_study'] or not request.args.get('id'):
         abort(404)
-    viewtype_to_object = {'org': Organization, 'person': Person, 'doc': Document}
-    viewtype_to_str = {'org': 'Организация', 'person': 'Персоналия', 'doc': 'Документ'}
+    viewtype_to_object = {'org': Organization, 'person': Person, 'doc': Document, 'field_of_study': FieldOfStudy}
+    viewtype_to_str = {'org': 'Организация', 'person': 'Персоналия',
+                       'doc': 'Документ', 'field_of_study': 'Область знаний'}
     viewtype = request.args.get('type')
     viewid = int(request.args.get('id'))
     obj = viewtype_to_object[viewtype]
