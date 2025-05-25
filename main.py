@@ -226,6 +226,73 @@ def search():
         abort(404)
 
 
+@app.route('/list')
+def list_view():
+    """
+    Renders a list view for organizations, persons, documents, or fields of study.
+    This route provides a list of all items of the specified type without pagination.
+    It supports sorting to display results in a consistent order.
+    Query Parameters:
+    - type (str): The type of objects to list ('org', 'person', 'doc', 'field_of_study')
+    - sort (str): Field to sort by (default depends on object type)
+    Returns:
+    - Renders the 'list.html' template with the results
+    - Aborts with a 404 status code if the type parameter is invalid
+    """
+    if not request.args.get('type'):
+        abort(404)
+
+    assert request.args.get('type') in ['org', 'person', 'doc', 'field_of_study']
+
+    obj_type = request.args.get('type')
+
+    obj_map = {
+        'org': Organization,
+        'person': Person,
+        'doc': Document,
+        'field_of_study': FieldOfStudy
+    }
+
+    title_map = {
+        'org': 'Organizations',
+        'person': 'Persons',
+        'doc': 'Documents',
+        'field_of_study': 'Fields of Study'
+    }
+
+    obj = obj_map[obj_type]
+
+    # Determine default sort field based on object type
+    if obj_type == 'person':
+        sort_field = request.args.get('sort', 'surname')
+        if sort_field == 'surname':
+            stmt = select(obj).order_by(obj.surname.collate('C'), obj.name.collate('C'))
+        else:
+            stmt = select(obj).order_by(getattr(obj, sort_field))
+    else:
+        sort_field = request.args.get('sort', 'name')
+        stmt = select(obj).order_by(func.lower(getattr(obj, sort_field)).collate('C'))
+
+    results = []
+    with Session(engine) as session:
+        data = session.execute(stmt)
+        for item in data:
+            if obj_type == 'person':
+                person = item[0]
+                results.append([obj_type, person.id, str(person)])
+            else:
+                item_obj = item[0]
+                results.append([obj_type, item_obj.id, item_obj.name])
+
+    page_info = {
+        'heading': title_map[obj_type],
+        'title': f'List of {title_map[obj_type]}',
+        'type': obj_type
+    }
+
+    return render_template('list.html', results=results, page=page_info)
+
+
 @app.route('/new')
 @login_required
 def new():
@@ -453,6 +520,7 @@ def delete():
             if obj_type == 'person':
                 session.query(DocumentAuthorship).filter(DocumentAuthorship.person_id == obj_id).delete()
                 session.query(OrganizationMembership).filter(OrganizationMembership.person_id == obj_id).delete()
+                session.query(PersonFieldOfStudy).filter(PersonFieldOfStudy.person_id == obj_id).delete()
             elif obj_type == 'org':
                 session.query(OrganizationMembership).filter(OrganizationMembership.organization_id == obj_id).delete()
             elif obj_type == 'doc':
