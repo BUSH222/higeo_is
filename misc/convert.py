@@ -517,7 +517,7 @@ def convert_person_field_of_study():
                 for field in fields:
                     field_id = None
                     for db_field, db_id in field_map.items():
-                        if field in db_field or db_field in field:
+                        if field == db_field:
                             field_id = db_id
                             break
                     if field_id:

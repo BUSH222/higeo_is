@@ -4,7 +4,7 @@ from helper import SECRET_KEY
 from helper.db.initialise_database import engine, Organization, Person, Document, FieldOfStudy
 from helper.db.initialise_database import DocumentAuthorship, OrganizationMembership, PersonFieldOfStudy
 from helper.login.login import app_login, login_manager
-from sqlalchemy import select, func, extract, and_, inspect
+from sqlalchemy import select, func, extract, and_, inspect, text
 from sqlalchemy.orm import Session
 import urllib.parse
 import requests
@@ -69,8 +69,33 @@ def view():
     - Renders the 'view.html' template with the data and page context if the object is found.
     - Aborts with a 404 status code if the 'type' is not one of the expected values or if the 'id' is missing.
     """
-    if request.args.get('type') not in ['org', 'person', 'doc', 'field_of_study'] or not request.args.get('id'):
+    if request.args.get('type') not in ['org', 'person', 'doc', 'field_of_study', 'geography'] \
+            or not request.args.get('id'):
         abort(404)
+
+    if request.args.get('type') == 'geography':
+        place = request.args.get('id')
+        stmt = select(Person).filter(Person.area_of_study.ilike(f'%{place}%')).order_by(Person.surname, Person.name)
+        with Session(engine) as session:
+            people = session.execute(stmt).scalars().all()
+        data = {
+            "Географический регион": place,
+            "Связанные исследователи": [[
+                'person',
+                person.id,
+                f"{person.surname} {person.name} {person.patronymic or ''}"
+            ] for person in people]
+        }
+
+        page = {
+            'heading': f'Географический регион: {place}',
+            'title': f'Geographic region: {place}',
+            'id': place,
+            'type': 'geography'
+        }
+
+        return render_template('view.html', data=data, page=page)
+
     viewtype_to_object = {'org': Organization, 'person': Person, 'doc': Document, 'field_of_study': FieldOfStudy}
     viewtype_to_str = {'org': 'Организация', 'person': 'Персоналия',
                        'doc': 'Документ', 'field_of_study': 'Область знаний'}
@@ -85,7 +110,6 @@ def view():
             'id': viewid, 'type': viewtype}
     if "Фотография" in data:
         data["Фотография"] = f'<img src="{data["Фотография"]}" alt="Фотография" />'
-    # If "Дата рождения" is missing, try to extract "Дата смерти" from "Комментарии"
     if "Дата рождения" not in data and "Комментарии" in data and data["Комментарии"]:
         match = re.search(r'Дата рождения:\s*([^\.\n]+)', data["Комментарии"])
         if match:
@@ -242,9 +266,48 @@ def list_view():
     if not request.args.get('type'):
         abort(404)
 
-    assert request.args.get('type') in ['org', 'person', 'doc', 'field_of_study']
+    assert request.args.get('type') in ['org', 'person', 'doc', 'field_of_study', 'geography']
 
     obj_type = request.args.get('type')
+
+    if obj_type == 'geography':
+        query = text("""
+            WITH split_locations AS (
+            SELECT
+                trim(unnest(string_to_array(area_of_study, ','))) AS location
+            FROM
+                person
+            WHERE
+                area_of_study IS NOT NULL
+            ),
+            valid_locations AS (
+            SELECT
+                location
+            FROM
+                split_locations
+            WHERE
+                length(location) > 0
+            )
+            SELECT
+            location,
+            COUNT(*) AS frequency
+            FROM
+            valid_locations
+            GROUP BY
+            location
+            ORDER BY
+            frequency DESC
+            LIMIT :limit;
+        """)
+        page_info = {
+            'heading': 'Самые популярные географические регионы',
+            'title': 'Самые популярные географические регионы',
+        }
+        with Session(engine) as session:
+            result = session.execute(query, {"limit": 100})
+            results = result.fetchall()
+        results = [['geography', row[0], f'{row[0]} - {row[1]} результатов'] for row in results]
+        return render_template('list.html', results=results, page=page_info, result_use_pagination=False)
 
     obj_map = {
         'org': Organization,
@@ -254,10 +317,10 @@ def list_view():
     }
 
     title_map = {
-        'org': 'Organizations',
-        'person': 'Persons',
-        'doc': 'Documents',
-        'field_of_study': 'Fields of Study'
+        'org': 'Организации',
+        'person': 'Персоналии',
+        'doc': 'Документы',
+        'field_of_study': 'Области исследования'
     }
 
     obj = obj_map[obj_type]
@@ -286,11 +349,11 @@ def list_view():
 
     page_info = {
         'heading': title_map[obj_type],
-        'title': f'List of {title_map[obj_type]}',
+        'title': title_map[obj_type],
         'type': obj_type
     }
 
-    return render_template('list.html', results=results, page=page_info)
+    return render_template('list.html', results=results, page=page_info, result_use_pagination=True)
 
 
 @app.route('/new')
