@@ -423,9 +423,10 @@ def edit():
         abort(501)
     obj_type = request.args.get('type')
     obj_id = request.args.get('id')
-    title_converter = {'org': 'organization', 'person': 'person', 'doc': 'document'}
+    title_converter = {'org': 'organization', 'person': 'person',
+                       'doc': 'document', 'field_of_study': 'field of study'}
     page = {'heading': f'Edit {title_converter[obj_type]}', 'title': f'Edit {title_converter[obj_type]}'}
-    obj = {'org': Organization, 'person': Person, 'doc': Document}[obj_type]
+    obj = {'org': Organization, 'person': Person, 'doc': Document, 'field_of_study': FieldOfStudy}[obj_type]
 
     stmt = select(obj).where(obj.id == obj_id)
     with Session(engine) as session:
