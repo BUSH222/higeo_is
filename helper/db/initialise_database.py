@@ -116,7 +116,10 @@ class Person(Base):
     death_place: Mapped[str] = mapped_column(nullable=True)
 
     academic_degree: Mapped[str] = mapped_column(nullable=True)
-    field_of_study: Mapped[str] = mapped_column(nullable=True)
+
+    field_of_study: Mapped[list["FieldOfStudy"]] = \
+        relationship("PersonFieldOfStudy", back_populates="person")
+
     area_of_study: Mapped[str] = mapped_column(nullable=True)  # geography
 
     organizations: Mapped[list["OrganizationMembership"]] = \
@@ -137,7 +140,8 @@ class Person(Base):
                   'Дата сметри': self.death_date,
                   'Место смерти': self.death_place,
                   'Академическое звание': self.academic_degree,
-                  'Область исследования': self.field_of_study,
+                  'Область исследования':
+                  [['field_of_study', f.field_of_study.id, str(f.field_of_study)] for f in self.field_of_study],
                   'Районы работ': self.area_of_study,
                   'Связанные организации':
                   [['org', org.organization.id, str(org.organization)] for org in self.organizations],
@@ -238,6 +242,35 @@ class Document(Base):
         return self.name
 
 
+class FieldOfStudy(Base):
+    """
+    Represents a field of study entity in the database.
+    Attributes:
+        id (int): The primary key of the field of study, auto-incremented.
+        name (str): The name of the field of study, cannot be null.
+        comment (str): Additional comments about the field of study.
+    Methods:
+        values_ru():
+            Returns a dictionary of the field of study's attributes with Russian labels.
+        __str__():
+            Returns the name of the field of study as its string representation.
+    """
+    __tablename__ = 'field_of_study'
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(nullable=False)
+    members: Mapped[list["OrganizationMembership"]] = \
+        relationship("PersonFieldOfStudy", back_populates="field_of_study")
+
+    def values_ru(self):
+        values = {'Название': self.name,
+                  'Связанные персоналии':
+                  [['person', member.person.id, str(member.person)] for member in self.members]}
+        return clean_dict(values)
+
+    def __str__(self):
+        return self.name
+
+
 class OrganizationMembership(Base):
     """
     Represents the membership of a person in an organization.
@@ -276,9 +309,36 @@ class DocumentAuthorship(Base):
     document: Mapped["Document"] = relationship("Document", back_populates="authors")
 
 
+class PersonFieldOfStudy(Base):
+    """
+    Represents the relationship between a person and their field of study.
+    Attributes:
+        id (int): The primary key for the person-field of study relationship.
+        person_id (int): The foreign key referencing the person.
+        field_of_study_id (int): The foreign key referencing the field of study.
+        person (Person): The relationship to the Person model.
+        field_of_study (FieldOfStudy): The relationship to the FieldOfStudy model.
+    """
+    __tablename__ = 'person_field_of_study'
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    person_id: Mapped[int] = mapped_column(ForeignKey('person.id'))
+    field_of_study_id: Mapped[int] = mapped_column(ForeignKey('field_of_study.id'))
+
+    person: Mapped["Person"] = relationship("Person")
+    field_of_study: Mapped["FieldOfStudy"] = relationship("FieldOfStudy")
+
+
 def create_tables():
     """
     Creates all tables defined in the metadata.
     """
     Base.metadata.create_all(engine)
     print('Tables created.')
+
+
+def drop_tables():
+    """
+    Drops all tables defined in the metadata.
+    """
+    Base.metadata.drop_all(engine)
+    print('Tables dropped.')
