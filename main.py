@@ -550,7 +550,7 @@ def save():
             elif obj == Document:
                 session.add(DocumentAuthorship(document_id=obj_id, person_id=connection_id))
                 session.commit()
-    return render_template('redirect.html', url='/search')
+    return render_template('redirect.html', url=f'/view?type={obj_type}&id={obj_id}')
 
 
 @app.route('/delete')

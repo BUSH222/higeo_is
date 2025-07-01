@@ -7,7 +7,7 @@
     <script>
         setTimeout(myURL, 2000);
         function myURL() {
-            document.location.href = '{{ url }}';
+            document.location.href = '{{ url|safe }}';
         }
     </script>
 </body>

@@ -102,8 +102,8 @@ class Person(Base):
     __tablename__ = 'person'
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     _oldid: Mapped[int] = mapped_column(nullable=True)
-    name: Mapped[str] = mapped_column(nullable=False)
     surname: Mapped[str] = mapped_column(nullable=False)
+    name: Mapped[str] = mapped_column(nullable=False)
     patronymic: Mapped[str] = mapped_column(nullable=True)
 
     name_en: Mapped[str] = mapped_column(nullable=True)
