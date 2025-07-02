@@ -20,22 +20,41 @@
                             onclick="return confirm('Вы действительно хотите стереть всю страницу?');">Delete</a>
                     {% endif %}
                     {% for key, value in data.items() %}
-                    <div class="row hover-highlight g-0">
-                        <div class="col-lg-3 fw-bold">{{ key }}</div>
-                        <div class="col-lg-9">
-                            {% if value is iterable and value is not string and value is not none %}
-                                {% for item in value %}
-                                <div>
-                                    <a href="/view?type={{item[0]}}&id={{item[1]}}">{{item[2]}}</a>
+                        {% if key not in parameters.single %}
+                            <div class="row hover-highlight g-0">
+                                <div class="col-lg-3 fw-bold">{{ key }}</div>
+                                <div class="col-lg-9">
+                                    {% if value is iterable and value is not string and value is not none %}
+                                        {% for item in value %}
+                                        <div>
+                                            <a href="/view?type={{item[0]}}&id={{item[1]}}">{{item[2]}}</a>
+                                        </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-break m-02">
+                                            {{ value|safe }}
+                                        </p>
+                                    {% endif %}
                                 </div>
-                                {% endfor %}
-                            {% else %}
-                                <p class="text-break m-02">
-                                    {{ value|safe }}
-                                </p>
-                            {% endif %}
+                            </div>
+                        {% else %}
+                        <div class="row hover-highlight g-0">
+                            <div class="col-12 fw-bold">{{ key }}</div>
+                            <div class="col-12">
+                                {% if value is iterable and value is not string and value is not none %}
+                                    {% for item in value %}
+                                    <div>
+                                        <a href="/view?type={{item[0]}}&id={{item[1]}}">{{item[2]}}</a>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <p class="text-break m-02">
+                                        {{ value|safe }}
+                                    </p>
+                                {% endif %}
+                            </div>
                         </div>
-                    </div>
+                        {% endif %}
                     {% endfor %}
                 </div>
             </div>

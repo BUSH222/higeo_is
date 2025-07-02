@@ -95,12 +95,16 @@ def view():
             'id': place,
             'type': 'geography'
         }
+        parameters = {'single': [],
+                      'multiple': ['Связанные персоналии', 'Связанные исследователи']}
 
-        return render_template('view.html', data=data, page=page)
+        return render_template('view.html', data=data, page=page, parameters=parameters)
 
     viewtype_to_object = {'org': Organization, 'person': Person, 'doc': Document, 'field_of_study': FieldOfStudy}
     viewtype_to_str = {'org': 'Организация', 'person': 'Персоналия',
                        'doc': 'Документ', 'field_of_study': 'Область знаний'}
+    parameters = {'single': ['Биография', 'Библиография'],
+                  'multiple': ['Связанные персоналии', 'Связанные исследователи']}
     viewtype = request.args.get('type')
     viewid = int(request.args.get('id'))
     obj = viewtype_to_object[viewtype]
@@ -143,7 +147,7 @@ def view():
                     continue
             items.insert(insert_idx, (death_key, death_value))
             data = dict(items)
-    return render_template('view.html', data=data, page=page)
+    return render_template('view.html', data=data, page=page, parameters=parameters)
 
 
 @app.route('/search')
