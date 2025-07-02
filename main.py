@@ -17,6 +17,8 @@ app = Flask(__name__)
 app.register_blueprint(app_login)
 app.config['SECRET_KEY'] = SECRET_KEY
 app.config['SESSION_COOKIE_DOMAIN'] = False
+app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024
+app.config['MAX_FORM_MEMORY_SIZE'] = 32 * 1024 * 1024
 
 login_manager.init_app(app)
 login_manager.login_view = 'app_login.login'
