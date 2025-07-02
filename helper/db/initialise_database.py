@@ -141,14 +141,17 @@ class Person(Base):
                   'Место смерти': self.death_place,
                   'Академическое звание': self.academic_degree,
                   'Область исследования':
-                  [['field_of_study', f.field_of_study.id, str(f.field_of_study)] for f in self.field_of_study],
+                  sorted([['field_of_study', f.field_of_study.id, str(f.field_of_study)] for f in self.field_of_study],
+                         key=lambda x: x[2]),
                   'Районы работ': self.area_of_study,
                   'Связанные организации':
-                  [['org', org.organization.id, str(org.organization)] for org in self.organizations],
+                  sorted([['org', org.organization.id, str(org.organization)] for org in self.organizations],
+                         key=lambda x: x[2]),
                   'Биография': self.biography,
                   'Библиография': self.bibliography,
                   'Фотография': self.photo,
-                  'Документы': [['doc', doc.document.id, str(doc.document)] for doc in self.documents],
+                  'Документы': sorted([['doc', doc.document.id, str(doc.document)] for doc in self.documents],
+                                      key=lambda x: x[2]),
                   'Комментарии': self.comment}
         return clean_dict(values)
 
@@ -188,7 +191,9 @@ class Organization(Base):
                   'История': self.history,
                   'Комментарий': self.comment,
                   'Связанные персоналии':
-                  [['person', member.person.id, str(member.person)] for member in self.members]}
+                  sorted([['person', member.person.id, str(member.person)] for member in self.members],
+                         key=lambda x: x[2])
+                  }
         return clean_dict(values)
 
     def __str__(self):
@@ -228,7 +233,9 @@ class Document(Base):
     comment: Mapped[str] = mapped_column(nullable=True)
 
     def values_ru(self):
-        values = {'Авторы': [['person', author.person.id, str(author.person)] for author in self.authors],
+        values = {'Авторы':
+                  sorted([['person', author.person.id, str(author.person)] for author in self.authors],
+                         key=lambda x: x[2]),
                   'Источник': self.source,
                   'Название': '<b>' + self.name + '</b>',
                   'Тип документа': self.doc_type,
@@ -262,9 +269,11 @@ class FieldOfStudy(Base):
         relationship("PersonFieldOfStudy", back_populates="field_of_study")
 
     def values_ru(self):
-        values = {'Название': self.name,
-                  'Связанные персоналии':
-                  [['person', member.person.id, str(member.person)] for member in self.members]}
+        values = {
+            'Название': self.name,
+            'Связанные персоналии':
+            sorted([['person', member.person.id, str(member.person)] for member in self.members], key=lambda x: x[2])
+        }
         return clean_dict(values)
 
     def __str__(self):
