@@ -393,7 +393,6 @@ def new():
         if column.key not in ['organizations', 'documents', 'members', 'authors', 'field_of_study'] and \
                 column.key != 'id':
             data_fin[column.key] = ''
-    print(data_fin)
     data2 = {}
     if obj_type == 'person':
         data2 = {'doc': [], 'org': [], 'field_of_study': []}
@@ -402,7 +401,12 @@ def new():
     elif obj_type == 'org':
         data2 = {'person': []}
 
-    return render_template('new.html', page=page, data1=data_fin, data2=data2, obj_type=obj_type)
+    multiple_choice = {'academic_degree': ['действительный член', 'иностранный член', 'почётный член',
+                                           'член-корреспондент', 'профессор РАН']}
+    file = ['file']
+
+    return render_template('new.html', page=page, data1=data_fin, data2=data2,
+                           obj_type=obj_type, file=file, multiple_choice=multiple_choice)
 
 
 @app.route('/edit')
@@ -478,8 +482,12 @@ def edit():
             for obj_person in obj_real.authors:
                 person = obj_person.person
                 data2['person'].append({'type': 'person', 'id': person.id, 'name': str(person)})
+    multiple_choice = {'academic_degree': ['действительный член', 'иностранный член', 'почётный член',
+                                           'член-корреспондент', 'профессор РАН']}
+    file = ['file']
 
-    return render_template('new.html', page=page, data1=data_fin2, data2=data2, obj_type=obj_type)
+    return render_template('new.html', page=page, data1=data_fin2, data2=data2, obj_type=obj_type,
+                           multiple_choice=multiple_choice, file=file)
 
 
 @app.route('/save', methods=['POST'])

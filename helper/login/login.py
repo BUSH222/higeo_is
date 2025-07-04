@@ -10,7 +10,13 @@ import json
 app_login = Blueprint('app_login', __name__)
 login_manager = LoginManager(app_login)
 login_manager.login_view = 'login'
-google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
+
+try:
+    google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
+except requests.exceptions.ConnectionError:
+    print('WARNING: google authentication is not working. Either no internet connection or google is unreachable')
+    google_provider_cfg = None
+
 client = WebApplicationClient(GOOGLE_CLIENT_ID)
 
 

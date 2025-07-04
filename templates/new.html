@@ -12,7 +12,17 @@
         <div class="row mt-3">
             <div class="col-lg-2 fw-bold">{{ key }}</div>
             <div class="col-lg-10">
-                <textarea class="form-control" id="{{ key }}" name="{{ key }}">{{ value }}</textarea>
+                {% if key in multiple_choice %}
+                    <select class="form-control" id="{{ key }}" name="{{ key }}">
+                        {% for option in multiple_choice[key] %}
+                            <option value="{{ option }}" {% if value == option %}selected{% endif %}>{{ option }}</option>
+                        {% endfor %}
+                    </select>
+                {% elif key in file %}
+                    <input type="file" class="form-control" id="{{ key }}" name="{{ key }}">
+                {% else %}
+                    <textarea class="form-control" id="{{ key }}" name="{{ key }}">{{ value }}</textarea>
+                {% endif %}
             </div>
         </div>
         {% endfor %}
