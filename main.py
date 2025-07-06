@@ -514,6 +514,12 @@ def save():
     if 'connection' in formdata.keys():
         formdata.pop('connection')
     formdata = {key: (value if value != '' else None) for key, value in formdata.items()}
+    for key in request.files:
+        value = request.files[key]
+        upload_path = f'static/uploads/[{str(datetime.now())}]' + value.filename
+        formdata[key] = upload_path
+        value.save(upload_path)
+
     connections = request.form.getlist('connection')
     obj_type = request.args.get('type')
     obj = {'org': Organization, 'person': Person, 'doc': Document}[obj_type]

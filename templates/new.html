@@ -7,7 +7,7 @@
     <div class="row mt-3">
         <h1 class="d-flex justify-content-center fw-bold">{{ page.heading }}</h1>
     </div>
-    <form id="edit-form" method="POST" action="/save?type={{ obj_type }}">
+    <form id="edit-form" method="POST" enctype="multipart/form-data" action="/save?type={{ obj_type }}">
         {% for key, value in data1.items() %}
         <div class="row mt-3">
             <div class="col-lg-2 fw-bold">{{ key }}</div>
@@ -19,6 +19,9 @@
                         {% endfor %}
                     </select>
                 {% elif key in file %}
+                    {% if value %}
+                        <div>Current file: <a href="{{ value }}" target="_blank">Download</a></div>
+                    {% endif %}
                     <input type="file" class="form-control" id="{{ key }}" name="{{ key }}">
                 {% else %}
                     <textarea class="form-control" id="{{ key }}" name="{{ key }}">{{ value }}</textarea>

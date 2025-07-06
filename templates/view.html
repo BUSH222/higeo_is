@@ -30,6 +30,8 @@
                                             <a href="/view?type={{item[0]}}&id={{item[1]}}">{{item[2]}}</a>
                                         </div>
                                         {% endfor %}
+                                    {% elif value is string and value.startswith('static/uploads/') %}
+                                        <a class="m-02" href="/{{ value }}" target="_blank">Скачать файл</a>
                                     {% else %}
                                         <p class="text-break m-02">
                                             {{ value|safe }}

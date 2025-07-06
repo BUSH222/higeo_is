@@ -15,7 +15,7 @@ try:
     google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
 except requests.exceptions.ConnectionError:
     print('WARNING: google authentication is not working. Either no internet connection or google is unreachable')
-    google_provider_cfg = None
+    google_provider_cfg = None  # This will throw errors when you try to log in.
 
 client = WebApplicationClient(GOOGLE_CLIENT_ID)
 
