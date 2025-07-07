@@ -1,6 +1,12 @@
 from flask import Flask, render_template, request, abort, jsonify
 from flask_login import login_required
-from helper import SECRET_KEY
+from helper import (SECRET_KEY,
+                    MULTIPLE_CHOICE_FIELDS,
+                    FILE_FIELDS,
+                    TITLE_CONVERTER_NEW_EDIT,
+                    HEADING_CONVERTER,
+                    TITLE_CONVERTER_LIST
+                    )
 from helper.db.initialise_database import engine, Organization, Person, Document, FieldOfStudy
 from helper.db.initialise_database import DocumentAuthorship, OrganizationMembership, PersonFieldOfStudy
 from helper.cleanup.htmlcleaner import clean_html
@@ -102,8 +108,6 @@ def view():
         return render_template('view.html', data=data, page=page, parameters=parameters)
 
     viewtype_to_object = {'org': Organization, 'person': Person, 'doc': Document, 'field_of_study': FieldOfStudy}
-    viewtype_to_str = {'org': 'Организация', 'person': 'Персоналия',
-                       'doc': 'Документ', 'field_of_study': 'Область знаний'}
     parameters = {'single': ['Биография', 'Библиография'],
                   'multiple': ['Связанные персоналии', 'Связанные исследователи']}
     viewtype = request.args.get('type')
@@ -113,7 +117,7 @@ def view():
     with Session(engine) as session:
         data = session.execute(stmt).scalar_one_or_none()
         data = data.values_ru()
-    page = {'heading': f'{viewtype_to_str[viewtype]}', 'title': f'View {obj.__name__.lower()}',
+    page = {'heading': f'{HEADING_CONVERTER[viewtype]}', 'title': f'View {obj.__name__.lower()}',
             'id': viewid, 'type': viewtype}
     if "Фотография" in data:
         data["Фотография"] = f'<img src="{data["Фотография"]}" alt="Фотография" />'
@@ -323,13 +327,6 @@ def list_view():
         'field_of_study': FieldOfStudy
     }
 
-    title_map = {
-        'org': 'Организации',
-        'person': 'Персоналии',
-        'doc': 'Документы',
-        'field_of_study': 'Области исследования'
-    }
-
     obj = obj_map[obj_type]
 
     # Determine default sort field based on object type
@@ -355,8 +352,8 @@ def list_view():
                 results.append([obj_type, item_obj.id, item_obj.name])
 
     page_info = {
-        'heading': title_map[obj_type],
-        'title': title_map[obj_type],
+        'heading': TITLE_CONVERTER_LIST[obj_type],
+        'title': TITLE_CONVERTER_LIST[obj_type],
         'type': obj_type
     }
 
@@ -383,8 +380,8 @@ def new():
     if len(request.args) != 1 or not request.args.get('type'):
         abort(501)
     obj_type = request.args.get('type')
-    title_converter = {'org': 'organization', 'person': 'person', 'doc': 'document'}
-    page = {'heading': f'New {title_converter[obj_type]}', 'title': f'New {title_converter[obj_type]}'}
+    page = {'heading': f'New {TITLE_CONVERTER_NEW_EDIT[obj_type]}',
+            'title': f'New {TITLE_CONVERTER_NEW_EDIT[obj_type]}'}
     obj_dict = {'org': Organization, 'person': Person, 'doc': Document}
     obj = obj_dict[obj_type]
 
@@ -402,12 +399,8 @@ def new():
     elif obj_type == 'org':
         data2 = {'person': []}
 
-    multiple_choice = {'academic_degree': ['действительный член', 'иностранный член', 'почётный член',
-                                           'член-корреспондент', 'профессор РАН']}
-    file = ['file']
-
     return render_template('new.html', page=page, data1=data_fin, data2=data2,
-                           obj_type=obj_type, file=file, multiple_choice=multiple_choice)
+                           obj_type=obj_type, file=FILE_FIELDS, multiple_choice=MULTIPLE_CHOICE_FIELDS)
 
 
 @app.route('/edit')
@@ -434,9 +427,8 @@ def edit():
         abort(501)
     obj_type = request.args.get('type')
     obj_id = request.args.get('id')
-    title_converter = {'org': 'organization', 'person': 'person',
-                       'doc': 'document', 'field_of_study': 'field of study'}
-    page = {'heading': f'Edit {title_converter[obj_type]}', 'title': f'Edit {title_converter[obj_type]}'}
+    page = {'heading': f'Edit {TITLE_CONVERTER_NEW_EDIT[obj_type]}',
+            'title': f'Edit {TITLE_CONVERTER_NEW_EDIT[obj_type]}'}
     obj = {'org': Organization, 'person': Person, 'doc': Document, 'field_of_study': FieldOfStudy}[obj_type]
 
     stmt = select(obj).where(obj.id == obj_id)
@@ -483,12 +475,9 @@ def edit():
             for obj_person in obj_real.authors:
                 person = obj_person.person
                 data2['person'].append({'type': 'person', 'id': person.id, 'name': str(person)})
-    multiple_choice = {'academic_degree': ['действительный член', 'иностранный член', 'почётный член',
-                                           'член-корреспондент', 'профессор РАН']}
-    file = ['file']
 
     return render_template('new.html', page=page, data1=data_fin2, data2=data2, obj_type=obj_type,
-                           multiple_choice=multiple_choice, file=file)
+                           multiple_choice=MULTIPLE_CHOICE_FIELDS, file=FILE_FIELDS)
 
 
 @app.route('/save', methods=['POST'])
