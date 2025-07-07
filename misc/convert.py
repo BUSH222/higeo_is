@@ -9,6 +9,7 @@ import zipfile
 import os
 import io
 from dotenv import load_dotenv
+from helper.cleanup.htmlcleaner import clean_html
 
 csv.field_size_limit(sys.maxsize)
 
@@ -257,10 +258,9 @@ def convert_person():
                     'death_date': death_date,
                     'death_place': row[13],
                     'academic_degree': row[14],
-                    # 'field_of_study': row[15],s
                     'area_of_study': row[16],
-                    'biography': row[18],
-                    'bibliography': row[19],
+                    'biography': clean_html(row[18]),
+                    'bibliography': clean_html(row[19]),
                     'photo': photo,
                     'comment': comment
                 }

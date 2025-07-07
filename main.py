@@ -522,6 +522,8 @@ def save():
         value.save(upload_path)
     if 'bibliography' in formdata:
         formdata['bibliography'] = clean_html(formdata['bibliography'])
+    if 'biography' in formdata:
+        formdata['biography'] = clean_html(formdata['biography'])
     connections = request.form.getlist('connection')
     obj_type = request.args.get('type')
     obj = {'org': Organization, 'person': Person, 'doc': Document}[obj_type]

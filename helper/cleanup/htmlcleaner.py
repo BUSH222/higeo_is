@@ -72,6 +72,7 @@ p.GIN
                 txt = txt.replace("<meta name=Generator content=Microsoft Word 15 (filtered)>", ' ')
             while "<body lang=RU link=blue vlink=purple style=word-wrap:break-word>" in txt:
                 txt = txt.replace("<body lang=RU link=blue vlink=purple style=word-wrap:break-word>", '<body lang=RU>')
+        return txt.strip()
     except Exception as e:
         print(f"Error cleaning HTML: {e}")
         return txt
