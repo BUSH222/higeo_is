@@ -3,6 +3,7 @@ from flask_login import login_required
 from helper import SECRET_KEY
 from helper.db.initialise_database import engine, Organization, Person, Document, FieldOfStudy
 from helper.db.initialise_database import DocumentAuthorship, OrganizationMembership, PersonFieldOfStudy
+from helper.cleanup.htmlcleaner import clean_html
 from helper.login.login import app_login, login_manager
 from sqlalchemy import select, func, extract, and_, inspect, text
 from sqlalchemy.orm import Session
@@ -519,7 +520,8 @@ def save():
         upload_path = f'static/uploads/[{str(datetime.now())}]' + value.filename
         formdata[key] = upload_path
         value.save(upload_path)
-
+    if 'bibliography' in formdata:
+        formdata['bibliography'] = clean_html(formdata['bibliography'])
     connections = request.form.getlist('connection')
     obj_type = request.args.get('type')
     obj = {'org': Organization, 'person': Person, 'doc': Document}[obj_type]
