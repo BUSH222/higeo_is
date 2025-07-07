@@ -277,7 +277,62 @@ def list_view():
     if not request.args.get('type'):
         abort(404)
 
-    assert request.args.get('type') in ['org', 'person', 'doc', 'field_of_study', 'geography']
+    assert request.args.get('type') in ['org', 'person', 'doc', 'field_of_study']
+
+    obj_type = request.args.get('type')
+
+    obj_map = {
+        'org': Organization,
+        'person': Person,
+        'doc': Document,
+        'field_of_study': FieldOfStudy
+    }
+
+    obj = obj_map[obj_type]
+
+    # Determine default sort field based on object type
+    if obj_type == 'person':
+        sort_field = request.args.get('sort', 'surname')
+        if sort_field == 'surname':
+            stmt = select(obj).order_by(obj.surname.collate('C'), obj.name.collate('C'))
+        else:
+            stmt = select(obj).order_by(getattr(obj, sort_field))
+    else:
+        sort_field = request.args.get('sort', 'name')
+        stmt = select(obj).order_by(func.lower(getattr(obj, sort_field)).collate('C'))
+
+    results = []
+    with Session(engine) as session:
+        data = session.execute(stmt)
+        for item in data:
+            if obj_type == 'person':
+                person = item[0]
+                results.append([obj_type, person.id, str(person)])
+            else:
+                item_obj = item[0]
+                results.append([obj_type, item_obj.id, item_obj.name])
+
+    page_info = {
+        'heading': TITLE_CONVERTER_LIST[obj_type],
+        'title': TITLE_CONVERTER_LIST[obj_type],
+        'type': obj_type
+    }
+
+    return render_template('list.html', results=results, page=page_info, result_use_pagination=True)
+
+
+@app.route('/list_custom')
+def list_view_custom():
+    if not request.args.get('type'):
+        abort(404)
+
+    assert request.args.get('type') in ['geography',
+                                        'acad_full_members',  # действительный член
+                                        'acad_foreign_members',  # иностранный член
+                                        'acad_honorary_members',  # почётный член
+                                        'acad_corresponding_members',  # член-корреспондент
+                                        'acad_professors',  # профессор РАН
+                                        ]
 
     obj_type = request.args.get('type')
 
@@ -318,46 +373,28 @@ def list_view():
             result = session.execute(query, {"limit": 100})
             results = result.fetchall()
         results = [['geography', row[0], f'{row[0]} - {row[1]} результатов'] for row in results]
-        return render_template('list.html', results=results, page=page_info, result_use_pagination=False)
-
-    obj_map = {
-        'org': Organization,
-        'person': Person,
-        'doc': Document,
-        'field_of_study': FieldOfStudy
-    }
-
-    obj = obj_map[obj_type]
-
-    # Determine default sort field based on object type
-    if obj_type == 'person':
-        sort_field = request.args.get('sort', 'surname')
-        if sort_field == 'surname':
-            stmt = select(obj).order_by(obj.surname.collate('C'), obj.name.collate('C'))
-        else:
-            stmt = select(obj).order_by(getattr(obj, sort_field))
-    else:
-        sort_field = request.args.get('sort', 'name')
-        stmt = select(obj).order_by(func.lower(getattr(obj, sort_field)).collate('C'))
-
-    results = []
-    with Session(engine) as session:
-        data = session.execute(stmt)
-        for item in data:
-            if obj_type == 'person':
-                person = item[0]
-                results.append([obj_type, person.id, str(person)])
-            else:
-                item_obj = item[0]
-                results.append([obj_type, item_obj.id, item_obj.name])
-
-    page_info = {
-        'heading': TITLE_CONVERTER_LIST[obj_type],
-        'title': TITLE_CONVERTER_LIST[obj_type],
-        'type': obj_type
-    }
-
-    return render_template('list.html', results=results, page=page_info, result_use_pagination=True)
+        use_pagination = False
+    elif obj_type.startswith('acad_'):
+        acad_map = {
+            'acad_full_members': 'действительный член',
+            'acad_foreign_members': 'иностранный член',
+            'acad_honorary_members': 'почётный член',
+            'acad_corresponding_members': 'член-корреспондент',
+            'acad_professors': 'профессор РАН'
+        }
+        query = select(Person).filter(
+            Person.academic_degree == acad_map[obj_type]
+        ).order_by(Person.surname.collate('C'))
+        print(query)
+        with Session(engine) as session:
+            result = session.execute(query)
+            results = [['person', person[0]._oldid, str(person[0])] for person in result.fetchall()]
+        page_info = {
+            'heading': 'Список академических степеней - ' + acad_map[obj_type],
+            'title': 'Список академических степеней - ' + acad_map[obj_type],
+        }
+        use_pagination = True
+    return render_template('list.html', results=results, page=page_info, result_use_pagination=use_pagination)
 
 
 @app.route('/new')
