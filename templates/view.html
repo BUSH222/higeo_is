@@ -37,25 +37,31 @@
                                     {% endif %}
                                 </div>
                             </div>
-                        {% elif key in parameters.multiple %}
-                            <div class="row hover-highlight g-0">
-                                <div class="col-12 fw-bold">
-                                    <div class="col-lg-3 fw-bold">{{ key }}</div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="row">
+                            {% elif key in parameters.multiple %}
+                                <div class="row hover-highlight g-0">
+                                    <div class="col-12 fw-bold">{{ key }}</div>
+                                    <div class="col-12">
                                         {% if value is iterable and value is not string and value is not none %}
-                                            {% for item in value %}
-                                                <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-1">
-                                                    <div class="result-item">
-                                                        <a href="/view?type={{item[0]}}&id={{item[1]}}">{{item[2]}}</a>
+                                            {% set num_items = value|length %}
+                                            {% set num_cols = 4 %}
+                                            {% set items_per_col = ((num_items + num_cols - 1) // num_cols)|int %}
+                                            
+                                            <div class="row">
+                                                {% for col in range(num_cols) %}
+                                                    <div class="col-12 col-xl-3">
+                                                        {% for i in range(col * items_per_col, (col + 1) * items_per_col) %}
+                                                            {% if i < num_items %}
+                                                                <div class="result-item mb-1">
+                                                                    <a href="/view?type={{value[i][0]}}&id={{value[i][1]}}">{{value[i][2]}}</a>
+                                                                </div>
+                                                            {% endif %}
+                                                        {% endfor %}
                                                     </div>
-                                                </div>
-                                            {% endfor %}
+                                                {% endfor %}
+                                            </div>
                                         {% endif %}
                                     </div>
                                 </div>
-                            </div>
                         {% else %}
                             <div class="row hover-highlight g-0">
                                 <div class="col-lg-3 fw-bold">{{ key }}</div>
