@@ -385,10 +385,9 @@ def list_view_custom():
         query = select(Person).filter(
             Person.academic_degree == acad_map[obj_type]
         ).order_by(Person.surname.collate('C'))
-        print(query)
         with Session(engine) as session:
             result = session.execute(query)
-            results = [['person', person[0]._oldid, str(person[0])] for person in result.fetchall()]
+            results = [['person', person[0].id, str(person[0])] for person in result.fetchall()]
         page_info = {
             'heading': 'Список академических степеней - ' + acad_map[obj_type],
             'title': 'Список академических степеней - ' + acad_map[obj_type],
