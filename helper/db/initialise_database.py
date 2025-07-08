@@ -122,6 +122,9 @@ class Person(Base):
 
     area_of_study: Mapped[str] = mapped_column(nullable=True)  # geography
 
+    education: Mapped[list["PersonEducation"]] = \
+        relationship("PersonEducation", back_populates="person")
+
     organizations: Mapped[list["OrganizationMembership"]] = \
         relationship("OrganizationMembership", back_populates="person")
     documents: Mapped[list["DocumentAuthorship"]] = \
@@ -144,6 +147,9 @@ class Person(Base):
                   sorted([['field_of_study', f.field_of_study.id, str(f.field_of_study)] for f in self.field_of_study],
                          key=lambda x: x[2]),
                   'Районы работ': self.area_of_study,
+                  'Образование':
+                  sorted([['org', org.organization.id, str(org.organization)] for org in self.education],
+                         key=lambda x: x[2]),
                   'Связанные организации':
                   sorted([['org', org.organization.id, str(org.organization)] for org in self.organizations],
                          key=lambda x: x[2]),
@@ -181,6 +187,8 @@ class Organization(Base):
     name: Mapped[str] = mapped_column(nullable=False)
     members: Mapped[list["OrganizationMembership"]] = \
         relationship("OrganizationMembership", back_populates="organization")
+    alumni: Mapped[list["PersonEducation"]] = \
+        relationship("PersonEducation", back_populates="organization")
     org_type: Mapped[str] = mapped_column(nullable=True)
     history: Mapped[str] = mapped_column(nullable=True)
     comment: Mapped[str] = mapped_column(nullable=True)
@@ -297,6 +305,25 @@ class OrganizationMembership(Base):
 
     person: Mapped["Person"] = relationship("Person", back_populates="organizations")
     organization: Mapped["Organization"] = relationship("Organization", back_populates="members")
+
+
+class PersonEducation(Base):
+    """
+    Represents the membership of a person in an organization.
+    Attributes:
+        id (int): The primary key of the membership record.
+        person_id (int): The foreign key referencing the person.
+        organization_id (int): The foreign key referencing the organization.
+        person (Person): The relationship to the Person model.
+        organization (Organization): The relationship to the Organization model.
+    """
+    __tablename__ = 'person_education'
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    person_id: Mapped[int] = mapped_column(ForeignKey('person.id'))
+    organization_id: Mapped[int] = mapped_column(ForeignKey('organization.id'))
+
+    person: Mapped["Person"] = relationship("Person", back_populates="education")
+    organization: Mapped["Organization"] = relationship("Organization", back_populates="alumni")
 
 
 class DocumentAuthorship(Base):

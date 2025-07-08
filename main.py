@@ -8,7 +8,10 @@ from helper import (SECRET_KEY,
                     TITLE_CONVERTER_LIST
                     )
 from helper.db.initialise_database import engine, Organization, Person, Document, FieldOfStudy
-from helper.db.initialise_database import DocumentAuthorship, OrganizationMembership, PersonFieldOfStudy
+from helper.db.initialise_database import (DocumentAuthorship,
+                                           OrganizationMembership,
+                                           PersonFieldOfStudy,
+                                           PersonEducation)
 from helper.cleanup.htmlcleaner import clean_html
 from helper.login.login import app_login, login_manager
 from sqlalchemy import select, func, extract, and_, inspect, text
@@ -424,12 +427,12 @@ def new():
     mapper = inspect(obj)
     data_fin = dict()
     for column in mapper.attrs:
-        if column.key not in ['organizations', 'documents', 'members', 'authors', 'field_of_study'] and \
+        if column.key not in ['organizations', 'documents', 'members', 'authors', 'field_of_study', 'education'] and \
                 column.key != 'id':
             data_fin[column.key] = ''
     data2 = {}
     if obj_type == 'person':
-        data2 = {'doc': [], 'org': [], 'field_of_study': []}
+        data2 = {'doc': [], 'org': [], 'field_of_study': [], 'education': []}
     elif obj_type == 'doc':
         data2 = {'person': []}
     elif obj_type == 'org':
@@ -491,7 +494,7 @@ def edit():
         obj_real = session.query(obj).filter(obj.id == obj_id).one_or_none()
         assert obj_real is not None
         if obj_type == 'person':
-            data2 = {"org": [], "doc": [], "field_of_study": []}
+            data2 = {"org": [], "doc": [], "field_of_study": [], 'education': []}
             for doc_authorship in obj_real.documents:  # doc_authorship is DocumentAuthorship
                 doc = doc_authorship.document
                 data2['doc'].append({'type': 'doc', 'id': doc.id, 'name': doc.name})
@@ -501,6 +504,9 @@ def edit():
             for field_relationship in obj_real.field_of_study:
                 field = field_relationship.field_of_study
                 data2['field_of_study'].append({'type': 'field_of_study', 'id': field.id, 'name': field.name})
+            for person_education in obj_real.education:
+                org = person_education.organization
+                data2['education'].append({'type': 'org', 'id': org.id, 'name': org.name})
         elif obj_type == 'org':
             data2 = {'person': []}
             for obj_person in obj_real.members:
@@ -576,20 +582,32 @@ def save():
             session.query(DocumentAuthorship).filter(DocumentAuthorship.person_id == obj_id).delete()
             session.query(OrganizationMembership).filter(OrganizationMembership.person_id == obj_id).delete()
             session.query(PersonFieldOfStudy).filter(PersonFieldOfStudy.person_id == obj_id).delete()
+            # Also delete education relationships
+            session.query(PersonEducation).filter(PersonEducation.person_id == obj_id).delete()
         elif obj_type == 'org':
             session.query(OrganizationMembership).filter(OrganizationMembership.organization_id == obj_id).delete()
         elif obj_type == 'doc':
             session.query(DocumentAuthorship).filter(DocumentAuthorship.document_id == obj_id).delete()
         session.commit()
+
         for connection in connections:
-            connection_type, connection_id = connection.split(':')
+            connection_parts = connection.split(':')
+            connection_type = connection_parts[0]
+            connection_id = connection_parts[1]
+            connection_category = connection_parts[2] if len(connection_parts) > 2 else None
             if obj == Person:
                 if connection_type == 'doc':
                     session.add(DocumentAuthorship(document_id=connection_id, person_id=obj_id))
                     session.commit()
                 elif connection_type == 'org':
-                    session.add(OrganizationMembership(organization_id=connection_id, person_id=obj_id))
-                    session.commit()
+                    if connection_category == 'education':
+                        # This is an education relationship
+                        session.add(PersonEducation(organization_id=connection_id, person_id=obj_id))
+                        session.commit()
+                    else:
+                        # This is a regular organization membership
+                        session.add(OrganizationMembership(organization_id=connection_id, person_id=obj_id))
+                        session.commit()
                 elif connection_type == 'field_of_study':
                     session.add(PersonFieldOfStudy(field_of_study_id=connection_id, person_id=obj_id))
                     session.commit()
