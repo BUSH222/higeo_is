@@ -25,8 +25,8 @@ SECRET_KEY = os.environ.get("SECRET_KEY", token_urlsafe(16))
 # Project constants
 MULTIPLE_CHOICE_FIELDS = {
     'academic_degree': [
-        'действительный член', 'иностранный член', 'почётный член',
-        'член-корреспондент', 'профессор РАН'
+        '', 'действительный член', 'иностранный член',
+        'почётный член', 'член-корреспондент', 'профессор РАН'
     ]
 }
 FILE_FIELDS = ['file']

@@ -427,8 +427,8 @@ def new():
     mapper = inspect(obj)
     data_fin = dict()
     for column in mapper.attrs:
-        if column.key not in ['organizations', 'documents', 'members', 'authors', 'field_of_study', 'education'] and \
-                column.key != 'id':
+        if column.key not in ['organizations', 'documents', 'members', 'authors', 'field_of_study',
+                              'education', 'alumni'] and column.key != 'id':
             data_fin[column.key] = ''
     data2 = {}
     if obj_type == 'person':
@@ -436,7 +436,7 @@ def new():
     elif obj_type == 'doc':
         data2 = {'person': []}
     elif obj_type == 'org':
-        data2 = {'person': []}
+        data2 = {'person': [], 'alumni': []}
 
     return render_template('new.html', page=page, data1=data_fin, data2=data2,
                            obj_type=obj_type, file=FILE_FIELDS, multiple_choice=MULTIPLE_CHOICE_FIELDS)
@@ -508,10 +508,13 @@ def edit():
                 org = person_education.organization
                 data2['education'].append({'type': 'org', 'id': org.id, 'name': org.name})
         elif obj_type == 'org':
-            data2 = {'person': []}
+            data2 = {'person': [], 'alumni': []}
             for obj_person in obj_real.members:
                 person = obj_person.person
                 data2['person'].append({'type': 'person', 'id': person.id, 'name': str(person)})
+            for person_education in obj_real.alumni:
+                person = person_education.person
+                data2['alumni'].append({'type': 'person', 'id': person.id, 'name': str(person)})
         elif obj_type == 'doc':
             data2 = {'person': []}
             for obj_person in obj_real.authors:
@@ -582,7 +585,6 @@ def save():
             session.query(DocumentAuthorship).filter(DocumentAuthorship.person_id == obj_id).delete()
             session.query(OrganizationMembership).filter(OrganizationMembership.person_id == obj_id).delete()
             session.query(PersonFieldOfStudy).filter(PersonFieldOfStudy.person_id == obj_id).delete()
-            # Also delete education relationships
             session.query(PersonEducation).filter(PersonEducation.person_id == obj_id).delete()
         elif obj_type == 'org':
             session.query(OrganizationMembership).filter(OrganizationMembership.organization_id == obj_id).delete()
@@ -612,8 +614,12 @@ def save():
                     session.add(PersonFieldOfStudy(field_of_study_id=connection_id, person_id=obj_id))
                     session.commit()
             elif obj == Organization:
-                session.add(OrganizationMembership(organization_id=obj_id, person_id=connection_id))
-                session.commit()
+                if connection_category == 'alumni':
+                    session.add(PersonEducation(organization_id=obj_id, person_id=connection_id))
+                    session.commit()
+                else:
+                    session.add(OrganizationMembership(organization_id=obj_id, person_id=connection_id))
+                    session.commit()
             elif obj == Document:
                 session.add(DocumentAuthorship(document_id=obj_id, person_id=connection_id))
                 session.commit()
