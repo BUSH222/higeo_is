@@ -5,7 +5,8 @@ from helper import (SECRET_KEY,
                     FILE_FIELDS,
                     TITLE_CONVERTER_NEW_EDIT,
                     HEADING_CONVERTER,
-                    TITLE_CONVERTER_LIST
+                    TITLE_CONVERTER_LIST,
+                    CONNECTION_TYPE_MAPPING
                     )
 from helper.db.initialise_database import engine, Organization, Person, Document, FieldOfStudy
 from helper.db.initialise_database import (DocumentAuthorship,
@@ -439,7 +440,8 @@ def new():
         data2 = {'person': [], 'alumni': []}
 
     return render_template('new.html', page=page, data1=data_fin, data2=data2,
-                           obj_type=obj_type, file=FILE_FIELDS, multiple_choice=MULTIPLE_CHOICE_FIELDS)
+                           obj_type=obj_type, file=FILE_FIELDS, multiple_choice=MULTIPLE_CHOICE_FIELDS,
+                           connection_types=CONNECTION_TYPE_MAPPING)
 
 
 @app.route('/edit')
@@ -522,7 +524,8 @@ def edit():
                 data2['person'].append({'type': 'person', 'id': person.id, 'name': str(person)})
 
     return render_template('new.html', page=page, data1=data_fin2, data2=data2, obj_type=obj_type,
-                           multiple_choice=MULTIPLE_CHOICE_FIELDS, file=FILE_FIELDS)
+                           multiple_choice=MULTIPLE_CHOICE_FIELDS, file=FILE_FIELDS,
+                           connection_types=CONNECTION_TYPE_MAPPING)
 
 
 @app.route('/save', methods=['POST'])
@@ -658,6 +661,7 @@ def delete():
                 session.query(DocumentAuthorship).filter(DocumentAuthorship.person_id == obj_id).delete()
                 session.query(OrganizationMembership).filter(OrganizationMembership.person_id == obj_id).delete()
                 session.query(PersonFieldOfStudy).filter(PersonFieldOfStudy.person_id == obj_id).delete()
+                session.query(PersonEducation).filter(PersonEducation.person_id == obj_id).delete()
             elif obj_type == 'org':
                 session.query(OrganizationMembership).filter(OrganizationMembership.organization_id == obj_id).delete()
             elif obj_type == 'doc':

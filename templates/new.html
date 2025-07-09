@@ -36,7 +36,7 @@
             <div class="col-lg-10">
                 <!-- Search bar for adding new connections -->
                 <input type="text" class="form-control search-input" placeholder="Поиск..." 
-                       data-type="{% if key == 'education' %}org{% elif key == 'alumni' %}person{% else %}{{ values[0]['type'] if values else key }}{% endif %}" data-key="{{ key }}"> <!-- Special case for education -->
+                    data-type="{{ connection_types[key] }}" data-key="{{ key }}">
                 <div class="search-results dropdown-menu"></div>
 
                 <!-- List of existing connections -->
@@ -44,7 +44,7 @@
                     {% for obj in values %}
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         {{ obj.name }}
-                        <input type="hidden" name="connection" value="{{ obj.type }}:{{ obj.id }}">
+                        <input type="hidden" name="connection" value="{{ obj.type }}:{{ obj.id }}:{{ key }}">
                         <button type="button" class="btn btn-danger btn-sm remove-connection">Удалить</button>
                     </li>
                     {% endfor %}

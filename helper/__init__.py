@@ -35,6 +35,16 @@ MULTIPLE_CHOICE_FIELDS = {
 FILE_FIELDS = ['file']
 
 
+CONNECTION_TYPE_MAPPING = {
+    'doc': 'doc',
+    'org': 'org',
+    'person': 'person',
+    'education': 'org',     # education connects to organizations
+    'alumni': 'person',     # alumni connects to persons
+    'field_of_study': 'field_of_study'
+}
+
+
 TITLE_CONVERTER_NEW_EDIT = {
     'org': 'organization',
     'person': 'person',
