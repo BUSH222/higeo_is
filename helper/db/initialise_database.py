@@ -140,7 +140,7 @@ class Person(Base):
         values = {'Фамилия Имя Отчество': '<b>' + str(self) + '</b>',
                   'Дата рождения': self.birth_date,
                   'Место рождения': self.birth_place,
-                  'Дата сметри': self.death_date,
+                  'Дата смерти': self.death_date,
                   'Место смерти': self.death_place,
                   'Академическое звание': self.academic_degree,
                   'Область исследования':
