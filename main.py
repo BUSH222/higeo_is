@@ -113,7 +113,7 @@ def view():
 
     viewtype_to_object = {'org': Organization, 'person': Person, 'doc': Document, 'field_of_study': FieldOfStudy}
     parameters = {'single': ['Биография', 'Библиография'],
-                  'multiple': ['Связанные персоналии', 'Связанные исследователи']}
+                  'multiple': ['Связанные персоналии', 'Связанные исследователи', 'Выпускники']}
     viewtype = request.args.get('type')
     viewid = int(request.args.get('id'))
     obj = viewtype_to_object[viewtype]

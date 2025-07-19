@@ -20,67 +20,69 @@
                             onclick="return confirm('Вы действительно хотите стереть всю страницу?');">Delete</a>
                     {% endif %}
                     {% for key, value in data.items() %}
-                        {% if key in parameters.single %}
-                            <div class="row hover-highlight g-0">
-                                <div class="col-12 fw-bold">{{ key }}</div>
-                                <div class="col-12">
-                                    {% if value is iterable and value is not string and value is not none %}
-                                        {% for item in value %}
-                                        <div>
-                                            <a href="/view?type={{item[0]}}&id={{item[1]}}">{{item[2]}}</a>
-                                        </div>
-                                        {% endfor %}
-                                    {% else %}
-                                        <p class="text-break m-02">
-                                            {{ value|safe }}
-                                        </p>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            {% elif key in parameters.multiple %}
+                        {% if value is not none and (value is not iterable or (value is iterable and value|length > 0)) %}
+                            {% if key in parameters.single %}
                                 <div class="row hover-highlight g-0">
                                     <div class="col-12 fw-bold">{{ key }}</div>
                                     <div class="col-12">
                                         {% if value is iterable and value is not string and value is not none %}
-                                            {% set num_items = value|length %}
-                                            {% set num_cols = 4 %}
-                                            {% set items_per_col = ((num_items + num_cols - 1) // num_cols)|int %}
-                                            
-                                            <div class="row">
-                                                {% for col in range(num_cols) %}
-                                                    <div class="col-12 col-xl-3">
-                                                        {% for i in range(col * items_per_col, (col + 1) * items_per_col) %}
-                                                            {% if i < num_items %}
-                                                                <div class="result-item mb-1">
-                                                                    <a href="/view?type={{value[i][0]}}&id={{value[i][1]}}">{{value[i][2]}}</a>
-                                                                </div>
-                                                            {% endif %}
-                                                        {% endfor %}
-                                                    </div>
-                                                {% endfor %}
+                                            {% for item in value %}
+                                            <div>
+                                                <a href="/view?type={{item[0]}}&id={{item[1]}}">{{item[2]}}</a>
                                             </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            <p class="text-break m-02">
+                                                {{ value|safe }}
+                                            </p>
                                         {% endif %}
                                     </div>
                                 </div>
-                        {% else %}
-                            <div class="row hover-highlight g-0">
-                                <div class="col-lg-3 fw-bold">{{ key }}</div>
-                                <div class="col-lg-9">
-                                    {% if value is iterable and value is not string and value is not none %}
-                                        {% for item in value %}
-                                        <div>
-                                            <a href="/view?type={{item[0]}}&id={{item[1]}}">{{item[2]}}</a>
+                                {% elif key in parameters.multiple %}
+                                    <div class="row hover-highlight g-0">
+                                        <div class="col-12 fw-bold">{{ key }}</div>
+                                        <div class="col-12">
+                                            {% if value is iterable and value is not string and value is not none %}
+                                                {% set num_items = value|length %}
+                                                {% set num_cols = 4 %}
+                                                {% set items_per_col = ((num_items + num_cols - 1) // num_cols)|int %}
+                                                
+                                                <div class="row">
+                                                    {% for col in range(num_cols) %}
+                                                        <div class="col-12 col-xl-3">
+                                                            {% for i in range(col * items_per_col, (col + 1) * items_per_col) %}
+                                                                {% if i < num_items %}
+                                                                    <div class="result-item mb-1">
+                                                                        <a href="/view?type={{value[i][0]}}&id={{value[i][1]}}">{{value[i][2]}}</a>
+                                                                    </div>
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
                                         </div>
-                                        {% endfor %}
-                                    {% elif value is string and value.startswith('static/uploads/') %}
-                                        <a class="m-02" href="/{{ value }}" target="_blank">Скачать файл</a>
-                                    {% else %}
-                                        <p class="text-break m-02">
-                                            {{ value|safe }}
-                                        </p>
-                                    {% endif %}
+                                    </div>
+                            {% else %}
+                                <div class="row hover-highlight g-0">
+                                    <div class="col-lg-3 fw-bold">{{ key }}</div>
+                                    <div class="col-lg-9">
+                                        {% if value is iterable and value is not string and value is not none %}
+                                            {% for item in value %}
+                                            <div>
+                                                <a href="/view?type={{item[0]}}&id={{item[1]}}">{{item[2]}}</a>
+                                            </div>
+                                            {% endfor %}
+                                        {% elif value is string and value.startswith('static/uploads/') %}
+                                            <a class="m-02" href="/{{ value }}" target="_blank">Скачать файл</a>
+                                        {% else %}
+                                            <p class="text-break m-02">
+                                                {{ value|safe }}
+                                            </p>
+                                        {% endif %}
+                                    </div>
                                 </div>
-                            </div>
+                            {% endif %}
                         {% endif %}
                     {% endfor %}
                 </div>

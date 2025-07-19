@@ -150,7 +150,7 @@ class Person(Base):
                   'Образование':
                   sorted([['org', org.organization.id, str(org.organization)] for org in self.education],
                          key=lambda x: x[2]),
-                  'Связанные организации':
+                  'Места работы':
                   sorted([['org', org.organization.id, str(org.organization)] for org in self.organizations],
                          key=lambda x: x[2]),
                   'Биография': self.biography,
@@ -200,6 +200,9 @@ class Organization(Base):
                   'Комментарий': self.comment,
                   'Связанные персоналии':
                   sorted([['person', member.person.id, str(member.person)] for member in self.members],
+                         key=lambda x: x[2]),
+                  'Выпускники':
+                  sorted([['person', alum.person.id, str(alum.person)] for alum in self.alumni],
                          key=lambda x: x[2])
                   }
         return clean_dict(values)
