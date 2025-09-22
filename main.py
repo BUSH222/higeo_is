@@ -1,8 +1,19 @@
 from flask import Flask, render_template, request, abort, jsonify
 from flask_login import login_required
-from helper import SECRET_KEY
+from helper import (SECRET_KEY,
+                    MULTIPLE_CHOICE_FIELDS,
+                    FILE_FIELDS,
+                    TITLE_CONVERTER_NEW_EDIT,
+                    HEADING_CONVERTER,
+                    TITLE_CONVERTER_LIST,
+                    CONNECTION_TYPE_MAPPING
+                    )
 from helper.db.initialise_database import engine, Organization, Person, Document, FieldOfStudy
-from helper.db.initialise_database import DocumentAuthorship, OrganizationMembership, PersonFieldOfStudy
+from helper.db.initialise_database import (DocumentAuthorship,
+                                           OrganizationMembership,
+                                           PersonFieldOfStudy,
+                                           PersonEducation)
+from helper.cleanup.htmlcleaner import clean_html
 from helper.login.login import app_login, login_manager
 from sqlalchemy import select, func, extract, and_, inspect, text
 from sqlalchemy.orm import Session
@@ -17,6 +28,8 @@ app = Flask(__name__)
 app.register_blueprint(app_login)
 app.config['SECRET_KEY'] = SECRET_KEY
 app.config['SESSION_COOKIE_DOMAIN'] = False
+app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024
+app.config['MAX_FORM_MEMORY_SIZE'] = 32 * 1024 * 1024
 
 login_manager.init_app(app)
 login_manager.login_view = 'app_login.login'
@@ -93,12 +106,14 @@ def view():
             'id': place,
             'type': 'geography'
         }
+        parameters = {'single': [],
+                      'multiple': ['Связанные персоналии', 'Связанные исследователи']}
 
-        return render_template('view.html', data=data, page=page)
+        return render_template('view.html', data=data, page=page, parameters=parameters)
 
     viewtype_to_object = {'org': Organization, 'person': Person, 'doc': Document, 'field_of_study': FieldOfStudy}
-    viewtype_to_str = {'org': 'Организация', 'person': 'Персоналия',
-                       'doc': 'Документ', 'field_of_study': 'Область знаний'}
+    parameters = {'single': ['Биография', 'Библиография'],
+                  'multiple': ['Связанные персоналии', 'Связанные исследователи', 'Выпускники']}
     viewtype = request.args.get('type')
     viewid = int(request.args.get('id'))
     obj = viewtype_to_object[viewtype]
@@ -106,7 +121,7 @@ def view():
     with Session(engine) as session:
         data = session.execute(stmt).scalar_one_or_none()
         data = data.values_ru()
-    page = {'heading': f'{viewtype_to_str[viewtype]}', 'title': f'View {obj.__name__.lower()}',
+    page = {'heading': f'{HEADING_CONVERTER[viewtype]}', 'title': f'View {obj.__name__.lower()}',
             'id': viewid, 'type': viewtype}
     if "Фотография" in data:
         data["Фотография"] = f'<img src="{data["Фотография"]}" alt="Фотография" />'
@@ -141,7 +156,7 @@ def view():
                     continue
             items.insert(insert_idx, (death_key, death_value))
             data = dict(items)
-    return render_template('view.html', data=data, page=page)
+    return render_template('view.html', data=data, page=page, parameters=parameters)
 
 
 @app.route('/search')
@@ -266,7 +281,62 @@ def list_view():
     if not request.args.get('type'):
         abort(404)
 
-    assert request.args.get('type') in ['org', 'person', 'doc', 'field_of_study', 'geography']
+    assert request.args.get('type') in ['org', 'person', 'doc', 'field_of_study']
+
+    obj_type = request.args.get('type')
+
+    obj_map = {
+        'org': Organization,
+        'person': Person,
+        'doc': Document,
+        'field_of_study': FieldOfStudy
+    }
+
+    obj = obj_map[obj_type]
+
+    # Determine default sort field based on object type
+    if obj_type == 'person':
+        sort_field = request.args.get('sort', 'surname')
+        if sort_field == 'surname':
+            stmt = select(obj).order_by(obj.surname.collate('C'), obj.name.collate('C'))
+        else:
+            stmt = select(obj).order_by(getattr(obj, sort_field))
+    else:
+        sort_field = request.args.get('sort', 'name')
+        stmt = select(obj).order_by(func.lower(getattr(obj, sort_field)).collate('C'))
+
+    results = []
+    with Session(engine) as session:
+        data = session.execute(stmt)
+        for item in data:
+            if obj_type == 'person':
+                person = item[0]
+                results.append([obj_type, person.id, str(person)])
+            else:
+                item_obj = item[0]
+                results.append([obj_type, item_obj.id, item_obj.name])
+
+    page_info = {
+        'heading': TITLE_CONVERTER_LIST[obj_type],
+        'title': TITLE_CONVERTER_LIST[obj_type],
+        'type': obj_type
+    }
+
+    return render_template('list.html', results=results, page=page_info, result_use_pagination=True)
+
+
+@app.route('/list_custom')
+def list_view_custom():
+    if not request.args.get('type'):
+        abort(404)
+
+    assert request.args.get('type') in ['geography',
+                                        'acad_full_members',  # действительный член
+                                        'acad_foreign_members',  # иностранный член
+                                        'acad_honorary_members',  # почётный член
+                                        'acad_corresponding_members',  # член-корреспондент
+                                        'acad_professors',  # профессор РАН
+                                        ]
 
     obj_type = request.args.get('type')
 
@@ -307,53 +377,27 @@ def list_view():
             result = session.execute(query, {"limit": 100})
             results = result.fetchall()
         results = [['geography', row[0], f'{row[0]} - {row[1]} результатов'] for row in results]
-        return render_template('list.html', results=results, page=page_info, result_use_pagination=False)
-
-    obj_map = {
-        'org': Organization,
-        'person': Person,
-        'doc': Document,
-        'field_of_study': FieldOfStudy
-    }
-
-    title_map = {
-        'org': 'Организации',
-        'person': 'Персоналии',
-        'doc': 'Документы',
-        'field_of_study': 'Области исследования'
-    }
-
-    obj = obj_map[obj_type]
-
-    # Determine default sort field based on object type
-    if obj_type == 'person':
-        sort_field = request.args.get('sort', 'surname')
-        if sort_field == 'surname':
-            stmt = select(obj).order_by(obj.surname.collate('C'), obj.name.collate('C'))
-        else:
-            stmt = select(obj).order_by(getattr(obj, sort_field))
-    else:
-        sort_field = request.args.get('sort', 'name')
-        stmt = select(obj).order_by(func.lower(getattr(obj, sort_field)).collate('C'))
-
-    results = []
-    with Session(engine) as session:
-        data = session.execute(stmt)
-        for item in data:
-            if obj_type == 'person':
-                person = item[0]
-                results.append([obj_type, person.id, str(person)])
-            else:
-                item_obj = item[0]
-                results.append([obj_type, item_obj.id, item_obj.name])
-
-    page_info = {
-        'heading': title_map[obj_type],
-        'title': title_map[obj_type],
-        'type': obj_type
-    }
-
-    return render_template('list.html', results=results, page=page_info, result_use_pagination=True)
+        use_pagination = False
+    elif obj_type.startswith('acad_'):
+        acad_map = {
+            'acad_full_members': 'действительный член',
+            'acad_foreign_members': 'иностранный член',
+            'acad_honorary_members': 'почётный член',
+            'acad_corresponding_members': 'член-корреспондент',
+            'acad_professors': 'профессор РАН'
+        }
+        query = select(Person).filter(
+            Person.academic_degree == acad_map[obj_type]
+        ).order_by(Person.surname.collate('C'))
+        with Session(engine) as session:
+            result = session.execute(query)
+            results = [['person', person[0].id, str(person[0])] for person in result.fetchall()]
+        page_info = {
+            'heading': 'Список академических степеней - ' + acad_map[obj_type],
+            'title': 'Список академических степеней - ' + acad_map[obj_type],
+        }
+        use_pagination = True
+    return render_template('list.html', results=results, page=page_info, result_use_pagination=use_pagination)
 
 
 @app.route('/new')
@@ -376,27 +420,28 @@ def new():
     if len(request.args) != 1 or not request.args.get('type'):
         abort(501)
     obj_type = request.args.get('type')
-    title_converter = {'org': 'organization', 'person': 'person', 'doc': 'document'}
-    page = {'heading': f'New {title_converter[obj_type]}', 'title': f'New {title_converter[obj_type]}'}
+    page = {'heading': f'New {TITLE_CONVERTER_NEW_EDIT[obj_type]}',
+            'title': f'New {TITLE_CONVERTER_NEW_EDIT[obj_type]}'}
     obj_dict = {'org': Organization, 'person': Person, 'doc': Document}
     obj = obj_dict[obj_type]
 
     mapper = inspect(obj)
     data_fin = dict()
     for column in mapper.attrs:
-        if column.key not in ['organizations', 'documents', 'members', 'authors', 'field_of_study'] and \
-                column.key != 'id':
+        if column.key not in ['organizations', 'documents', 'members', 'authors', 'field_of_study',
+                              'education', 'alumni'] and column.key != 'id':
             data_fin[column.key] = ''
-    print(data_fin)
     data2 = {}
     if obj_type == 'person':
-        data2 = {'doc': [], 'org': [], 'field_of_study': []}
+        data2 = {'doc': [], 'org': [], 'field_of_study': [], 'education': []}
     elif obj_type == 'doc':
         data2 = {'person': []}
     elif obj_type == 'org':
-        data2 = {'person': []}
+        data2 = {'person': [], 'alumni': []}
 
-    return render_template('new.html', page=page, data1=data_fin, data2=data2, obj_type=obj_type)
+    return render_template('new.html', page=page, data1=data_fin, data2=data2,
+                           obj_type=obj_type, file=FILE_FIELDS, multiple_choice=MULTIPLE_CHOICE_FIELDS,
+                           connection_types=CONNECTION_TYPE_MAPPING)
 
 
 @app.route('/edit')
@@ -423,9 +468,8 @@ def edit():
         abort(501)
     obj_type = request.args.get('type')
     obj_id = request.args.get('id')
-    title_converter = {'org': 'organization', 'person': 'person',
-                       'doc': 'document', 'field_of_study': 'field of study'}
-    page = {'heading': f'Edit {title_converter[obj_type]}', 'title': f'Edit {title_converter[obj_type]}'}
+    page = {'heading': f'Edit {TITLE_CONVERTER_NEW_EDIT[obj_type]}',
+            'title': f'Edit {TITLE_CONVERTER_NEW_EDIT[obj_type]}'}
     obj = {'org': Organization, 'person': Person, 'doc': Document, 'field_of_study': FieldOfStudy}[obj_type]
 
     stmt = select(obj).where(obj.id == obj_id)
@@ -452,7 +496,7 @@ def edit():
         obj_real = session.query(obj).filter(obj.id == obj_id).one_or_none()
         assert obj_real is not None
         if obj_type == 'person':
-            data2 = {"org": [], "doc": [], "field_of_study": []}
+            data2 = {"org": [], "doc": [], "field_of_study": [], 'education': []}
             for doc_authorship in obj_real.documents:  # doc_authorship is DocumentAuthorship
                 doc = doc_authorship.document
                 data2['doc'].append({'type': 'doc', 'id': doc.id, 'name': doc.name})
@@ -462,18 +506,26 @@ def edit():
             for field_relationship in obj_real.field_of_study:
                 field = field_relationship.field_of_study
                 data2['field_of_study'].append({'type': 'field_of_study', 'id': field.id, 'name': field.name})
+            for person_education in obj_real.education:
+                org = person_education.organization
+                data2['education'].append({'type': 'org', 'id': org.id, 'name': org.name})
         elif obj_type == 'org':
-            data2 = {'person': []}
+            data2 = {'person': [], 'alumni': []}
             for obj_person in obj_real.members:
                 person = obj_person.person
                 data2['person'].append({'type': 'person', 'id': person.id, 'name': str(person)})
+            for person_education in obj_real.alumni:
+                person = person_education.person
+                data2['alumni'].append({'type': 'person', 'id': person.id, 'name': str(person)})
         elif obj_type == 'doc':
             data2 = {'person': []}
             for obj_person in obj_real.authors:
                 person = obj_person.person
                 data2['person'].append({'type': 'person', 'id': person.id, 'name': str(person)})
 
-    return render_template('new.html', page=page, data1=data_fin2, data2=data2, obj_type=obj_type)
+    return render_template('new.html', page=page, data1=data_fin2, data2=data2, obj_type=obj_type,
+                           multiple_choice=MULTIPLE_CHOICE_FIELDS, file=FILE_FIELDS,
+                           connection_types=CONNECTION_TYPE_MAPPING)
 
 
 @app.route('/save', methods=['POST'])
@@ -500,6 +552,15 @@ def save():
     if 'connection' in formdata.keys():
         formdata.pop('connection')
     formdata = {key: (value if value != '' else None) for key, value in formdata.items()}
+    for key in request.files:
+        value = request.files[key]
+        upload_path = f'static/uploads/[{str(datetime.now())}]' + value.filename
+        formdata[key] = upload_path
+        value.save(upload_path)
+    if 'bibliography' in formdata:
+        formdata['bibliography'] = clean_html(formdata['bibliography'])
+    if 'biography' in formdata:
+        formdata['biography'] = clean_html(formdata['biography'])
     connections = request.form.getlist('connection')
     obj_type = request.args.get('type')
     obj = {'org': Organization, 'person': Person, 'doc': Document}[obj_type]
@@ -527,30 +588,45 @@ def save():
             session.query(DocumentAuthorship).filter(DocumentAuthorship.person_id == obj_id).delete()
             session.query(OrganizationMembership).filter(OrganizationMembership.person_id == obj_id).delete()
             session.query(PersonFieldOfStudy).filter(PersonFieldOfStudy.person_id == obj_id).delete()
+            session.query(PersonEducation).filter(PersonEducation.person_id == obj_id).delete()
         elif obj_type == 'org':
             session.query(OrganizationMembership).filter(OrganizationMembership.organization_id == obj_id).delete()
         elif obj_type == 'doc':
             session.query(DocumentAuthorship).filter(DocumentAuthorship.document_id == obj_id).delete()
         session.commit()
+
         for connection in connections:
-            connection_type, connection_id = connection.split(':')
+            connection_parts = connection.split(':')
+            connection_type = connection_parts[0]
+            connection_id = connection_parts[1]
+            connection_category = connection_parts[2] if len(connection_parts) > 2 else None
             if obj == Person:
                 if connection_type == 'doc':
                     session.add(DocumentAuthorship(document_id=connection_id, person_id=obj_id))
                     session.commit()
                 elif connection_type == 'org':
-                    session.add(OrganizationMembership(organization_id=connection_id, person_id=obj_id))
-                    session.commit()
+                    if connection_category == 'education':
+                        # This is an education relationship
+                        session.add(PersonEducation(organization_id=connection_id, person_id=obj_id))
+                        session.commit()
+                    else:
+                        # This is a regular organization membership
+                        session.add(OrganizationMembership(organization_id=connection_id, person_id=obj_id))
+                        session.commit()
                 elif connection_type == 'field_of_study':
                     session.add(PersonFieldOfStudy(field_of_study_id=connection_id, person_id=obj_id))
                     session.commit()
             elif obj == Organization:
-                session.add(OrganizationMembership(organization_id=obj_id, person_id=connection_id))
-                session.commit()
+                if connection_category == 'alumni':
+                    session.add(PersonEducation(organization_id=obj_id, person_id=connection_id))
+                    session.commit()
+                else:
+                    session.add(OrganizationMembership(organization_id=obj_id, person_id=connection_id))
+                    session.commit()
             elif obj == Document:
                 session.add(DocumentAuthorship(document_id=obj_id, person_id=connection_id))
                 session.commit()
-    return render_template('redirect.html', url='/search')
+    return render_template('redirect.html', url=f'/view?type={obj_type}&id={obj_id}')
 
 
 @app.route('/delete')
@@ -585,6 +661,7 @@ def delete():
                 session.query(DocumentAuthorship).filter(DocumentAuthorship.person_id == obj_id).delete()
                 session.query(OrganizationMembership).filter(OrganizationMembership.person_id == obj_id).delete()
                 session.query(PersonFieldOfStudy).filter(PersonFieldOfStudy.person_id == obj_id).delete()
+                session.query(PersonEducation).filter(PersonEducation.person_id == obj_id).delete()
             elif obj_type == 'org':
                 session.query(OrganizationMembership).filter(OrganizationMembership.organization_id == obj_id).delete()
             elif obj_type == 'doc':

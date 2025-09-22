@@ -248,6 +248,11 @@
                     params.append(key, value);
                 }
             }
+            // If the length of params is 1, and it is person, org, or doc, redirect to list
+            if (params.size === 1 && ['person', 'org', 'doc'].includes(params.get('type'))) {
+                window.location.href = `/list?type=${params.get('type')}`;
+                return;
+            }
 
             const url = form.action + '?' + params.toString();
 

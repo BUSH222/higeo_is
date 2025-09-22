@@ -102,8 +102,8 @@ class Person(Base):
     __tablename__ = 'person'
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     _oldid: Mapped[int] = mapped_column(nullable=True)
-    name: Mapped[str] = mapped_column(nullable=False)
     surname: Mapped[str] = mapped_column(nullable=False)
+    name: Mapped[str] = mapped_column(nullable=False)
     patronymic: Mapped[str] = mapped_column(nullable=True)
 
     name_en: Mapped[str] = mapped_column(nullable=True)
@@ -122,6 +122,9 @@ class Person(Base):
 
     area_of_study: Mapped[str] = mapped_column(nullable=True)  # geography
 
+    education: Mapped[list["PersonEducation"]] = \
+        relationship("PersonEducation", back_populates="person")
+
     organizations: Mapped[list["OrganizationMembership"]] = \
         relationship("OrganizationMembership", back_populates="person")
     documents: Mapped[list["DocumentAuthorship"]] = \
@@ -137,18 +140,24 @@ class Person(Base):
         values = {'Фамилия Имя Отчество': '<b>' + str(self) + '</b>',
                   'Дата рождения': self.birth_date,
                   'Место рождения': self.birth_place,
-                  'Дата сметри': self.death_date,
+                  'Дата смерти': self.death_date,
                   'Место смерти': self.death_place,
                   'Академическое звание': self.academic_degree,
                   'Область исследования':
-                  [['field_of_study', f.field_of_study.id, str(f.field_of_study)] for f in self.field_of_study],
+                  sorted([['field_of_study', f.field_of_study.id, str(f.field_of_study)] for f in self.field_of_study],
+                         key=lambda x: x[2]),
                   'Районы работ': self.area_of_study,
-                  'Связанные организации':
-                  [['org', org.organization.id, str(org.organization)] for org in self.organizations],
+                  'Образование':
+                  sorted([['org', org.organization.id, str(org.organization)] for org in self.education],
+                         key=lambda x: x[2]),
+                  'Места работы':
+                  sorted([['org', org.organization.id, str(org.organization)] for org in self.organizations],
+                         key=lambda x: x[2]),
                   'Биография': self.biography,
                   'Библиография': self.bibliography,
                   'Фотография': self.photo,
-                  'Документы': [['doc', doc.document.id, str(doc.document)] for doc in self.documents],
+                  'Документы': sorted([['doc', doc.document.id, str(doc.document)] for doc in self.documents],
+                                      key=lambda x: x[2]),
                   'Комментарии': self.comment}
         return clean_dict(values)
 
@@ -178,6 +187,8 @@ class Organization(Base):
     name: Mapped[str] = mapped_column(nullable=False)
     members: Mapped[list["OrganizationMembership"]] = \
         relationship("OrganizationMembership", back_populates="organization")
+    alumni: Mapped[list["PersonEducation"]] = \
+        relationship("PersonEducation", back_populates="organization")
     org_type: Mapped[str] = mapped_column(nullable=True)
     history: Mapped[str] = mapped_column(nullable=True)
     comment: Mapped[str] = mapped_column(nullable=True)
@@ -188,7 +199,12 @@ class Organization(Base):
                   'История': self.history,
                   'Комментарий': self.comment,
                   'Связанные персоналии':
-                  [['person', member.person.id, str(member.person)] for member in self.members]}
+                  sorted([['person', member.person.id, str(member.person)] for member in self.members],
+                         key=lambda x: x[2]),
+                  'Выпускники':
+                  sorted([['person', alum.person.id, str(alum.person)] for alum in self.alumni],
+                         key=lambda x: x[2])
+                  }
         return clean_dict(values)
 
     def __str__(self):
@@ -228,7 +244,9 @@ class Document(Base):
     comment: Mapped[str] = mapped_column(nullable=True)
 
     def values_ru(self):
-        values = {'Авторы': [['person', author.person.id, str(author.person)] for author in self.authors],
+        values = {'Авторы':
+                  sorted([['person', author.person.id, str(author.person)] for author in self.authors],
+                         key=lambda x: x[2]),
                   'Источник': self.source,
                   'Название': '<b>' + self.name + '</b>',
                   'Тип документа': self.doc_type,
@@ -262,9 +280,11 @@ class FieldOfStudy(Base):
         relationship("PersonFieldOfStudy", back_populates="field_of_study")
 
     def values_ru(self):
-        values = {'Название': self.name,
-                  'Связанные персоналии':
-                  [['person', member.person.id, str(member.person)] for member in self.members]}
+        values = {
+            'Название': self.name,
+            'Связанные персоналии':
+            sorted([['person', member.person.id, str(member.person)] for member in self.members], key=lambda x: x[2])
+        }
         return clean_dict(values)
 
     def __str__(self):
@@ -288,6 +308,25 @@ class OrganizationMembership(Base):
 
     person: Mapped["Person"] = relationship("Person", back_populates="organizations")
     organization: Mapped["Organization"] = relationship("Organization", back_populates="members")
+
+
+class PersonEducation(Base):
+    """
+    Represents the membership of a person in an organization.
+    Attributes:
+        id (int): The primary key of the membership record.
+        person_id (int): The foreign key referencing the person.
+        organization_id (int): The foreign key referencing the organization.
+        person (Person): The relationship to the Person model.
+        organization (Organization): The relationship to the Organization model.
+    """
+    __tablename__ = 'person_education'
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    person_id: Mapped[int] = mapped_column(ForeignKey('person.id'))
+    organization_id: Mapped[int] = mapped_column(ForeignKey('organization.id'))
+
+    person: Mapped["Person"] = relationship("Person", back_populates="education")
+    organization: Mapped["Organization"] = relationship("Organization", back_populates="alumni")
 
 
 class DocumentAuthorship(Base):
