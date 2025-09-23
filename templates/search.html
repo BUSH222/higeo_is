@@ -178,7 +178,14 @@
     <div class="results-box p-3">
         <h5 class="mb-2 mt-3 text-center result-counter" style="font-size: 1.5rem;">Результаты поиска</h5>
         <div class="row">
-            <h6 class="text-center">Здесь будут показаны результаты поиска</h6>
+            {% if not request.args.get('quicksearch') %}
+            <h6 class="text-center text-muted" style="font-size: 0.8rem;">Здесь будут показаны результаты поиска</h6>
+            {% endif %}
+            {% if results|length == 0 and request.args %}
+                <h6 class="text-center">Поиск не дал результатов</h6>
+            {% elif results|length > 0 %}
+                <h6 class="text-center">Найдено {{ results|length }} результатов</h6>
+            {% endif %}
             <div class="col-12">
                 <div class="row">
                     {% set last_letter = {'l': None} %}
@@ -250,6 +257,8 @@
             }
             // If the length of params is 1, and it is person, org, or doc, redirect to list
             if (params.size === 1 && ['person', 'org', 'doc'].includes(params.get('type'))) {
+                if (spinner) spinner.classList.add('d-none');
+                searchBtn.removeAttribute('disabled');
                 window.location.href = `/list?type=${params.get('type')}`;
                 return;
             }
