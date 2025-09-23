@@ -9,15 +9,16 @@
         <div class="col-12">
             <div class="card rounded">
                 <div class="card-header">
-                    <h2 class="d-flex justify-content-center">{{ page.heading }}</h1>
+                    <h2 class="d-flex justify-content-center">{{ page.heading }}</h2>
                 </div>
                 <div class="card-body">
                     {% if current_user.is_authenticated %}
-                        <a name="" id="" class="btn mt-2 mb-2 higeo-color-1" href="/edit?type={{page.type}}&id={{page.id}}" role="button">Edit</a>
+                        <a name="" id="" class="btn mt-2 mb-2 higeo-color-1" href="/edit?type={{page.type}}&id={{page.id}}" role="button">{{ _('Edit') }}</a>
                         <a name="" id="" class="btn mt-2 mb-2 bg-danger"
                             href="/delete?type={{page.type}}&id={{page.id}}"
                             role="button"
-                            onclick="return confirm('Вы действительно хотите стереть всю страницу?');">Delete</a>
+                            data-confirm="{{ _('Вы действительно хотите стереть всю страницу?') }}"
+                            onclick="return confirm(this.dataset.confirm)">{{ _('Delete') }}</a>
                     {% endif %}
                     {% for key, value in data.items() %}
                         {% if value is not none and (value is not iterable or (value is iterable and value|length > 0)) %}
@@ -74,7 +75,7 @@
                                             </div>
                                             {% endfor %}
                                         {% elif value is string and value.startswith('static/uploads/') %}
-                                            <a class="m-02" href="/{{ value }}" target="_blank">Скачать файл</a>
+                                            <a class="m-02" href="/{{ value }}" target="_blank">{{ _('Скачать файл') }}</a>
                                         {% else %}
                                             <p class="text-break m-02">
                                                 {{ value|safe }}

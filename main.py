@@ -1,5 +1,6 @@
-from flask import Flask, render_template, request, abort, jsonify, redirect
+from flask import Flask, render_template, request, abort, jsonify, redirect, session, url_for
 from flask_login import login_required
+from flask_babel import Babel, gettext as _
 from helper import (SECRET_KEY,
                     MULTIPLE_CHOICE_FIELDS,
                     FILE_FIELDS,
@@ -31,6 +32,53 @@ app.config['MAX_FORM_MEMORY_SIZE'] = 32 * 1024 * 1024
 
 login_manager.init_app(app)
 login_manager.login_view = 'app_login.login'
+
+app.config.update(
+    BABEL_DEFAULT_LOCALE='ru',
+    BABEL_TRANSLATION_DIRECTORIES='translations'
+)
+LANGUAGES = ['ru', 'en']
+babel = Babel(app)
+
+
+def get_locale():
+    # Priority: explicit ?lang= -> session -> (optionally user) -> Accept-Language -> default
+    lang = request.args.get('lang')
+    if lang in LANGUAGES:
+        session['lang'] = lang
+        return lang
+    if session.get('lang') in LANGUAGES:
+        return session['lang']
+    try:
+        from flask_login import current_user
+        if getattr(current_user, 'locale', None) in LANGUAGES:
+            return current_user.locale
+    except Exception:
+        pass
+    return request.accept_languages.best_match(LANGUAGES) or app.config['BABEL_DEFAULT_LOCALE']
+
+
+babel.init_app(app, locale_selector=get_locale)
+app.jinja_env.add_extension('jinja2.ext.i18n')
+
+
+@app.context_processor
+def inject_current_locale():
+    """Expose the current locale to templates as `current_locale`."""
+    try:
+        from flask_babel import get_locale as _get_locale
+        loc = str(_get_locale())
+    except Exception:
+        loc = app.config.get('BABEL_DEFAULT_LOCALE', 'ru')
+    return {'current_locale': loc}
+
+
+@app.get('/set_language/<lang_code>')
+def set_language(lang_code):
+    if lang_code not in LANGUAGES:
+        abort(404)
+    session['lang'] = lang_code
+    return redirect(request.referrer or url_for('index'))
 
 
 @app.route('/')
@@ -99,8 +147,8 @@ def view():
         }
 
         page = {
-            'heading': f'Географический регион: {place}',
-            'title': f'Geographic region: {place}',
+            'heading': _('Географический регион: %(place)s', place=place),
+            'title': _('Geographic region: %(place)s', place=place),
             'id': place,
             'type': 'geography'
         }
@@ -119,10 +167,10 @@ def view():
     with Session(engine) as session:
         data = session.execute(stmt).scalar_one_or_none()
         data = data.values_ru()
-    page = {'heading': f'{HEADING_CONVERTER[viewtype]}', 'title': f'View {obj.__name__.lower()}',
+    page = {'heading': f'{HEADING_CONVERTER[viewtype]}', 'title': _('View %(name)s', name=obj.__name__.lower()),
             'id': viewid, 'type': viewtype}
     if "Фотография" in data:
-        data["Фотография"] = f'<img src="{data["Фотография"]}" alt="Фотография" />'
+        data["Фотография"] = f'<img src="{data["Фотография"]}" alt="{_('Фотография')}" />'
     if "Дата рождения" not in data and "Комментарии" in data and data["Комментарии"]:
         match = re.search(r'Дата рождения:\s*([^\.\n]+)', data["Комментарии"])
         if match:
@@ -159,7 +207,7 @@ def view():
 
 @app.route('/search')
 def search():
-    page = {'heading': 'Поиск', 'title': 'Search'}
+    page = {'heading': _('Поиск'), 'title': _('Search')}
     if len(request.args) == 0 or not request.args.get('type'):
         return render_template('search.html', page=page)
 
@@ -395,13 +443,20 @@ def list_view_custom():
             LIMIT :limit;
         """)
         page_info = {
-            'heading': 'Самые популярные географические регионы',
-            'title': 'Самые популярные географические регионы',
+            'heading': _('Самые популярные географические регионы'),
+            'title': _('Самые популярные географические регионы'),
         }
         with Session(engine) as session:
             result = session.execute(query, {"limit": 100})
             results = result.fetchall()
-        results = [['geography', row[0], f'{row[0]} - {row[1]} результатов'] for row in results]
+        results = [
+            [
+                'geography',
+                row[0],
+                _('%(place)s - %(count)s results', place=row[0], count=row[1])
+            ]
+            for row in results
+        ]
         use_pagination = False
     elif obj_type.startswith('acad_'):
         acad_map = {
@@ -418,8 +473,8 @@ def list_view_custom():
             result = session.execute(query)
             results = [['person', person[0].id, str(person[0])] for person in result.fetchall()]
         page_info = {
-            'heading': 'Список академических степеней - ' + acad_map[obj_type],
-            'title': 'Список академических степеней - ' + acad_map[obj_type],
+            'heading': _('Список академических степеней - ') + acad_map[obj_type],
+            'title': _('Список академических степеней - ') + acad_map[obj_type],
         }
         use_pagination = True
     return render_template('list.html', results=results, page=page_info, result_use_pagination=use_pagination)

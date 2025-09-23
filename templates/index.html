@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}About{% endblock %}
+{% block title %}{{ _('About') }}{% endblock %}
 
 {% block content %}
 <div class="container mt-3">
@@ -8,28 +8,28 @@
         <div class="col-12">
             <div class="card rounded">
                 <div class="card-header">
-                    <h1 class="d-flex justify-content-center">Информационная система</h1>
+                    <h1 class="d-flex justify-content-center">{{ _('Информационная система') }}</h1>
                 </div>
                 <div class="card-body">
                     <div class="row mt-2">
                         <div class="col-lg-4 d-flex flex-wrap align-items-center">
-                            <img src="/static/img/IS-logo.gif" class="img-fluid mx-auto rounded" alt="IS logo">
+                            <img src="/static/img/IS-logo.gif" class="img-fluid mx-auto rounded" alt="{{ _('IS logo') }}">
                         </div>
                         <div class="col-lg-8 mt-2">
-                            <p><strong>Информационная система «История геологии и горного дела»</strong> – это биобиблиографическая академическая база данных, созданная для поддержки исследований в области наук о Земле и истории науки.</p>
-                            <p><strong><em>Задачи:</em></strong></p>
+                            <p>{% trans %}<strong>Информационная система «История геологии и горного дела»</strong> – это биобиблиографическая академическая база данных, созданная для поддержки исследований в области наук о Земле и истории науки.{% endtrans %}</p>
+                            <p><strong><em>{{ _('Задачи:') }}</em></strong></p>
                             <ul>
-                                <li>Систематизация и удобный поиск информации по истории геологии и горного дела.</li>
-                                <li>Поддержка научных исследований за счёт актуальных и структурированных данных.</li>
+                                <li>{{ _('Систематизация и удобный поиск информации по истории геологии и горного дела.') }}</li>
+                                <li>{{ _('Поддержка научных исследований за счёт актуальных и структурированных данных.') }}</li>
                             </ul>
-                            <p><strong><em>Функции:</em></strong></p>
+                            <p><strong><em>{{ _('Функции:') }}</em></strong></p>
                             <ul>
-                                <li>Содержит основные данные об учёных геологах и горных инженерах.</li>
-                                <li>Включает списки научных трудов и публикации об учёных.</li>
-                                <li>Позволяет сортировать данные, содержит документы и ссылки на дополнительные материалы.</li>
+                                <li>{{ _('Содержит основные данные об учёных геологах и горных инженерах.') }}</li>
+                                <li>{{ _('Включает списки научных трудов и публикации об учёных.') }}</li>
+                                <li>{{ _('Позволяет сортировать данные, содержит документы и ссылки на дополнительные материалы.') }}</li>
                             </ul>
                             <div class="text-end">
-                                <p><a target="_blank" rel="noopener noreferrer" href="http://www.ginras.ru/struct/19/9/index.php">Группа истории геологии</a>, ГИН РАН, Москва.</p>
+                                <p><a target="_blank" rel="noopener noreferrer" href="http://www.ginras.ru/struct/19/9/index.php">{{ _('Группа истории геологии') }}</a>, {{ _('ГИН РАН, Москва.') }}</p>
                             </div>
                         </div>
                     </div>

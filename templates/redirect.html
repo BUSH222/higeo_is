@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
 <body>
-    <h2>Success! you will soon be redirected</h2>
+    <h2>{{ _('Success! you will soon be redirected') }}</h2>
     <p id = "result"></p>
-    <button onclick = "myURL()">ok</button>
+    <button onclick = "myURL()">{{ _('ok') }}</button>
     <script>
         setTimeout(myURL, 2000);
         function myURL() {

@@ -7,9 +7,9 @@
     <div class="results-box p-3">
         <h5 class="mb-2 mt-3 text-center result-counter" style="font-size: 1.5rem;">{{page.heading}}</h5>
         {% if results|length == 0 and request.args %}
-            <h6 class="text-center">Поиск не дал результатов</h6>
+            <h6 class="text-center">{{ _('Поиск не дал результатов') }}</h6>
         {% elif results|length > 0 %}
-            <h6 class="text-center">Найдено {{ results|length }} результатов</h6>
+            <h6 class="text-center">{{ _('Найдено') }} {{ results|length }} {{ _('результатов') }}</h6>
         {% endif %}
         <div class="row">
             <div class="col-12">
