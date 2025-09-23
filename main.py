@@ -166,10 +166,17 @@ def view():
     with Session(engine) as session:
         data = session.execute(stmt).scalar_one_or_none()
         data = data.values_ru()
-    page = {'heading': f'{HEADING_CONVERTER[viewtype]}', 'title': _('View %(name)s', name=obj.__name__.lower()),
-            'id': viewid, 'type': viewtype}
+    page = {
+        'heading': HEADING_CONVERTER[viewtype],
+        'title': _('View %(name)s', name=obj.__name__.lower()),
+        'id': viewid,
+        'type': viewtype,
+    }
     if "Фотография" in data:
-        data["Фотография"] = f'<img src="{data["Фотография"]}" alt="{_('Фотография')}" />'
+        # Avoid nested quotes/functions inside an f-string (Python 3.10 parser can choke on this)
+        photo_src = data["Фотография"]
+        alt_text = _("Фотография")
+        data["Фотография"] = f'<img src="{photo_src}" alt="{alt_text}" />'
     if "Дата рождения" not in data and "Комментарии" in data and data["Комментарии"]:
         match = re.search(r'Дата рождения:\s*([^\.\n]+)', data["Комментарии"])
         if match:
