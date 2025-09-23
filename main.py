@@ -17,8 +17,6 @@ from helper.cleanup.htmlcleaner import clean_html
 from helper.login.login import app_login, login_manager
 from sqlalchemy import select, func, extract, and_, inspect, text
 from sqlalchemy.orm import Session
-import urllib.parse
-import requests
 from datetime import datetime
 from dateutil.parser import parse
 import re
@@ -188,11 +186,33 @@ def search():
     if len(request.args) == 0 or not request.args.get('type'):
         return render_template('search.html', page=page)
     if request.args.get('quicksearch'):
-        args = dict(request.args)
-        args.pop('quicksearch')
-        results = requests.get(request.base_url + '?' + urllib.parse.urlencode(args), verify=False)
-        out_res = list(results.json())
-        return render_template('search.html', page=page, results=out_res)
+        query = request.args.get('fullName')
+        where_stmt = []
+        if query is not None:
+            query_list = query.split()
+            if len(query_list) == 1:
+                where_stmt.append(func.lower(Person.surname).startswith(query_list[0].lower()))
+            elif len(query_list) == 2:
+                where_stmt.append(
+                    (func.lower(Person.surname) == query_list[0].lower())
+                    & (func.lower(Person.name) == query_list[1].lower())
+                )
+            elif len(query_list) == 3:
+                where_stmt.append(
+                    (func.lower(Person.surname) == query_list[0].lower())
+                    & (func.lower(Person.name) == query_list[1].lower())
+                    & (func.lower(Person.patronymic) == query_list[2].lower())
+                )
+        final_where_stmt = and_(*where_stmt) if where_stmt else True
+        stmt = select(Person).where(final_where_stmt).order_by(Person.surname.collate('C'))
+        results = []
+        with Session(engine) as session:
+            data = session.execute(stmt)
+            for person_row in data:
+                person = person_row[0]
+                results.append(['person', person.id, str(person)])
+        # Render the search page with results
+        return render_template('search.html', page=page, results=results)
     elif request.args.get('content'):
         content = request.args.get('content')
         query = select(Person).filter(Person.bibliography.ilike(f'%{content}%')).order_by(Person.surname.collate('C'))
