@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, abort, jsonify
+from flask import Flask, render_template, request, abort, jsonify, redirect
 from flask_login import login_required
 from helper import (SECRET_KEY,
                     MULTIPLE_CHOICE_FIELDS,
@@ -188,7 +188,9 @@ def search():
     if request.args.get('quicksearch'):
         query = request.args.get('fullName')
         where_stmt = []
-        if query is not None:
+        if query is None:
+            return redirect('/search')
+        else:
             query_list = query.split()
             if len(query_list) == 1:
                 where_stmt.append(func.lower(Person.surname).startswith(query_list[0].lower()))
