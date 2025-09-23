@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-09-23 20:41+0300\n"
+"POT-Creation-Date: 2025-09-23 21:44+0300\n"
 "PO-Revision-Date: 2025-09-23 21:10+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -18,48 +18,85 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: main.py:150
+#: main.py:149
 #, python-format
 msgid "Географический регион: %(place)s"
 msgstr "Geographic region: %(place)s"
 
-#: main.py:151
+#: main.py:150
 #, python-format
 msgid "Geographic region: %(place)s"
 msgstr "Geographic region: %(place)s"
 
-#: main.py:170
+#: main.py:169
 #, python-format
 msgid "View %(name)s"
 msgstr "View %(name)s"
 
-#: main.py:173
+#: main.py:172
 msgid "Фотография"
 msgstr "Photo"
 
-#: main.py:210 templates/about.html:37 templates/about.html:43
+#: main.py:209 templates/about.html:37 templates/about.html:43
 #: templates/about.html:49 templates/base.html:31 templates/base.html:70
 #: templates/base.html:71 templates/search.html:92 templates/search.html:128
 #: templates/search.html:163
 msgid "Поиск"
 msgstr "Search"
 
-#: main.py:210
+#: main.py:209
 msgid "Search"
 msgstr "Search"
 
-#: main.py:446 main.py:447
+#: main.py:367 templates/base.html:40
+msgid "Организации"
+msgstr "Organizations"
+
+#: main.py:368
+msgid "Персоналии"
+msgstr "Persons"
+
+#: main.py:369
+msgid "Документы"
+msgstr "Documents"
+
+#: main.py:370
+msgid "Области исследования"
+msgstr "Fields of study"
+
+#: main.py:452 main.py:453
 msgid "Самые популярные географические регионы"
 msgstr "Most popular geographic regions"
 
-#: main.py:456
+#: main.py:462
 #, python-format
 msgid "%(place)s - %(count)s results"
 msgstr "%(place)s - %(count)s results"
 
-#: main.py:476 main.py:477
-msgid "Список академических степеней - "
-msgstr "List of academic degrees - "
+#: main.py:478
+msgid "действительный член"
+msgstr "full member"
+
+#: main.py:479
+msgid "иностранный член"
+msgstr "foreign member"
+
+#: main.py:480
+msgid "почётный член"
+msgstr "honorary member"
+
+#: main.py:481
+msgid "член-корреспондент"
+msgstr "corresponding member"
+
+#: main.py:482
+msgid "профессор РАН"
+msgstr "RAS professor"
+
+#: main.py:493 main.py:494
+#, python-format
+msgid "Список академических степеней - %(degree)s"
+msgstr "List of academic degrees - %(degree)s"
 
 #: templates/about.html:2 templates/index.html:3
 msgid "About"
@@ -83,7 +120,16 @@ msgid ""
 "библиографические списки публикаций авторов, а также статьи и некрологи о"
 " них. Показаны отзывы на публикации и редакторская работа. К персоналиям "
 "учёных привязаны места их работы, дополнительные документы и фотографии."
-msgstr "The Information System ‘History of Geology and Mining’ is a biobibliographic database created to support research in Earth sciences and the history of science. The system contains information about Russian and foreign geologists and mining engineers who made significant contributions to the development of science. It presents bibliographic lists of authors’ publications, as well as articles and obituaries about them. Reviews of publications and editorial work are shown. Places of work, additional documents, and photographs are linked to the scholars’ profiles."
+msgstr ""
+"The Information System ‘History of Geology and Mining’ is a "
+"biobibliographic database created to support research in Earth sciences "
+"and the history of science. The system contains information about Russian"
+" and foreign geologists and mining engineers who made significant "
+"contributions to the development of science. It presents bibliographic "
+"lists of authors’ publications, as well as articles and obituaries about "
+"them. Reviews of publications and editorial work are shown. Places of "
+"work, additional documents, and photographs are linked to the scholars’ "
+"profiles."
 
 #: templates/about.html:20
 msgid ""
@@ -92,14 +138,24 @@ msgid ""
 "структурирование и поиск информации. Информационная система позволяет "
 "постоянно актуализировать информацию о геологах, сделать её максимально "
 "доступной и удобной для поиска и научной работы."
-msgstr "The information is intended to support and systematize knowledge in the field of the history of geology and mining. The system’s core functionality is structuring and searching information. The information system makes it possible to continuously update information about geologists, making it as accessible and convenient as possible for search and research work."
+msgstr ""
+"The information is intended to support and systematize knowledge in the "
+"field of the history of geology and mining. The system’s core "
+"functionality is structuring and searching information. The information "
+"system makes it possible to continuously update information about "
+"geologists, making it as accessible and convenient as possible for search"
+" and research work."
 
 #: templates/about.html:21
 msgid ""
 "Система постоянно обновляется и редактируется в Группе истории геологии "
 "ГИН РАН, куда вы можете прислать дополнительные библиографии и документы "
 "по истории геологических и горных наук."
-msgstr "The system is continuously updated and edited by the History of Geology Group at the Geological Institute of the Russian Academy of Sciences (GIN RAS), where you can send additional bibliographies and documents on the history of geological and mining sciences."
+msgstr ""
+"The system is continuously updated and edited by the History of Geology "
+"Group at the Geological Institute of the Russian Academy of Sciences (GIN"
+" RAS), where you can send additional bibliographies and documents on the "
+"history of geological and mining sciences."
 
 #: templates/about.html:23 templates/base.html:88 templates/index.html:32
 msgid "Группа истории геологии"
@@ -119,7 +175,11 @@ msgid ""
 "отчества учёных. На странице персоналии показаны биографии, библиографии,"
 " документы и фото. В системе более 1700 персоналий учёных из разных "
 "стран."
-msgstr "Enter surnames, first names, and patronymics (fully or partially) in the search bar. The person page shows biographies, bibliographies, documents, and photos. The system contains over 1,700 profiles of scholars from different countries."
+msgstr ""
+"Enter surnames, first names, and patronymics (fully or partially) in the "
+"search bar. The person page shows biographies, bibliographies, documents,"
+" and photos. The system contains over 1,700 profiles of scholars from "
+"different countries."
 
 #: templates/about.html:42
 msgid "Поиск организаций"
@@ -130,7 +190,10 @@ msgid ""
 "Для показа списка учёных связанных с организациями, напишите в строке "
 "поиска названия института, организации или общества (можно использовать "
 "сокращения и части названия)."
-msgstr "To display a list of scholars associated with organizations, enter the name of an institute, organization, or society in the search bar (abbreviations and partial names are allowed)."
+msgstr ""
+"To display a list of scholars associated with organizations, enter the "
+"name of an institute, organization, or society in the search bar "
+"(abbreviations and partial names are allowed)."
 
 #: templates/about.html:48 templates/search.html:28
 msgid "Поиск по библиографиям"
@@ -140,7 +203,9 @@ msgstr "Search by bibliographies"
 msgid ""
 "Система показывает списки персоналий у которых в перечне трудов "
 "встречаются слова поискового запроса."
-msgstr "The system shows lists of persons whose lists of works contain the query words."
+msgstr ""
+"The system shows lists of persons whose lists of works contain the query "
+"words."
 
 #: templates/about.html:54
 msgid "Просмотр общих списков"
@@ -206,7 +271,9 @@ msgstr "Content support and maintenance"
 
 #: templates/about.html:100
 msgid "Группа истории геологии, Геологический институт Российской академии наук."
-msgstr "History of Geology Group, Geological Institute of the Russian Academy of Sciences."
+msgstr ""
+"History of Geology Group, Geological Institute of the Russian Academy of "
+"Sciences."
 
 #: templates/about.html:101
 msgid "Автор идеи и редактор содержания: И.Г. Малахова."
@@ -244,10 +311,6 @@ msgstr "Topics"
 msgid "География"
 msgstr "Geography"
 
-#: templates/base.html:40
-msgid "Организации"
-msgstr "Organizations"
-
 #: templates/base.html:49 templates/base.html:57
 msgid "English"
 msgstr "English"
@@ -281,7 +344,10 @@ msgid ""
 "<strong>Информационная система «История геологии и горного дела»</strong>"
 " – это биобиблиографическая академическая база данных, созданная для "
 "поддержки исследований в области наук о Земле и истории науки."
-msgstr "<strong>The Information System ‘History of Geology and Mining’</strong> is a biobibliographic academic database created to support research in Earth sciences and the history of science."
+msgstr ""
+"<strong>The Information System ‘History of Geology and Mining’</strong> "
+"is a biobibliographic academic database created to support research in "
+"Earth sciences and the history of science."
 
 #: templates/index.html:20
 msgid "Задачи:"
@@ -291,7 +357,9 @@ msgstr "Objectives:"
 msgid ""
 "Систематизация и удобный поиск информации по истории геологии и горного "
 "дела."
-msgstr "Systematization and convenient search of information on the history of geology and mining."
+msgstr ""
+"Systematization and convenient search of information on the history of "
+"geology and mining."
 
 #: templates/index.html:23
 msgid ""
@@ -315,7 +383,9 @@ msgstr "Includes lists of scientific works and publications about scholars."
 msgid ""
 "Позволяет сортировать данные, содержит документы и ссылки на "
 "дополнительные материалы."
-msgstr "Allows sorting of data; includes documents and links to additional materials."
+msgstr ""
+"Allows sorting of data; includes documents and links to additional "
+"materials."
 
 #: templates/list.html:10 templates/search.html:185
 msgid "Поиск не дал результатов"

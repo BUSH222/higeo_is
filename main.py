@@ -6,7 +6,6 @@ from helper import (SECRET_KEY,
                     FILE_FIELDS,
                     TITLE_CONVERTER_NEW_EDIT,
                     HEADING_CONVERTER,
-                    TITLE_CONVERTER_LIST,
                     CONNECTION_TYPE_MAPPING
                     )
 from helper.db.initialise_database import engine, Organization, Person, Document, FieldOfStudy
@@ -364,6 +363,13 @@ def list_view():
 
     obj = obj_map[obj_type]
 
+    heading_map = {
+        'org': _('Организации'),
+        'person': _('Персоналии'),
+        'doc': _('Документы'),
+        'field_of_study': _('Области исследования'),
+    }
+
     # Determine default sort field based on object type
     if obj_type == 'person':
         sort_field = request.args.get('sort', 'surname')
@@ -390,8 +396,8 @@ def list_view():
                 results.append([obj_type, row[0], row[1]])
 
     page_info = {
-        'heading': TITLE_CONVERTER_LIST[obj_type],
-        'title': TITLE_CONVERTER_LIST[obj_type],
+        'heading': heading_map[obj_type],
+        'title': heading_map[obj_type],
         'type': obj_type
     }
 
@@ -459,22 +465,33 @@ def list_view_custom():
         ]
         use_pagination = False
     elif obj_type.startswith('acad_'):
-        acad_map = {
+        # DB filter labels (do not translate; must match stored values)
+        degree_db_map = {
             'acad_full_members': 'действительный член',
             'acad_foreign_members': 'иностранный член',
             'acad_honorary_members': 'почётный член',
             'acad_corresponding_members': 'член-корреспондент',
             'acad_professors': 'профессор РАН'
         }
+        # UI labels (translate for display)
+        degree_label_map = {
+            'acad_full_members': _('действительный член'),
+            'acad_foreign_members': _('иностранный член'),
+            'acad_honorary_members': _('почётный член'),
+            'acad_corresponding_members': _('член-корреспондент'),
+            'acad_professors': _('профессор РАН')
+        }
+
         query = select(Person).filter(
-            Person.academic_degree == acad_map[obj_type]
+            Person.academic_degree == degree_db_map[obj_type]
         ).order_by(Person.surname.collate('C'))
         with Session(engine) as session:
             result = session.execute(query)
             results = [['person', person[0].id, str(person[0])] for person in result.fetchall()]
+        degree_label = degree_label_map[obj_type]
         page_info = {
-            'heading': _('Список академических степеней - ') + acad_map[obj_type],
-            'title': _('Список академических степеней - ') + acad_map[obj_type],
+            'heading': _('Список академических степеней - %(degree)s', degree=degree_label),
+            'title': _('Список академических степеней - %(degree)s', degree=degree_label),
         }
         use_pagination = True
     return render_template('list.html', results=results, page=page_info, result_use_pagination=use_pagination)

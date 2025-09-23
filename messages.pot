@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-09-23 20:41+0300\n"
+"POT-Creation-Date: 2025-09-23 21:44+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,47 +17,84 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: main.py:150
+#: main.py:149
 #, python-format
 msgid "Географический регион: %(place)s"
 msgstr ""
 
-#: main.py:151
+#: main.py:150
 #, python-format
 msgid "Geographic region: %(place)s"
 msgstr ""
 
-#: main.py:170
+#: main.py:169
 #, python-format
 msgid "View %(name)s"
 msgstr ""
 
-#: main.py:173
+#: main.py:172
 msgid "Фотография"
 msgstr ""
 
-#: main.py:210 templates/about.html:37 templates/about.html:43
+#: main.py:209 templates/about.html:37 templates/about.html:43
 #: templates/about.html:49 templates/base.html:31 templates/base.html:70
 #: templates/base.html:71 templates/search.html:92 templates/search.html:128
 #: templates/search.html:163
 msgid "Поиск"
 msgstr ""
 
-#: main.py:210
+#: main.py:209
 msgid "Search"
 msgstr ""
 
-#: main.py:446 main.py:447
+#: main.py:367 templates/base.html:40
+msgid "Организации"
+msgstr ""
+
+#: main.py:368
+msgid "Персоналии"
+msgstr ""
+
+#: main.py:369
+msgid "Документы"
+msgstr ""
+
+#: main.py:370
+msgid "Области исследования"
+msgstr ""
+
+#: main.py:452 main.py:453
 msgid "Самые популярные географические регионы"
 msgstr ""
 
-#: main.py:456
+#: main.py:462
 #, python-format
 msgid "%(place)s - %(count)s results"
 msgstr ""
 
-#: main.py:476 main.py:477
-msgid "Список академических степеней - "
+#: main.py:478
+msgid "действительный член"
+msgstr ""
+
+#: main.py:479
+msgid "иностранный член"
+msgstr ""
+
+#: main.py:480
+msgid "почётный член"
+msgstr ""
+
+#: main.py:481
+msgid "член-корреспондент"
+msgstr ""
+
+#: main.py:482
+msgid "профессор РАН"
+msgstr ""
+
+#: main.py:493 main.py:494
+#, python-format
+msgid "Список академических степеней - %(degree)s"
 msgstr ""
 
 #: templates/about.html:2 templates/index.html:3
@@ -241,10 +278,6 @@ msgstr ""
 
 #: templates/base.html:37
 msgid "География"
-msgstr ""
-
-#: templates/base.html:40
-msgid "Организации"
 msgstr ""
 
 #: templates/base.html:49 templates/base.html:57
