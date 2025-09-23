@@ -320,23 +320,26 @@ def list_view():
     if obj_type == 'person':
         sort_field = request.args.get('sort', 'surname')
         if sort_field == 'surname':
-            stmt = select(obj).order_by(obj.surname.collate('C'), obj.name.collate('C'))
+            # Only select the necessary columns
+            stmt = select(Person.id, Person.surname, Person.name, Person.patronymic)\
+                .order_by(Person.surname.collate('C'), Person.name.collate('C'))
         else:
-            stmt = select(obj).order_by(getattr(obj, sort_field))
+            stmt = select(Person.id, Person.surname, Person.name, Person.patronymic)\
+                .order_by(getattr(Person, sort_field))
     else:
         sort_field = request.args.get('sort', 'name')
-        stmt = select(obj).order_by(func.lower(getattr(obj, sort_field)).collate('C'))
+        stmt = select(obj.id, obj.name).order_by(func.lower(getattr(obj, sort_field)).collate('C'))
 
     results = []
     with Session(engine) as session:
         data = session.execute(stmt)
-        for item in data:
+        for row in data:
             if obj_type == 'person':
-                person = item[0]
-                results.append([obj_type, person.id, str(person)])
+                # row: (id, surname, name, patronymic)
+                person_str = ' '.join(filter(None, (row[1], row[2], row[3])))
+                results.append([obj_type, row[0], person_str])
             else:
-                item_obj = item[0]
-                results.append([obj_type, item_obj.id, item_obj.name])
+                results.append([obj_type, row[0], row[1]])
 
     page_info = {
         'heading': TITLE_CONVERTER_LIST[obj_type],
