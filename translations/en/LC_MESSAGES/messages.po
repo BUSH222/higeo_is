@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-09-23 21:44+0300\n"
+"POT-Creation-Date: 2025-09-23 23:27+0300\n"
 "PO-Revision-Date: 2025-09-23 21:10+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -18,82 +18,94 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: main.py:149
+#: main.py:165
 #, python-format
 msgid "Географический регион: %(place)s"
 msgstr "Geographic region: %(place)s"
 
-#: main.py:150
+#: main.py:166
 #, python-format
 msgid "Geographic region: %(place)s"
 msgstr "Geographic region: %(place)s"
 
-#: main.py:169
+#: main.py:200
+msgid "Организация"
+msgstr "Organization"
+
+#: main.py:201
+msgid "Персоналия"
+msgstr "Person"
+
+#: main.py:202
+msgid "Документ"
+msgstr "Document"
+
+#: main.py:203
+msgid "Область знаний"
+msgstr "Field of study"
+
+#: main.py:207
 #, python-format
 msgid "View %(name)s"
 msgstr "View %(name)s"
 
-#: main.py:172
-msgid "Фотография"
-msgstr "Photo"
-
-#: main.py:209 templates/about.html:37 templates/about.html:43
+#: main.py:257 templates/about.html:37 templates/about.html:43
 #: templates/about.html:49 templates/base.html:31 templates/base.html:70
 #: templates/base.html:71 templates/search.html:92 templates/search.html:128
 #: templates/search.html:163
 msgid "Поиск"
 msgstr "Search"
 
-#: main.py:209
+#: main.py:257
 msgid "Search"
 msgstr "Search"
 
-#: main.py:367 templates/base.html:40
+#: main.py:420 templates/base.html:40
 msgid "Организации"
 msgstr "Organizations"
 
-#: main.py:368
+#: main.py:421
 msgid "Персоналии"
 msgstr "Persons"
 
-#: main.py:369
+#: main.py:422
 msgid "Документы"
 msgstr "Documents"
 
-#: main.py:370
+#: main.py:423
 msgid "Области исследования"
 msgstr "Fields of study"
 
-#: main.py:452 main.py:453
+#: main.py:505 main.py:506
 msgid "Самые популярные географические регионы"
 msgstr "Most popular geographic regions"
 
-#: main.py:462
+#: main.py:515
 #, python-format
 msgid "%(place)s - %(count)s results"
 msgstr "%(place)s - %(count)s results"
 
-#: main.py:478
+#: main.py:531
 msgid "действительный член"
 msgstr "full member"
 
-#: main.py:479
+#: main.py:532
 msgid "иностранный член"
 msgstr "foreign member"
 
-#: main.py:480
+#: main.py:533
 msgid "почётный член"
 msgstr "honorary member"
 
-#: main.py:481
+#: main.py:534
 msgid "член-корреспондент"
 msgstr "corresponding member"
 
-#: main.py:482
+#: main.py:535
 msgid "профессор РАН"
 msgstr "RAS professor"
 
-#: main.py:493 main.py:494
+#: main.py:546 main.py:547
 #, python-format
 msgid "Список академических степеней - %(degree)s"
 msgstr "List of academic degrees - %(degree)s"
@@ -530,4 +542,7 @@ msgstr "Delete"
 #: templates/view.html:78
 msgid "Скачать файл"
 msgstr "Download file"
+
+#~ msgid "Фотография"
+#~ msgstr "Photo"
 

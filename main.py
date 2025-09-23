@@ -53,7 +53,7 @@ def get_locale():
             return current_user.locale
     except Exception:
         pass
-    return request.accept_languages.best_match(LANGUAGES) or app.config['BABEL_DEFAULT_LOCALE']
+    return app.config['BABEL_DEFAULT_LOCALE']
 
 
 babel.init_app(app, locale_selector=get_locale)
@@ -255,6 +255,11 @@ def view():
 @app.route('/search')
 def search():
     page = {'heading': _('Поиск'), 'title': _('Search')}
+    # Choose localized name columns for person searches
+    use_en = (str(get_locale()) == 'en')
+    first_col = Person.name_en if use_en else Person.name
+    last_col = Person.surname_en if use_en else Person.surname
+    patr_col = Person.patronymic_en if use_en else Person.patronymic
     if len(request.args) == 0 or not request.args.get('type'):
         return render_template('search.html', page=page)
 
@@ -267,24 +272,24 @@ def search():
         else:
             parts = query.split()
             if len(parts) == 1:
-                where_stmt.append(func.lower(Person.surname).startswith(parts[0].lower()))
+                where_stmt.append(func.lower(last_col).startswith(parts[0].lower()))
             elif len(parts) == 2:
                 where_stmt.append(
-                    (func.lower(Person.surname) == parts[0].lower())
-                    & (func.lower(Person.name) == parts[1].lower())
+                    (func.lower(last_col) == parts[0].lower())
+                    & (func.lower(first_col) == parts[1].lower())
                 )
             elif len(parts) == 3:
                 where_stmt.append(
-                    (func.lower(Person.surname) == parts[0].lower())
-                    & (func.lower(Person.name) == parts[1].lower())
-                    & (func.lower(Person.patronymic) == parts[2].lower())
+                    (func.lower(last_col) == parts[0].lower())
+                    & (func.lower(first_col) == parts[1].lower())
+                    & (func.lower(patr_col) == parts[2].lower())
                 )
 
         final_where = and_(*where_stmt) if where_stmt else True
         stmt = (
-            select(Person.id, Person.surname, Person.name, Person.patronymic)
+            select(Person.id, last_col, first_col, patr_col)
             .where(final_where)
-            .order_by(Person.surname.collate('C'), Person.name.collate('C'))
+            .order_by(last_col.collate('C'), first_col.collate('C'))
         )
 
         results = []
@@ -318,28 +323,28 @@ def search():
             if query is not None:
                 parts = query.split()
                 if len(parts) == 1:
-                    where_stmt.append(func.lower(Person.surname).startswith(parts[0].lower()))
+                    where_stmt.append(func.lower(last_col).startswith(parts[0].lower()))
                 elif len(parts) == 2:
                     where_stmt.append(
-                        (func.lower(Person.surname) == parts[0].lower())
-                        & (func.lower(Person.name) == parts[1].lower())
+                        (func.lower(last_col) == parts[0].lower())
+                        & (func.lower(first_col) == parts[1].lower())
                     )
                 elif len(parts) == 3:
                     where_stmt.append(
-                        (func.lower(Person.surname) == parts[0].lower())
-                        & (func.lower(Person.name) == parts[1].lower())
-                        & (func.lower(Person.patronymic) == parts[2].lower())
+                        (func.lower(last_col) == parts[0].lower())
+                        & (func.lower(first_col) == parts[1].lower())
+                        & (func.lower(patr_col) == parts[2].lower())
                     )
         else:
             firstname = request.args.get('firstName')
             lastname = request.args.get('lastName')
             patronymic = request.args.get('patronymic')
             if firstname:
-                where_stmt.append(func.lower(Person.name).startswith(firstname.lower()))
+                where_stmt.append(func.lower(first_col).startswith(firstname.lower()))
             if lastname:
-                where_stmt.append(func.lower(Person.surname).startswith(lastname.lower()))
+                where_stmt.append(func.lower(last_col).startswith(lastname.lower()))
             if patronymic:
-                where_stmt.append(func.lower(Person.patronymic).startswith(patronymic.lower()))
+                where_stmt.append(func.lower(patr_col).startswith(patronymic.lower()))
 
         year_query = request.args.get('birthYear')
         if year_query is not None:
@@ -347,9 +352,9 @@ def search():
 
         final_where = and_(*where_stmt) if where_stmt else True
         stmt = (
-            select(Person.id, Person.surname, Person.name, Person.patronymic)
+            select(Person.id, last_col, first_col, patr_col)
             .where(final_where)
-            .order_by(Person.surname.collate('C'), Person.name.collate('C'))
+            .order_by(last_col.collate('C'), first_col.collate('C'))
         )
 
         results = []
