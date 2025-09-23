@@ -159,130 +159,130 @@ def view():
 
 @app.route('/search')
 def search():
-    """
-    Universal search view for organization, person, and document.
-
-    This route handles the search functionality for organizations, persons, and documents based on the
-    query parameters provided in the request. It supports various search types including quick search,
-    content search, and specific attribute search.
-
-    Query Parameters:
-    - type (str): The type of object to search ('org', 'person', 'doc').
-    - quicksearch (str): A quick search term.
-    - content (str): A term to search within the bibliography content.
-    - fullName (str): The full name of the person to search.
-    - firstName (str): The first name of the person to search.
-    - lastName (str): The last name of the person to search.
-    - patronymic (str): The patronymic of the person to search.
-    - birthYear (int): The birth year of the person to search.
-    - name (str): The name of the organization or document to search.
-
-    Returns:
-    - Renders the 'search.html' template with the search results if any.
-    - Returns a JSON response with the search results if applicable.
-    - Aborts with a 404 status code if the search type is not recognized.
-    """
     page = {'heading': 'Поиск', 'title': 'Search'}
     if len(request.args) == 0 or not request.args.get('type'):
         return render_template('search.html', page=page)
-    if request.args.get('quicksearch'):
+
+    # Quicksearch: /search?type=person&quicksearch=quicksearch&fullName=...
+    if request.args.get('quicksearch') and request.args.get('type') == 'person':
         query = request.args.get('fullName')
         where_stmt = []
         if query is None:
             return redirect('/search')
         else:
-            query_list = query.split()
-            if len(query_list) == 1:
-                where_stmt.append(func.lower(Person.surname).startswith(query_list[0].lower()))
-            elif len(query_list) == 2:
+            parts = query.split()
+            if len(parts) == 1:
+                where_stmt.append(func.lower(Person.surname).startswith(parts[0].lower()))
+            elif len(parts) == 2:
                 where_stmt.append(
-                    (func.lower(Person.surname) == query_list[0].lower())
-                    & (func.lower(Person.name) == query_list[1].lower())
+                    (func.lower(Person.surname) == parts[0].lower())
+                    & (func.lower(Person.name) == parts[1].lower())
                 )
-            elif len(query_list) == 3:
+            elif len(parts) == 3:
                 where_stmt.append(
-                    (func.lower(Person.surname) == query_list[0].lower())
-                    & (func.lower(Person.name) == query_list[1].lower())
-                    & (func.lower(Person.patronymic) == query_list[2].lower())
+                    (func.lower(Person.surname) == parts[0].lower())
+                    & (func.lower(Person.name) == parts[1].lower())
+                    & (func.lower(Person.patronymic) == parts[2].lower())
                 )
-        final_where_stmt = and_(*where_stmt) if where_stmt else True
-        stmt = select(Person).where(final_where_stmt).order_by(Person.surname.collate('C'))
+
+        final_where = and_(*where_stmt) if where_stmt else True
+        stmt = (
+            select(Person.id, Person.surname, Person.name, Person.patronymic)
+            .where(final_where)
+            .order_by(Person.surname.collate('C'), Person.name.collate('C'))
+        )
+
         results = []
         with Session(engine) as session:
-            data = session.execute(stmt)
-            for person_row in data:
-                person = person_row[0]
-                results.append(['person', person.id, str(person)])
-        # Render the search page with results
+            for row in session.execute(stmt):
+                # row: (id, surname, name, patronymic)
+                display = ' '.join(filter(None, (row[1], row[2], row[3])))
+                results.append(['person', row[0], display])
         return render_template('search.html', page=page, results=results)
+
+    # Content search (bibliography substring) — return compact JSON
     elif request.args.get('content'):
         content = request.args.get('content')
-        query = select(Person).filter(Person.bibliography.ilike(f'%{content}%')).order_by(Person.surname.collate('C'))
+        stmt = (
+            select(Person.id, Person.surname, Person.name, Person.patronymic)
+            .where(Person.bibliography.ilike(f'%{content}%'))
+            .order_by(Person.surname.collate('C'), Person.name.collate('C'))
+        )
         results = []
         with Session(engine) as session:
-            data = session.execute(query)
-            for person_row in data:
-                person = person_row[0]
-                results.append(['person', person.id, str(person)])
+            for row in session.execute(stmt):
+                display = ' '.join(filter(None, (row[1], row[2], row[3])))
+                results.append(['person', row[0], display])
         return jsonify(results)
+
+    # Person attribute search — return compact JSON
     elif request.args.get('type') == 'person':
+        where_stmt = []
         if len(set(request.args.keys()).intersection({'firstName', 'lastName', 'patronymic'})) == 0:
             query = request.args.get('fullName')
-            where_stmt = []
             if query is not None:
-                query_list = query.split()
-                if len(query_list) == 1:
-                    where_stmt.append(func.lower(Person.surname).startswith(query_list[0].lower()))
-                elif len(query_list) == 2:
-                    where_stmt.append((func.lower(Person.surname) == query_list[0].lower())
-                                      & (func.lower(Person.name) == query_list[1].lower()))
-                elif len(query_list) == 3:
-                    where_stmt.append((func.lower(Person.surname) == query_list[0].lower())
-                                      & (func.lower(Person.name) == query_list[1].lower())
-                                      & (func.lower(Person.patronymic) == query_list[2].lower()))
-            year_query = request.args.get('birthYear')
-            if year_query is not None:
-                where_stmt.append(extract('year', Person.birth_date) == int(year_query))
+                parts = query.split()
+                if len(parts) == 1:
+                    where_stmt.append(func.lower(Person.surname).startswith(parts[0].lower()))
+                elif len(parts) == 2:
+                    where_stmt.append(
+                        (func.lower(Person.surname) == parts[0].lower())
+                        & (func.lower(Person.name) == parts[1].lower())
+                    )
+                elif len(parts) == 3:
+                    where_stmt.append(
+                        (func.lower(Person.surname) == parts[0].lower())
+                        & (func.lower(Person.name) == parts[1].lower())
+                        & (func.lower(Person.patronymic) == parts[2].lower())
+                    )
         else:
             firstname = request.args.get('firstName')
             lastname = request.args.get('lastName')
             patronymic = request.args.get('patronymic')
-            year_query = request.args.get('birthYear')
-            where_stmt = []
-            if firstname is not None:
+            if firstname:
                 where_stmt.append(func.lower(Person.name).startswith(firstname.lower()))
-            if lastname is not None:
+            if lastname:
                 where_stmt.append(func.lower(Person.surname).startswith(lastname.lower()))
-            if patronymic is not None:
+            if patronymic:
                 where_stmt.append(func.lower(Person.patronymic).startswith(patronymic.lower()))
-            if year_query is not None:
-                where_stmt.append(extract('year', Person.birth_date) == int(year_query))
 
-        final_where_stmt = and_(*where_stmt) if where_stmt else True
-        stmt = select(Person).where(final_where_stmt).order_by(Person.surname.collate('C'))
+        year_query = request.args.get('birthYear')
+        if year_query is not None:
+            where_stmt.append(extract('year', Person.birth_date) == int(year_query))
+
+        final_where = and_(*where_stmt) if where_stmt else True
+        stmt = (
+            select(Person.id, Person.surname, Person.name, Person.patronymic)
+            .where(final_where)
+            .order_by(Person.surname.collate('C'), Person.name.collate('C'))
+        )
+
         results = []
         with Session(engine) as session:
-            data = session.execute(stmt)
-            for person_row in data:
-                person = person_row[0]
-                results.append(['person', person.id, str(person)])
+            for row in session.execute(stmt):
+                display = ' '.join(filter(None, (row[1], row[2], row[3])))
+                results.append(['person', row[0], display])
         return jsonify(results)
-    elif request.args.get('type') in ['org', 'doc', 'field_of_study']:  # Name only search
+
+    # Name-only search for org/doc/field_of_study — already compact (id, name)
+    elif request.args.get('type') in ['org', 'doc', 'field_of_study']:
         obj_type = request.args.get('type')
         obj = {'org': Organization, 'doc': Document, 'field_of_study': FieldOfStudy}[obj_type]
         query = request.args.get('name')
-        if query is not None:
-            stmt = select(obj.id, obj.name)\
-                .where(func.lower(obj.name)
-                       .startswith(query.lower())).order_by(func.lower(obj.name))
+        if query:
+            stmt = (
+                select(obj.id, obj.name)
+                .where(func.lower(obj.name).startswith(query.lower()))
+                .order_by(func.lower(obj.name).collate('C'))
+            )
         else:
             stmt = select(obj.id, obj.name).order_by(func.lower(obj.name).collate('C'))
         results = []
         with Session(engine) as session:
-            data = session.execute(stmt)
-            for row in data:
+            for row in session.execute(stmt):
                 results.append([obj_type, row[0], row[1]])
         return jsonify(results)
+
     else:
         abort(404)
 
