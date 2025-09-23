@@ -5,7 +5,6 @@ from helper import (SECRET_KEY,
                     MULTIPLE_CHOICE_FIELDS,
                     FILE_FIELDS,
                     TITLE_CONVERTER_NEW_EDIT,
-                    HEADING_CONVERTER,
                     CONNECTION_TYPE_MAPPING
                     )
 from helper.db.initialise_database import engine, Organization, Person, Document, FieldOfStudy
@@ -136,14 +135,31 @@ def view():
         stmt = select(Person).filter(Person.area_of_study.ilike(f'%{place}%')).order_by(Person.surname, Person.name)
         with Session(engine) as session:
             people = session.execute(stmt).scalars().all()
-        data = {
-            "Географический регион": place,
-            "Связанные исследователи": [[
-                'person',
-                person.id,
-                f"{person.surname} {person.name} {person.patronymic or ''}"
-            ] for person in people]
-        }
+        # Localize keys for geography view
+        if get_locale() == 'en':
+            data = {
+                "Geographic region": place,
+                "Related researchers": [
+                    [
+                        'person',
+                        person.id,
+                        f"{person.surname} {person.name} {person.patronymic or ''}"
+                    ] for person in people
+                ],
+            }
+            parameters = {'single': [], 'multiple': ['Related researchers']}
+        else:
+            data = {
+                "Географический регион": place,
+                "Связанные исследователи": [
+                    [
+                        'person',
+                        person.id,
+                        f"{person.surname} {person.name} {person.patronymic or ''}"
+                    ] for person in people
+                ],
+            }
+            parameters = {'single': [], 'multiple': ['Связанные исследователи']}
 
         page = {
             'heading': _('Географический регион: %(place)s', place=place),
@@ -151,37 +167,63 @@ def view():
             'id': place,
             'type': 'geography'
         }
-        parameters = {'single': [],
-                      'multiple': ['Связанные персоналии', 'Связанные исследователи']}
 
         return render_template('view.html', data=data, page=page, parameters=parameters)
 
     viewtype_to_object = {'org': Organization, 'person': Person, 'doc': Document, 'field_of_study': FieldOfStudy}
-    parameters = {'single': ['Биография', 'Библиография'],
-                  'multiple': ['Связанные персоналии', 'Связанные исследователи', 'Выпускники']}
+    # Localize which keys are considered single vs multiple for layout
+    if get_locale() == 'en':
+        parameters = {
+            'single': ['Biography', 'Bibliography'],
+            'multiple': ['Related persons', 'Related researchers', 'Alumni'],
+        }
+    else:
+        parameters = {
+            'single': ['Биография', 'Библиография'],
+            'multiple': ['Связанные персоналии', 'Связанные исследователи', 'Выпускники'],
+        }
     viewtype = request.args.get('type')
     viewid = int(request.args.get('id'))
     obj = viewtype_to_object[viewtype]
     stmt = select(obj).where(obj.id == viewid)
     with Session(engine) as session:
-        data = session.execute(stmt).scalar_one_or_none()
-        data = data.values_ru()
+        obj_instance = session.execute(stmt).scalar_one_or_none()
+        if obj_instance is None:
+            abort(404)
+        # Use localized value dictionaries
+        if get_locale() == 'en':
+            data = obj_instance.values_en()
+        else:
+            data = obj_instance.values_ru()
+    # Localized heading labels
+    heading_map = {
+        'org': _('Организация'),
+        'person': _('Персоналия'),
+        'doc': _('Документ'),
+        'field_of_study': _('Область знаний'),
+    }
     page = {
-        'heading': HEADING_CONVERTER[viewtype],
+        'heading': heading_map[viewtype],
         'title': _('View %(name)s', name=obj.__name__.lower()),
         'id': viewid,
         'type': viewtype,
     }
-    if "Фотография" in data:
-        # Avoid nested quotes/functions inside an f-string (Python 3.10 parser can choke on this)
-        photo_src = data["Фотография"]
-        alt_text = _("Фотография")
-        data["Фотография"] = f'<img src="{photo_src}" alt="{alt_text}" />'
-    if "Дата рождения" not in data and "Комментарии" in data and data["Комментарии"]:
-        match = re.search(r'Дата рождения:\s*([^\.\n]+)', data["Комментарии"])
+    # Photo rendering: handle localized key
+    photo_key = 'Photo' if get_locale() == 'en' else 'Фотография'
+    if photo_key in data:
+        photo_src = data[photo_key]
+        alt_text = _(photo_key)
+        data[photo_key] = f'<img src="{photo_src}" alt="{alt_text}" />'
+    # Insert derived birth date from comments if missing (comments text is Russian; regex remains RU)
+    comments_key = 'Comments' if get_locale() == 'en' else 'Комментарии'
+    fio_key = 'Full name' if get_locale() == 'en' else 'Фамилия Имя Отчество'
+    birth_key = 'Birth date' if get_locale() == 'en' else 'Дата рождения'
+    birth_place_key = 'Birth place' if get_locale() == 'en' else 'Место рождения'
+    death_key = 'Death date' if get_locale() == 'en' else 'Дата смерти'
+
+    if birth_key not in data and comments_key in data and data[comments_key]:
+        match = re.search(r'Дата рождения:\s*([^\.\n]+)', data[comments_key])
         if match:
-            fio_key = "Фамилия Имя Отчество"
-            birth_key = "Дата рождения"
             birth_value = '<i>' + match.group(1).strip() + '</i>'
             if fio_key in data:
                 items = list(data.items())
@@ -191,12 +233,11 @@ def view():
             else:
                 items = [(birth_key, birth_value)] + list(data.items())
                 data = dict(items)
-    if "Дата смерти" not in data and "Комментарии" in data and data["Комментарии"]:
-        match = re.search(r'Дата смерти:\s*([^\.\n]+)', data["Комментарии"])
+    if death_key not in data and comments_key in data and data[comments_key]:
+        match = re.search(r'Дата смерти:\s*([^\.\n]+)', data[comments_key])
         if match:
-            death_key = "Дата смерти"
             death_value = '<i>' + match.group(1).strip() + '</i>'
-            keys_priority = ["Место рождения", "Дата рождения", "Фамилия Имя Отчество"]
+            keys_priority = [birth_place_key, birth_key, fio_key]
             items = list(data.items())
             insert_idx = 0
             for key in keys_priority:

@@ -167,7 +167,7 @@ class Person(Base):
         Structure mirrors values_ru and keeps the same data values.
         """
         values = {
-            'Full name': '<b>' + str(self) + '</b>',
+            'Full name': '<b>' + ' '.join(filter(None, (self.surname_en, self.name_en, self.patronymic_en))) + '</b>',
             'Birth date': self.birth_date,
             'Birth place': self.birth_place,
             'Death date': self.death_date,
