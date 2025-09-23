@@ -1,11 +1,10 @@
-from flask import Flask, render_template, request, abort, jsonify, redirect
+from flask import Flask, render_template, request, abort, jsonify, redirect, session, url_for
 from flask_login import login_required
+from flask_babel import Babel, gettext as _
 from helper import (SECRET_KEY,
                     MULTIPLE_CHOICE_FIELDS,
                     FILE_FIELDS,
                     TITLE_CONVERTER_NEW_EDIT,
-                    HEADING_CONVERTER,
-                    TITLE_CONVERTER_LIST,
                     CONNECTION_TYPE_MAPPING
                     )
 from helper.db.initialise_database import engine, Organization, Person, Document, FieldOfStudy
@@ -31,6 +30,53 @@ app.config['MAX_FORM_MEMORY_SIZE'] = 32 * 1024 * 1024
 
 login_manager.init_app(app)
 login_manager.login_view = 'app_login.login'
+
+app.config.update(
+    BABEL_DEFAULT_LOCALE='ru',
+    BABEL_TRANSLATION_DIRECTORIES='translations'
+)
+LANGUAGES = ['ru', 'en']
+babel = Babel(app)
+
+
+def get_locale():
+    # Priority: explicit ?lang= -> session -> (optionally user) -> Accept-Language -> default
+    lang = request.args.get('lang')
+    if lang in LANGUAGES:
+        session['lang'] = lang
+        return lang
+    if session.get('lang') in LANGUAGES:
+        return session['lang']
+    try:
+        from flask_login import current_user
+        if getattr(current_user, 'locale', None) in LANGUAGES:
+            return current_user.locale
+    except Exception:
+        pass
+    return app.config['BABEL_DEFAULT_LOCALE']
+
+
+babel.init_app(app, locale_selector=get_locale)
+app.jinja_env.add_extension('jinja2.ext.i18n')
+
+
+@app.context_processor
+def inject_current_locale():
+    """Expose the current locale to templates as `current_locale`."""
+    try:
+        from flask_babel import get_locale as _get_locale
+        loc = str(_get_locale())
+    except Exception:
+        loc = app.config.get('BABEL_DEFAULT_LOCALE', 'ru')
+    return {'current_locale': loc}
+
+
+@app.get('/set_language/<lang_code>')
+def set_language(lang_code):
+    if lang_code not in LANGUAGES:
+        abort(404)
+    session['lang'] = lang_code
+    return redirect(request.referrer or url_for('index'))
 
 
 @app.route('/')
@@ -89,45 +135,99 @@ def view():
         stmt = select(Person).filter(Person.area_of_study.ilike(f'%{place}%')).order_by(Person.surname, Person.name)
         with Session(engine) as session:
             people = session.execute(stmt).scalars().all()
-        data = {
-            "Географический регион": place,
-            "Связанные исследователи": [[
-                'person',
-                person.id,
-                f"{person.surname} {person.name} {person.patronymic or ''}"
-            ] for person in people]
-        }
+        # Localize keys for geography view
+        if get_locale() == 'en':
+            data = {
+                "Geographic region": place,
+                "Related researchers": [
+                    [
+                        'person',
+                        person.id,
+                        (
+                            f"{person.surname_en or person.surname} "
+                            f"{person.name_en or person.name} "
+                            f"{person.patronymic_en or person.patronymic or ''}"
+                        )
+                    ] for person in people
+                ],
+            }
+            parameters = {'single': [], 'multiple': ['Related researchers']}
+        else:
+            data = {
+                "Географический регион": place,
+                "Связанные исследователи": [
+                    [
+                        'person',
+                        person.id,
+                        f"{person.surname} {person.name} {person.patronymic or ''}"
+                    ] for person in people
+                ],
+            }
+            parameters = {'single': [], 'multiple': ['Связанные исследователи']}
 
         page = {
-            'heading': f'Географический регион: {place}',
-            'title': f'Geographic region: {place}',
+            'heading': _('Географический регион: %(place)s', place=place),
+            'title': _('Geographic region: %(place)s', place=place),
             'id': place,
             'type': 'geography'
         }
-        parameters = {'single': [],
-                      'multiple': ['Связанные персоналии', 'Связанные исследователи']}
 
         return render_template('view.html', data=data, page=page, parameters=parameters)
 
     viewtype_to_object = {'org': Organization, 'person': Person, 'doc': Document, 'field_of_study': FieldOfStudy}
-    parameters = {'single': ['Биография', 'Библиография'],
-                  'multiple': ['Связанные персоналии', 'Связанные исследователи', 'Выпускники']}
+    # Localize which keys are considered single vs multiple for layout
+    if get_locale() == 'en':
+        parameters = {
+            'single': ['Biography', 'Bibliography'],
+            'multiple': ['Related persons', 'Related researchers', 'Alumni'],
+        }
+    else:
+        parameters = {
+            'single': ['Биография', 'Библиография'],
+            'multiple': ['Связанные персоналии', 'Связанные исследователи', 'Выпускники'],
+        }
     viewtype = request.args.get('type')
     viewid = int(request.args.get('id'))
     obj = viewtype_to_object[viewtype]
     stmt = select(obj).where(obj.id == viewid)
     with Session(engine) as session:
-        data = session.execute(stmt).scalar_one_or_none()
-        data = data.values_ru()
-    page = {'heading': f'{HEADING_CONVERTER[viewtype]}', 'title': f'View {obj.__name__.lower()}',
-            'id': viewid, 'type': viewtype}
-    if "Фотография" in data:
-        data["Фотография"] = f'<img src="{data["Фотография"]}" alt="Фотография" />'
-    if "Дата рождения" not in data and "Комментарии" in data and data["Комментарии"]:
-        match = re.search(r'Дата рождения:\s*([^\.\n]+)', data["Комментарии"])
+        obj_instance = session.execute(stmt).scalar_one_or_none()
+        if obj_instance is None:
+            abort(404)
+        # Use localized value dictionaries
+        if get_locale() == 'en':
+            data = obj_instance.values_en()
+        else:
+            data = obj_instance.values_ru()
+    # Localized heading labels
+    heading_map = {
+        'org': _('Организация'),
+        'person': _('Персоналия'),
+        'doc': _('Документ'),
+        'field_of_study': _('Область знаний'),
+    }
+    page = {
+        'heading': heading_map[viewtype],
+        'title': _('View %(name)s', name=obj.__name__.lower()),
+        'id': viewid,
+        'type': viewtype,
+    }
+    # Photo rendering: handle localized key
+    photo_key = 'Photo' if get_locale() == 'en' else 'Фотография'
+    if photo_key in data:
+        photo_src = data[photo_key]
+        alt_text = _(photo_key)
+        data[photo_key] = f'<img src="{photo_src}" alt="{alt_text}" />'
+    # Insert derived birth date from comments if missing (comments text is Russian; regex remains RU)
+    comments_key = 'Comments' if get_locale() == 'en' else 'Комментарии'
+    fio_key = 'Full name' if get_locale() == 'en' else 'Фамилия Имя Отчество'
+    birth_key = 'Birth date' if get_locale() == 'en' else 'Дата рождения'
+    birth_place_key = 'Birth place' if get_locale() == 'en' else 'Место рождения'
+    death_key = 'Death date' if get_locale() == 'en' else 'Дата смерти'
+
+    if birth_key not in data and comments_key in data and data[comments_key]:
+        match = re.search(r'Дата рождения:\s*([^\.\n]+)', data[comments_key])
         if match:
-            fio_key = "Фамилия Имя Отчество"
-            birth_key = "Дата рождения"
             birth_value = '<i>' + match.group(1).strip() + '</i>'
             if fio_key in data:
                 items = list(data.items())
@@ -137,12 +237,11 @@ def view():
             else:
                 items = [(birth_key, birth_value)] + list(data.items())
                 data = dict(items)
-    if "Дата смерти" not in data and "Комментарии" in data and data["Комментарии"]:
-        match = re.search(r'Дата смерти:\s*([^\.\n]+)', data["Комментарии"])
+    if death_key not in data and comments_key in data and data[comments_key]:
+        match = re.search(r'Дата смерти:\s*([^\.\n]+)', data[comments_key])
         if match:
-            death_key = "Дата смерти"
             death_value = '<i>' + match.group(1).strip() + '</i>'
-            keys_priority = ["Место рождения", "Дата рождения", "Фамилия Имя Отчество"]
+            keys_priority = [birth_place_key, birth_key, fio_key]
             items = list(data.items())
             insert_idx = 0
             for key in keys_priority:
@@ -159,7 +258,12 @@ def view():
 
 @app.route('/search')
 def search():
-    page = {'heading': 'Поиск', 'title': 'Search'}
+    page = {'heading': _('Поиск'), 'title': _('Search')}
+    # Choose localized name columns for person searches
+    use_en = (str(get_locale()) == 'en')
+    first_col = Person.name_en if use_en else Person.name
+    last_col = Person.surname_en if use_en else Person.surname
+    patr_col = Person.patronymic_en if use_en else Person.patronymic
     if len(request.args) == 0 or not request.args.get('type'):
         return render_template('search.html', page=page)
 
@@ -172,24 +276,24 @@ def search():
         else:
             parts = query.split()
             if len(parts) == 1:
-                where_stmt.append(func.lower(Person.surname).startswith(parts[0].lower()))
+                where_stmt.append(func.lower(last_col).startswith(parts[0].lower()))
             elif len(parts) == 2:
                 where_stmt.append(
-                    (func.lower(Person.surname) == parts[0].lower())
-                    & (func.lower(Person.name) == parts[1].lower())
+                    (func.lower(last_col) == parts[0].lower())
+                    & (func.lower(first_col) == parts[1].lower())
                 )
             elif len(parts) == 3:
                 where_stmt.append(
-                    (func.lower(Person.surname) == parts[0].lower())
-                    & (func.lower(Person.name) == parts[1].lower())
-                    & (func.lower(Person.patronymic) == parts[2].lower())
+                    (func.lower(last_col) == parts[0].lower())
+                    & (func.lower(first_col) == parts[1].lower())
+                    & (func.lower(patr_col) == parts[2].lower())
                 )
 
         final_where = and_(*where_stmt) if where_stmt else True
         stmt = (
-            select(Person.id, Person.surname, Person.name, Person.patronymic)
+            select(Person.id, last_col, first_col, patr_col)
             .where(final_where)
-            .order_by(Person.surname.collate('C'), Person.name.collate('C'))
+            .order_by(last_col.collate('C'), first_col.collate('C'))
         )
 
         results = []
@@ -223,28 +327,28 @@ def search():
             if query is not None:
                 parts = query.split()
                 if len(parts) == 1:
-                    where_stmt.append(func.lower(Person.surname).startswith(parts[0].lower()))
+                    where_stmt.append(func.lower(last_col).startswith(parts[0].lower()))
                 elif len(parts) == 2:
                     where_stmt.append(
-                        (func.lower(Person.surname) == parts[0].lower())
-                        & (func.lower(Person.name) == parts[1].lower())
+                        (func.lower(last_col) == parts[0].lower())
+                        & (func.lower(first_col) == parts[1].lower())
                     )
                 elif len(parts) == 3:
                     where_stmt.append(
-                        (func.lower(Person.surname) == parts[0].lower())
-                        & (func.lower(Person.name) == parts[1].lower())
-                        & (func.lower(Person.patronymic) == parts[2].lower())
+                        (func.lower(last_col) == parts[0].lower())
+                        & (func.lower(first_col) == parts[1].lower())
+                        & (func.lower(patr_col) == parts[2].lower())
                     )
         else:
             firstname = request.args.get('firstName')
             lastname = request.args.get('lastName')
             patronymic = request.args.get('patronymic')
             if firstname:
-                where_stmt.append(func.lower(Person.name).startswith(firstname.lower()))
+                where_stmt.append(func.lower(first_col).startswith(firstname.lower()))
             if lastname:
-                where_stmt.append(func.lower(Person.surname).startswith(lastname.lower()))
+                where_stmt.append(func.lower(last_col).startswith(lastname.lower()))
             if patronymic:
-                where_stmt.append(func.lower(Person.patronymic).startswith(patronymic.lower()))
+                where_stmt.append(func.lower(patr_col).startswith(patronymic.lower()))
 
         year_query = request.args.get('birthYear')
         if year_query is not None:
@@ -252,9 +356,9 @@ def search():
 
         final_where = and_(*where_stmt) if where_stmt else True
         stmt = (
-            select(Person.id, Person.surname, Person.name, Person.patronymic)
+            select(Person.id, last_col, first_col, patr_col)
             .where(final_where)
-            .order_by(Person.surname.collate('C'), Person.name.collate('C'))
+            .order_by(last_col.collate('C'), first_col.collate('C'))
         )
 
         results = []
@@ -316,6 +420,13 @@ def list_view():
 
     obj = obj_map[obj_type]
 
+    heading_map = {
+        'org': _('Организации'),
+        'person': _('Персоналии'),
+        'doc': _('Документы'),
+        'field_of_study': _('Области исследования'),
+    }
+
     # Determine default sort field based on object type
     if obj_type == 'person':
         sort_field = request.args.get('sort', 'surname')
@@ -342,8 +453,8 @@ def list_view():
                 results.append([obj_type, row[0], row[1]])
 
     page_info = {
-        'heading': TITLE_CONVERTER_LIST[obj_type],
-        'title': TITLE_CONVERTER_LIST[obj_type],
+        'heading': heading_map[obj_type],
+        'title': heading_map[obj_type],
         'type': obj_type
     }
 
@@ -395,31 +506,49 @@ def list_view_custom():
             LIMIT :limit;
         """)
         page_info = {
-            'heading': 'Самые популярные географические регионы',
-            'title': 'Самые популярные географические регионы',
+            'heading': _('Самые популярные географические регионы'),
+            'title': _('Самые популярные географические регионы'),
         }
         with Session(engine) as session:
             result = session.execute(query, {"limit": 100})
             results = result.fetchall()
-        results = [['geography', row[0], f'{row[0]} - {row[1]} результатов'] for row in results]
+        results = [
+            [
+                'geography',
+                row[0],
+                _('%(place)s - %(count)s results', place=row[0], count=row[1])
+            ]
+            for row in results
+        ]
         use_pagination = False
     elif obj_type.startswith('acad_'):
-        acad_map = {
+        # DB filter labels (do not translate; must match stored values)
+        degree_db_map = {
             'acad_full_members': 'действительный член',
             'acad_foreign_members': 'иностранный член',
             'acad_honorary_members': 'почётный член',
             'acad_corresponding_members': 'член-корреспондент',
             'acad_professors': 'профессор РАН'
         }
+        # UI labels (translate for display)
+        degree_label_map = {
+            'acad_full_members': _('действительный член'),
+            'acad_foreign_members': _('иностранный член'),
+            'acad_honorary_members': _('почётный член'),
+            'acad_corresponding_members': _('член-корреспондент'),
+            'acad_professors': _('профессор РАН')
+        }
+
         query = select(Person).filter(
-            Person.academic_degree == acad_map[obj_type]
+            Person.academic_degree == degree_db_map[obj_type]
         ).order_by(Person.surname.collate('C'))
         with Session(engine) as session:
             result = session.execute(query)
             results = [['person', person[0].id, str(person[0])] for person in result.fetchall()]
+        degree_label = degree_label_map[obj_type]
         page_info = {
-            'heading': 'Список академических степеней - ' + acad_map[obj_type],
-            'title': 'Список академических степеней - ' + acad_map[obj_type],
+            'heading': _('Список академических степеней - %(degree)s', degree=degree_label),
+            'title': _('Список академических степеней - %(degree)s', degree=degree_label),
         }
         use_pagination = True
     return render_template('list.html', results=results, page=page_info, result_use_pagination=use_pagination)

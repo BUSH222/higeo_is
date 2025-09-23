@@ -1,0 +1,551 @@
+# Russian translations for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-09-23 23:27+0300\n"
+"PO-Revision-Date: 2025-09-23 20:44+0300\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ru\n"
+"Language-Team: ru <LL@li.org>\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: main.py:165
+#, python-format
+msgid "Географический регион: %(place)s"
+msgstr "Географический регион: %(place)s"
+
+#: main.py:166
+#, python-format
+msgid "Geographic region: %(place)s"
+msgstr "Географический регион: %(place)s"
+
+#: main.py:200
+msgid "Организация"
+msgstr "Организация"
+
+#: main.py:201
+msgid "Персоналия"
+msgstr "Персоналия"
+
+#: main.py:202
+msgid "Документ"
+msgstr "Документ"
+
+#: main.py:203
+msgid "Область знаний"
+msgstr "Область знаний"
+
+#: main.py:207
+#, python-format
+msgid "View %(name)s"
+msgstr "Просмотр %(name)s"
+
+#: main.py:257 templates/about.html:37 templates/about.html:43
+#: templates/about.html:49 templates/base.html:31 templates/base.html:70
+#: templates/base.html:71 templates/search.html:92 templates/search.html:128
+#: templates/search.html:163
+msgid "Поиск"
+msgstr "Поиск"
+
+#: main.py:257
+msgid "Search"
+msgstr "Поиск"
+
+#: main.py:420 templates/base.html:40
+msgid "Организации"
+msgstr "Организации"
+
+#: main.py:421
+msgid "Персоналии"
+msgstr "Персоналии"
+
+#: main.py:422
+msgid "Документы"
+msgstr "Документы"
+
+#: main.py:423
+msgid "Области исследования"
+msgstr "Области исследования"
+
+#: main.py:505 main.py:506
+msgid "Самые популярные географические регионы"
+msgstr "Самые популярные географические регионы"
+
+#: main.py:515
+#, python-format
+msgid "%(place)s - %(count)s results"
+msgstr "%(place)s - %(count)s результатов"
+
+#: main.py:531
+msgid "действительный член"
+msgstr "действительный член"
+
+#: main.py:532
+msgid "иностранный член"
+msgstr "иностранный член"
+
+#: main.py:533
+msgid "почётный член"
+msgstr "почётный член"
+
+#: main.py:534
+msgid "член-корреспондент"
+msgstr "член-корреспондент"
+
+#: main.py:535
+msgid "профессор РАН"
+msgstr "профессор РАН"
+
+#: main.py:546 main.py:547
+#, python-format
+msgid "Список академических степеней - %(degree)s"
+msgstr "Список академических степеней - %(degree)s"
+
+#: templates/about.html:2 templates/index.html:3
+msgid "About"
+msgstr "О системе"
+
+#: templates/about.html:11
+msgid "Об информационной системе"
+msgstr "Об информационной системе"
+
+#: templates/about.html:16 templates/index.html:16
+msgid "IS logo"
+msgstr "Логотип ИС"
+
+#: templates/about.html:19
+msgid ""
+"Информационная система «История геологии и горного дела» - это "
+"биобиблиографическая база данных для информационного обеспечения "
+"исследований по наукам о Земле и по истории науки. Система содержит "
+"информацию об отечественных и зарубежных геологах и горных инженерах "
+"внёсших значительный вклад в развитие науки. Представлены "
+"библиографические списки публикаций авторов, а также статьи и некрологи о"
+" них. Показаны отзывы на публикации и редакторская работа. К персоналиям "
+"учёных привязаны места их работы, дополнительные документы и фотографии."
+msgstr ""
+"Информационная система «История геологии и горного дела» - это "
+"биобиблиографическая база данных для информационного обеспечения "
+"исследований по наукам о Земле и по истории науки. Система содержит "
+"информацию об отечественных и зарубежных геологах и горных инженерах "
+"внёсших значительный вклад в развитие науки. Представлены "
+"библиографические списки публикаций авторов, а также статьи и некрологи о"
+" них. Показаны отзывы на публикации и редакторская работа. К персоналиям "
+"учёных привязаны места их работы, дополнительные документы и фотографии."
+
+#: templates/about.html:20
+msgid ""
+"Информация предназначена для поддержки и систематизации знаний в области "
+"истории геологии и горного дела. Основным функционалом системы служат "
+"структурирование и поиск информации. Информационная система позволяет "
+"постоянно актуализировать информацию о геологах, сделать её максимально "
+"доступной и удобной для поиска и научной работы."
+msgstr ""
+"Информация предназначена для поддержки и систематизации знаний в области "
+"истории геологии и горного дела. Основным функционалом системы служат "
+"структурирование и поиск информации. Информационная система позволяет "
+"постоянно актуализировать информацию о геологах, сделать её максимально "
+"доступной и удобной для поиска и научной работы."
+
+#: templates/about.html:21
+msgid ""
+"Система постоянно обновляется и редактируется в Группе истории геологии "
+"ГИН РАН, куда вы можете прислать дополнительные библиографии и документы "
+"по истории геологических и горных наук."
+msgstr ""
+"Система постоянно обновляется и редактируется в Группе истории геологии "
+"ГИН РАН, куда вы можете прислать дополнительные библиографии и документы "
+"по истории геологических и горных наук."
+
+#: templates/about.html:23 templates/base.html:88 templates/index.html:32
+msgid "Группа истории геологии"
+msgstr "Группа истории геологии"
+
+#: templates/about.html:23 templates/index.html:32
+msgid "ГИН РАН, Москва."
+msgstr "ГИН РАН, Москва."
+
+#: templates/about.html:36
+msgid "Поиск персоналии"
+msgstr "Поиск персоналии"
+
+#: templates/about.html:37
+msgid ""
+"Напишите в строке поиска (полностью или частично) фамилии, имена и "
+"отчества учёных. На странице персоналии показаны биографии, библиографии,"
+" документы и фото. В системе более 1700 персоналий учёных из разных "
+"стран."
+msgstr ""
+"Напишите в строке поиска (полностью или частично) фамилии, имена и "
+"отчества учёных. На странице персоналии показаны биографии, библиографии,"
+" документы и фото. В системе более 1700 персоналий учёных из разных "
+"стран."
+
+#: templates/about.html:42
+msgid "Поиск организаций"
+msgstr "Поиск организаций"
+
+#: templates/about.html:43
+msgid ""
+"Для показа списка учёных связанных с организациями, напишите в строке "
+"поиска названия института, организации или общества (можно использовать "
+"сокращения и части названия)."
+msgstr ""
+"Для показа списка учёных связанных с организациями, напишите в строке "
+"поиска названия института, организации или общества (можно использовать "
+"сокращения и части названия)."
+
+#: templates/about.html:48 templates/search.html:28
+msgid "Поиск по библиографиям"
+msgstr "Поиск по библиографиям"
+
+#: templates/about.html:49
+msgid ""
+"Система показывает списки персоналий у которых в перечне трудов "
+"встречаются слова поискового запроса."
+msgstr ""
+"Система показывает списки персоналий у которых в перечне трудов "
+"встречаются слова поискового запроса."
+
+#: templates/about.html:54
+msgid "Просмотр общих списков"
+msgstr "Просмотр общих списков"
+
+#: templates/about.html:56
+msgid ""
+"Также можно воспользоваться выбором персоналии или организации из общего "
+"списка."
+msgstr ""
+"Также можно воспользоваться выбором персоналии или организации из общего "
+"списка."
+
+#: templates/about.html:58
+msgid "Список персоналий"
+msgstr "Список персоналий"
+
+#: templates/about.html:59
+msgid "Список научных направлений"
+msgstr "Список научных направлений"
+
+#: templates/about.html:60
+msgid "Список организаций"
+msgstr "Список организаций"
+
+#: templates/about.html:61
+msgid "География исследований"
+msgstr "География исследований"
+
+#: templates/about.html:62
+msgid "Список действительных членов"
+msgstr "Список действительных членов"
+
+#: templates/about.html:63
+msgid "Список иностранных членов"
+msgstr "Список иностранных членов"
+
+#: templates/about.html:64
+msgid "Список почётных членов"
+msgstr "Список почётных членов"
+
+#: templates/about.html:65
+msgid "Список членов-корреспондентов"
+msgstr "Список членов-корреспондентов"
+
+#: templates/about.html:66
+msgid "Список профессоров РАН"
+msgstr "Список профессоров РАН"
+
+#: templates/about.html:78
+msgid "Дополнительная информация"
+msgstr "Дополнительная информация"
+
+#: templates/about.html:82
+msgid "Публикации о системе:"
+msgstr "Публикации о системе:"
+
+#: templates/about.html:94
+msgid "Разработка программного обеспечения:"
+msgstr "Разработка программного обеспечения:"
+
+#: templates/about.html:99
+msgid "Поддержка и наполнение контента"
+msgstr "Поддержка и наполнение контента"
+
+#: templates/about.html:100
+msgid "Группа истории геологии, Геологический институт Российской академии наук."
+msgstr "Группа истории геологии, Геологический институт Российской академии наук."
+
+#: templates/about.html:101
+msgid "Автор идеи и редактор содержания: И.Г. Малахова."
+msgstr "Автор идеи и редактор содержания: И.Г. Малахова."
+
+#: templates/about.html:104
+msgid "Лицензии"
+msgstr "Лицензии"
+
+#: templates/about.html:105
+msgid "Содержание ИС находится под лицензией"
+msgstr "Содержание ИС находится под лицензией"
+
+#: templates/about.html:106
+msgid "Исходный код ИС находится под лицензией"
+msgstr "Исходный код ИС находится под лицензией"
+
+#: templates/base.html:19
+msgid "logo"
+msgstr "логотип"
+
+#: templates/base.html:22
+msgid "Toggle navigation"
+msgstr "Переключить навигацию"
+
+#: templates/base.html:28
+msgid "О системе"
+msgstr "О системе"
+
+#: templates/base.html:34
+msgid "Темы"
+msgstr "Темы"
+
+#: templates/base.html:37
+msgid "География"
+msgstr "География"
+
+#: templates/base.html:49 templates/base.html:57
+msgid "English"
+msgstr "Английский"
+
+#: templates/base.html:51 templates/base.html:62
+msgid "Русский"
+msgstr "Русский"
+
+#: templates/base.html:70
+msgid "Общий поиск"
+msgstr "Общий поиск"
+
+#: templates/base.html:85
+msgid "ГИН РАН"
+msgstr "ГИН РАН"
+
+#: templates/base.html:89
+msgid "Геологический институт"
+msgstr "Геологический институт"
+
+#: templates/base.html:90
+msgid "Российская академия наук"
+msgstr "Российская академия наук"
+
+#: templates/index.html:11
+msgid "Информационная система"
+msgstr "Информационная система"
+
+#: templates/index.html:19
+msgid ""
+"<strong>Информационная система «История геологии и горного дела»</strong>"
+" – это биобиблиографическая академическая база данных, созданная для "
+"поддержки исследований в области наук о Земле и истории науки."
+msgstr ""
+"<strong>Информационная система «История геологии и горного дела»</strong>"
+" – это биобиблиографическая академическая база данных, созданная для "
+"поддержки исследований в области наук о Земле и истории науки."
+
+#: templates/index.html:20
+msgid "Задачи:"
+msgstr "Задачи:"
+
+#: templates/index.html:22
+msgid ""
+"Систематизация и удобный поиск информации по истории геологии и горного "
+"дела."
+msgstr ""
+"Систематизация и удобный поиск информации по истории геологии и горного "
+"дела."
+
+#: templates/index.html:23
+msgid ""
+"Поддержка научных исследований за счёт актуальных и структурированных "
+"данных."
+msgstr ""
+"Поддержка научных исследований за счёт актуальных и структурированных "
+"данных."
+
+#: templates/index.html:25
+msgid "Функции:"
+msgstr "Функции:"
+
+#: templates/index.html:27
+msgid "Содержит основные данные об учёных геологах и горных инженерах."
+msgstr "Содержит основные данные об учёных геологах и горных инженерах."
+
+#: templates/index.html:28
+msgid "Включает списки научных трудов и публикации об учёных."
+msgstr "Включает списки научных трудов и публикации об учёных."
+
+#: templates/index.html:29
+msgid ""
+"Позволяет сортировать данные, содержит документы и ссылки на "
+"дополнительные материалы."
+msgstr ""
+"Позволяет сортировать данные, содержит документы и ссылки на "
+"дополнительные материалы."
+
+#: templates/list.html:10 templates/search.html:185
+msgid "Поиск не дал результатов"
+msgstr "Поиск не дал результатов"
+
+#: templates/list.html:12 templates/search.html:187
+msgid "Найдено"
+msgstr "Найдено"
+
+#: templates/list.html:12 templates/search.html:187
+msgid "результатов"
+msgstr "результатов"
+
+#: templates/new.html:23
+msgid "Current file:"
+msgstr "Текущий файл:"
+
+#: templates/new.html:23
+msgid "Download"
+msgstr "Скачать"
+
+#: templates/new.html:38
+msgid "Поиск..."
+msgstr "Поиск..."
+
+#: templates/new.html:48
+msgid "Удалить"
+msgstr "Удалить"
+
+#: templates/new.html:56
+msgid "Сохранить"
+msgstr "Сохранить"
+
+#: templates/redirect.html:4
+msgid "Success! you will soon be redirected"
+msgstr "Успешно! вы скоро будете перенаправлены"
+
+#: templates/redirect.html:6
+msgid "ok"
+msgstr "ОК"
+
+#: templates/search.html:20
+msgid "Поиск по персоналиям:"
+msgstr "Поиск по персоналиям:"
+
+#: templates/search.html:34
+msgid "Содержание"
+msgstr "Содержание"
+
+#: templates/search.html:35
+msgid "Фамилия Имя Отчество"
+msgstr "Фамилия Имя Отчество"
+
+#: templates/search.html:44
+msgid "Ввести по частям"
+msgstr "Ввести по частям"
+
+#: templates/search.html:51
+msgid "Имя"
+msgstr "Имя"
+
+#: templates/search.html:57
+msgid "Введите имя"
+msgstr "Введите имя"
+
+#: templates/search.html:60
+msgid "Отчество"
+msgstr "Отчество"
+
+#: templates/search.html:66
+msgid "Введите отчество"
+msgstr "Введите отчество"
+
+#: templates/search.html:69
+msgid "Фамилия"
+msgstr "Фамилия"
+
+#: templates/search.html:75
+msgid "Введите фамилию"
+msgstr "Введите фамилию"
+
+#: templates/search.html:80
+msgid "Год рождения"
+msgstr "Год рождения"
+
+#: templates/search.html:86
+msgid "Введите год рождения"
+msgstr "Введите год рождения"
+
+#: templates/search.html:110
+msgid "Поиск по организациям:"
+msgstr "Поиск по организациям:"
+
+#: templates/search.html:118
+msgid "Название организации"
+msgstr "Название организации"
+
+#: templates/search.html:124 templates/search.html:159
+msgid "Введите название организации"
+msgstr "Введите название организации"
+
+#: templates/search.html:145
+msgid "Поиск по документам:"
+msgstr "Поиск по документам:"
+
+#: templates/search.html:153
+msgid "Название документа"
+msgstr "Название документа"
+
+#: templates/search.html:172
+msgid "New person"
+msgstr "Новая персоналия"
+
+#: templates/search.html:173
+msgid "New organization"
+msgstr "Новая организация"
+
+#: templates/search.html:174
+msgid "New document"
+msgstr "Новый документ"
+
+#: templates/search.html:179
+msgid "Результаты поиска"
+msgstr "Результаты поиска"
+
+#: templates/search.html:182
+msgid "Здесь будут показаны результаты поиска"
+msgstr "Здесь будут показаны результаты поиска"
+
+#: templates/view.html:16
+msgid "Edit"
+msgstr "Редактировать"
+
+#: templates/view.html:20
+msgid "Вы действительно хотите стереть всю страницу?"
+msgstr "Вы действительно хотите стереть всю страницу?"
+
+#: templates/view.html:21
+msgid "Delete"
+msgstr "Удалить"
+
+#: templates/view.html:78
+msgid "Скачать файл"
+msgstr "Скачать файл"
+
+#~ msgid "Список академических степеней - "
+#~ msgstr ""
+
+#~ msgid "Фотография"
+#~ msgstr ""
+

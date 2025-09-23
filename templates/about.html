@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}About{% endblock %}
+{% block title %}{{ _('About') }}{% endblock %}
 
 {% block content %}
 
@@ -8,19 +8,19 @@
         <div class="col-12">
             <div class="card rounded">
                 <div class="card-header">
-                    <h1 class="d-flex justify-content-center">Об информационной системе</h1>
+                    <h1 class="d-flex justify-content-center">{{ _('Об информационной системе') }}</h1>
                 </div>
                 <div class="card-body">
                     <div class="row mt-2">
                         <div class="col-lg-4 d-flex flex-wrap align-items-center">
-                            <img src="/static/img/IS-logo.gif" class="img-fluid mx-auto rounded" alt="IS logo">
+                            <img src="/static/img/IS-logo.gif" class="img-fluid mx-auto rounded" alt="{{ _('IS logo') }}">
                         </div>
                         <div class="col-lg-8 mt-2">
-                            <p>Информационная система «История геологии и горного дела» - это биобиблиографическая база данных для информационного обеспечения исследований по наукам о Земле и по истории науки. Система содержит информацию об отечественных и зарубежных геологах и горных инженерах внёсших значительный вклад в развитие науки. Представлены библиографические списки публикаций авторов, а также статьи и некрологи о них. Показаны отзывы на публикации и редакторская работа. К персоналиям учёных привязаны места их работы, дополнительные документы и фотографии.</p>
-                            <p>Информация предназначена для поддержки и систематизации знаний в области истории геологии и горного дела. Основным функционалом системы служат структурирование и поиск информации. Информационная система позволяет постоянно актуализировать информацию о геологах, сделать её максимально доступной и удобной для поиска и научной работы.</p>
-                            <p>Система постоянно обновляется и редактируется в Группе истории геологии ГИН РАН, куда вы можете прислать дополнительные библиографии и документы по истории геологических и горных наук.</p>
+                            <p>{% trans %}Информационная система «История геологии и горного дела» - это биобиблиографическая база данных для информационного обеспечения исследований по наукам о Земле и по истории науки. Система содержит информацию об отечественных и зарубежных геологах и горных инженерах внёсших значительный вклад в развитие науки. Представлены библиографические списки публикаций авторов, а также статьи и некрологи о них. Показаны отзывы на публикации и редакторская работа. К персоналиям учёных привязаны места их работы, дополнительные документы и фотографии.{% endtrans %}</p>
+                            <p>{% trans %}Информация предназначена для поддержки и систематизации знаний в области истории геологии и горного дела. Основным функционалом системы служат структурирование и поиск информации. Информационная система позволяет постоянно актуализировать информацию о геологах, сделать её максимально доступной и удобной для поиска и научной работы.{% endtrans %}</p>
+                            <p>{% trans %}Система постоянно обновляется и редактируется в Группе истории геологии ГИН РАН, куда вы можете прислать дополнительные библиографии и документы по истории геологических и горных наук.{% endtrans %}</p>
                             <div class="text-end">
-                                <p><a href="http://www.ginras.ru/struct/19/9/index.php">Группа истории геологии</a>, ГИН РАН, Москва.</p>
+                                <p><a href="http://www.ginras.ru/struct/19/9/index.php">{{ _('Группа истории геологии') }}</a>, {{ _('ГИН РАН, Москва.') }}</p>
                             </div>
                         </div>
                     </div>
@@ -33,37 +33,37 @@
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-2 row-cols-xl-4 g-3 mt-2">
                 <div class="col">
                     <div class="card h-100 d-flex flex-column px-0">
-                        <div class="card-header higeo-color-2">Поиск персоналии</div>
-                        <div class="card-body flex-grow-1">Напишите в строке поиска (полностью или частично) фамилии, имена и отчества учёных. На странице персоналии показаны биографии, библиографии, документы и фото. В системе более 1700 персоналий учёных из разных стран.<br><a href="/search?defaultopen=1">Поиск</a></div>
+                        <div class="card-header higeo-color-2">{{ _('Поиск персоналии') }}</div>
+                        <div class="card-body flex-grow-1">{% trans %}Напишите в строке поиска (полностью или частично) фамилии, имена и отчества учёных. На странице персоналии показаны биографии, библиографии, документы и фото. В системе более 1700 персоналий учёных из разных стран.{% endtrans %}<br><a href="/search?defaultopen=1">{{ _('Поиск') }}</a></div>
                     </div>
                 </div>
                 <div class="col">
                     <div class="card h-100 d-flex flex-column px-0">
-                        <div class="card-header higeo-color-2">Поиск организаций</div>
-                        <div class="card-body flex-grow-1">Для показа списка учёных связанных с организациями, напишите в строке поиска названия института, организации или общества (можно использовать сокращения и части названия).<br><a href="/search?defaultopen=2">Поиск</a></div>
+                        <div class="card-header higeo-color-2">{{ _('Поиск организаций') }}</div>
+                        <div class="card-body flex-grow-1">{% trans %}Для показа списка учёных связанных с организациями, напишите в строке поиска названия института, организации или общества (можно использовать сокращения и части названия).{% endtrans %}<br><a href="/search?defaultopen=2">{{ _('Поиск') }}</a></div>
                     </div>
                 </div>
                 <div class="col">
                     <div class="card h-100 d-flex flex-column px-0">
-                        <div class="card-header higeo-color-2">Поиск по библиографиям</div>
-                        <div class="card-body flex-grow-1">Система показывает списки персоналий у которых в перечне трудов встречаются слова поискового запроса.<br><a href="/search?defaultopen=1">Поиск</a></div>
+                        <div class="card-header higeo-color-2">{{ _('Поиск по библиографиям') }}</div>
+                        <div class="card-body flex-grow-1">{% trans %}Система показывает списки персоналий у которых в перечне трудов встречаются слова поискового запроса.{% endtrans %}<br><a href="/search?defaultopen=1">{{ _('Поиск') }}</a></div>
                     </div>
                 </div>
                 <div class="col">
                     <div class="card h-100 d-flex flex-column px-0">
-                        <div class="card-header higeo-color-2">Просмотр общих списков</div>
+                        <div class="card-header higeo-color-2">{{ _('Просмотр общих списков') }}</div>
                         <div class="card-body flex-grow-1">
-                            <p>Также можно воспользоваться выбором персоналии или организации из общего списка.</p>
+                            <p>{% trans %}Также можно воспользоваться выбором персоналии или организации из общего списка.{% endtrans %}</p>
                             <ul>
-                                <li><a href="/list?type=person">Список персоналий</a></li>
-                                <li><a href="/list?type=field_of_study">Список научных направлений</a></li>
-                                <li><a href="/list?type=org">Список организаций</a></li>
-                                <li><a href="/list_custom?type=geography">География исследований</a></li>
-                                <li><a href="/list_custom?type=acad_full_members">Список действительных членов</a></li>
-                                <li><a href="/list_custom?type=acad_foreign_members">Список иностранных членов</a></li>
-                                <li><a href="/list_custom?type=acad_honorary_members">Список почётных членов</a></li>
-                                <li><a href="/list_custom?type=acad_corresponding_members">Список членов-корреспондентов</a></li>
-                                <li><a href="/list_custom?type=acad_professors">Список профессоров РАН</a></li>
+                                <li><a href="/list?type=person">{{ _('Список персоналий') }}</a></li>
+                                <li><a href="/list?type=field_of_study">{{ _('Список научных направлений') }}</a></li>
+                                <li><a href="/list?type=org">{{ _('Список организаций') }}</a></li>
+                                <li><a href="/list_custom?type=geography">{{ _('География исследований') }}</a></li>
+                                <li><a href="/list_custom?type=acad_full_members">{{ _('Список действительных членов') }}</a></li>
+                                <li><a href="/list_custom?type=acad_foreign_members">{{ _('Список иностранных членов') }}</a></li>
+                                <li><a href="/list_custom?type=acad_honorary_members">{{ _('Список почётных членов') }}</a></li>
+                                <li><a href="/list_custom?type=acad_corresponding_members">{{ _('Список членов-корреспондентов') }}</a></li>
+                                <li><a href="/list_custom?type=acad_professors">{{ _('Список профессоров РАН') }}</a></li>
                             </ul>
                         </div>
                     </div>
@@ -75,11 +75,11 @@
         <div class="col-12">
             <div class="card rounded">
                 <div class="card-header">
-                    <h3>Дополнительная информация</h3>
+                    <h3>{{ _('Дополнительная информация') }}</h3>
                 </div>
                 <div class="card-body">
                     <div class="container">
-                        <h4>Публикации о системе:</h4>
+                        <h4>{{ _('Публикации о системе:') }}</h4>
                         <p class=GIN><i>Малахова И.Г., Шиолашвили Л.Н.</i> Информационная система «История геологии» // Информационное обеспечение науки: новые технологии. М.: Научный мир, 2011. С. 250-253.</p>
                         <p class=GIN><i>Malakhova I.G., Vtorov I.P.</i> Two systems - one goal // 13th International Erbe Symposium: cultural heritage in geosciences, mining and metallurgy: libraries-archives-museums: [Banska Stiavnica. 15-20 June 2015]. Banska Stiavnica: Slovak Mining Museum, 2015. P. 132-133.</p>
                         <p class=GIN><i>Второв И.П., Малахова И.Г.</i> Опыт эксплуатации информационной системы «История геологии и горного дела» // Информационное обеспечение науки: Новые технологии. М.: БЕН РАН, 2017. С. 208-215.</p>
@@ -91,19 +91,19 @@
                         <p class=GIN><i>Малахова И.Г.</i> История геологии и горного дела в информационном пространстве // Отечественная геология. 2023. № 6. С. 13-15. <a href="https://www.tsnigri.ru/magazine/OG/2023/6_23_min.pdf">URL</a></p>
                     </div>
                     <div class="container mt-2">
-                        <h4>Разработка программного обеспечения:</h4>
+                        <h4>{{ _('Разработка программного обеспечения:') }}</h4>
                         <p>Н.Е. Каленов, А.М. Сенько, М.M. Якшин, БЕН РАН, МСЦ РАН (2011-2020).</p>
                         <p>Ф.И. Второв, Институт компьютерных наук НИТУ МИСИС (с 2025).</p>
                     </div>
                     <div class="container mt-2">
-                        <h4>Поддержка и наполнение контента</h4>
-                        <p>Группа истории геологии, Геологический институт Российской академии наук.</p>
-                        <p>Автор идеи и редактор содержания: И.Г. Малахова.</p>
+                        <h4>{{ _('Поддержка и наполнение контента') }}</h4>
+                        <p>{{ _('Группа истории геологии, Геологический институт Российской академии наук.') }}</p>
+                        <p>{{ _('Автор идеи и редактор содержания: И.Г. Малахова.') }}</p>
                     </div>
                     <div class="container mt-2">
-                        <h4>Лицензии</h4>
-                        <p><img src="https://mirrors.creativecommons.org/presskit/buttons/88x31/png/by-nc-nd.png" height="20"> Содержание ИС находится под лицензией <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/">Creative Commons 4.0</a></p>
-                        <p>Исходный код ИС находится под лицензией <a href="https://github.com/BUSH222/higeo_is/blob/main/LICENSE">MIT</a></p>
+                        <h4>{{ _('Лицензии') }}</h4>
+                        <p><img src="https://mirrors.creativecommons.org/presskit/buttons/88x31/png/by-nc-nd.png" height="20"> {{ _('Содержание ИС находится под лицензией') }} <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/">Creative Commons 4.0</a></p>
+                        <p>{{ _('Исходный код ИС находится под лицензией') }} <a href="https://github.com/BUSH222/higeo_is/blob/main/LICENSE">MIT</a></p>
                     </div>
                 </div>
             </div>

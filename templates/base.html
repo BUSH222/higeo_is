@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ current_locale or 'ru' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,51 +16,50 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-higeo">
         <div class="container-fluid">
             <a class="navbar-brand" href="/">
-                <img src="/static/img/IS-logo.gif" class="rounded-circle me-4" width="50" height="50" alt="logo">
+                <img src="/static/img/IS-logo.gif" class="rounded-circle me-4" width="50" height="50" alt="{{ _('logo') }}">
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
-                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{{ _('Toggle navigation') }}">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav">
 					<li>
-                    	<a class="nav-link border-md-right fs-4 me-2" href="/about">О системе</a>
+                    	<a class="nav-link border-md-right fs-4 me-2" href="/about">{{ _('О системе') }}</a>
 					</li>
 					<li>
-                    	<a class="nav-link border-md-right fs-4 me-2" href="/search">Поиск</a>
+                    	<a class="nav-link border-md-right fs-4 me-2" href="/search">{{ _('Поиск') }}</a>
 					</li>
                     <li>
-                    	<a class="nav-link border-md-right fs-4 me-2" href="/list?type=field_of_study">Темы</a>
+                    	<a class="nav-link border-md-right fs-4 me-2" href="/list?type=field_of_study">{{ _('Темы') }}</a>
 					</li>
                      <li>
-                    	<a class="nav-link border-md-right fs-4 me-2" href="/list_custom?type=geography">География</a>
+                    	<a class="nav-link border-md-right fs-4 me-2" href="/list_custom?type=geography">{{ _('География') }}</a>
 					</li>
                      <li>
-                    	<a class="nav-link border-md-right fs-4 me-2" href="/list?type=org">Организации</a>
+                    	<a class="nav-link border-md-right fs-4 me-2" href="/list?type=org">{{ _('Организации') }}</a>
 					</li>
 					
 				</ul>
 
                 <div class="d-flex ms-auto align-items-center">
-                    <div class="nav-item dropdown pe-5 disabled" style="display: none;">  <!-- Language selector -->
-                        <a class="nav-link dropdown-toggle d-flex align-items-center disabled" href="#" id="langMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="flag-icon flag-icon-ru fs-4 me-2"></i> Русский
+                    <div class="nav-item dropdown pe-5">  <!-- Language selector -->
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="langMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            {% if current_locale.startswith('en') %}
+                                <i class="flag-icon flag-icon-gb fs-4 me-2"></i> {{ _('English') }}
+                            {% else %}
+                                <i class="flag-icon flag-icon-ru fs-4 me-2"></i> {{ _('Русский') }}
+                            {% endif %}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="langMenu">
                             <li>
-                                <a class="dropdown-item d-flex align-items-center" href="#">
-                                    <i class="flag-icon flag-icon-gb me-2"></i> English
+                                <a class="dropdown-item d-flex align-items-center {% if current_locale.startswith('en') %}active{% endif %}" href="{{ url_for('set_language', lang_code='en') }}">
+                                    <i class="flag-icon flag-icon-gb me-2"></i> {{ _('English') }}
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item d-flex align-items-center" href="#">
-                                    <i class="flag-icon flag-icon-ru me-2"></i> Русский
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item d-flex align-items-center" href="#">
-                                    <i class="flag-icon flag-icon-fr me-2"></i> French
+                                <a class="dropdown-item d-flex align-items-center {% if current_locale.startswith('ru') %}active{% endif %}" href="{{ url_for('set_language', lang_code='ru') }}">
+                                    <i class="flag-icon flag-icon-ru me-2"></i> {{ _('Русский') }}
                                 </a>
                             </li>
                         </ul>
@@ -68,8 +67,8 @@
 					<form class="d-flex ms-auto" role="search" id="searchform" action="search">
                         <input type="hidden" id="person" name="person">
                         <input type="hidden" id="quicksearch" name="quicksearch">
-						<input class="form-control me-2" type="search" id="fullName" name="fullName" placeholder="Общий поиск" aria-label="Search">
-						<button class="btn higeo-color-1 mr-2" type="submit">Поиск</button>
+						<input class="form-control me-2" type="search" id="fullName" name="fullName" placeholder="{{ _('Общий поиск') }}" aria-label="{{ _('Поиск') }}">
+						<button class="btn higeo-color-1 mr-2" type="submit">{{ _('Поиск') }}</button>
 					</form>
 				</div>
 				
@@ -83,12 +82,12 @@
 
     <div class="container mt-auto">
         <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
-            <p class="mb-0 text-body-secondary">© 2015 - <script type="text/javascript">document.write(new Date().getFullYear());</script>, ГИН РАН</p>
+            <p class="mb-0 text-body-secondary">© 2015 - <script type="text/javascript">document.write(new Date().getFullYear());</script>, {{ _('ГИН РАН') }}</p>
 
             <ul class="nav col-md-6 justify-content-end">
-                <li class="nav-item"><a target="_blank" rel="noopener noreferrer" href="http://www.ginras.ru/struct/19/9/index.php" class="nav-link px-2 text-body-secondary">Группа истории геологии</a></li>
-                <li class="nav-item"><a target="_blank" rel="noopener noreferrer" href="http://www.ginras.ru/index.php" class="nav-link px-2 text-body-secondary">Геологический институт</a></li>
-                <li class="nav-item"><a target="_blank" rel="noopener noreferrer" href="https://new.ras.ru/" class="nav-link px-2 text-body-secondary">Российская академия наук</a></li>
+                <li class="nav-item"><a target="_blank" rel="noopener noreferrer" href="http://www.ginras.ru/struct/19/9/index.php" class="nav-link px-2 text-body-secondary">{{ _('Группа истории геологии') }}</a></li>
+                <li class="nav-item"><a target="_blank" rel="noopener noreferrer" href="http://www.ginras.ru/index.php" class="nav-link px-2 text-body-secondary">{{ _('Геологический институт') }}</a></li>
+                <li class="nav-item"><a target="_blank" rel="noopener noreferrer" href="https://new.ras.ru/" class="nav-link px-2 text-body-secondary">{{ _('Российская академия наук') }}</a></li>
             </ul>
         </footer>
     </div>

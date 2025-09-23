@@ -161,6 +161,42 @@ class Person(Base):
                   'Комментарии': self.comment}
         return clean_dict(values)
 
+    def values_en(self):
+        """
+        Returns a dictionary of the person's attributes with English labels.
+        Structure mirrors values_ru and keeps the same data values.
+        """
+        values = {
+            'Full name': '<b>' + ' '.join(filter(None, (self.surname_en, self.name_en, self.patronymic_en))) + '</b>',
+            'Birth date': self.birth_date,
+            'Birth place': self.birth_place,
+            'Death date': self.death_date,
+            'Death place': self.death_place,
+            'Academic degree': self.academic_degree,
+            'Field of study': sorted(
+                [['field_of_study', f.field_of_study.id, str(f.field_of_study)] for f in self.field_of_study],
+                key=lambda x: x[2]
+            ),
+            'Work areas': self.area_of_study,
+            'Education': sorted(
+                [['org', org.organization.id, str(org.organization)] for org in self.education],
+                key=lambda x: x[2]
+            ),
+            'Workplaces': sorted(
+                [['org', org.organization.id, str(org.organization)] for org in self.organizations],
+                key=lambda x: x[2]
+            ),
+            'Biography': self.biography,
+            'Bibliography': self.bibliography,
+            'Photo': self.photo,
+            'Documents': sorted(
+                [['doc', doc.document.id, str(doc.document)] for doc in self.documents],
+                key=lambda x: x[2]
+            ),
+            'Comments': self.comment,
+        }
+        return clean_dict(values)
+
     def __str__(self):
         return ' '.join(filter(None, (self.surname, self.name, self.patronymic)))
 
@@ -205,6 +241,33 @@ class Organization(Base):
                   sorted([['person', alum.person.id, str(alum.person)] for alum in self.alumni],
                          key=lambda x: x[2])
                   }
+        return clean_dict(values)
+
+    def values_en(self):
+        """
+        Returns a dictionary of the organization's attributes with English labels.
+        Mirrors values_ru structure.
+        """
+        def person_display(p):
+            last = p.surname_en or p.surname
+            first = p.name_en or p.name
+            patr = p.patronymic_en or p.patronymic
+            return ' '.join(filter(None, (last, first, patr)))
+
+        values = {
+            'Name': '<b>' + self.name + '</b>',
+            'Type of organization': self.org_type,
+            'History': self.history,
+            'Comment': self.comment,
+            'Related persons': sorted(
+                [['person', member.person.id, person_display(member.person)] for member in self.members],
+                key=lambda x: x[2]
+            ),
+            'Alumni': sorted(
+                [['person', alum.person.id, person_display(alum.person)] for alum in self.alumni],
+                key=lambda x: x[2]
+            ),
+        }
         return clean_dict(values)
 
     def __str__(self):
@@ -256,6 +319,32 @@ class Document(Base):
                   'Комментарий': self.comment}
         return clean_dict(values)
 
+    def values_en(self):
+        """
+        Returns a dictionary of the document's attributes with English labels.
+        Mirrors values_ru structure.
+        """
+        def person_display(p):
+            last = p.surname_en or p.surname
+            first = p.name_en or p.name
+            patr = p.patronymic_en or p.patronymic
+            return ' '.join(filter(None, (last, first, patr)))
+
+        values = {
+            'Authors': sorted(
+                [['person', author.person.id, person_display(author.person)] for author in self.authors],
+                key=lambda x: x[2]
+            ),
+            'Source': self.source,
+            'Title': '<b>' + self.name + '</b>',
+            'Document type': self.doc_type,
+            'Language': self.language,
+            'Year of publication': self.year,
+            'File': self.file,
+            'Comment': self.comment,
+        }
+        return clean_dict(values)
+
     def __str__(self):
         return self.name
 
@@ -284,6 +373,26 @@ class FieldOfStudy(Base):
             'Название': self.name,
             'Связанные персоналии':
             sorted([['person', member.person.id, str(member.person)] for member in self.members], key=lambda x: x[2])
+        }
+        return clean_dict(values)
+
+    def values_en(self):
+        """
+        Returns a dictionary of the field of study's attributes with English labels.
+        Mirrors values_ru structure.
+        """
+        def person_display(p):
+            last = p.surname_en or p.surname
+            first = p.name_en or p.name
+            patr = p.patronymic_en or p.patronymic
+            return ' '.join(filter(None, (last, first, patr)))
+
+        values = {
+            'Name': self.name,
+            'Related persons': sorted(
+                [['person', member.person.id, person_display(member.person)] for member in self.members],
+                key=lambda x: x[2]
+            ),
         }
         return clean_dict(values)
 
