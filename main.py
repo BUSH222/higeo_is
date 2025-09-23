@@ -143,7 +143,11 @@ def view():
                     [
                         'person',
                         person.id,
-                        f"{person.surname} {person.name} {person.patronymic or ''}"
+                        (
+                            f"{person.surname_en or person.surname} "
+                            f"{person.name_en or person.name} "
+                            f"{person.patronymic_en or person.patronymic or ''}"
+                        )
                     ] for person in people
                 ],
             }

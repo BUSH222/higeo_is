@@ -248,17 +248,23 @@ class Organization(Base):
         Returns a dictionary of the organization's attributes with English labels.
         Mirrors values_ru structure.
         """
+        def person_display(p):
+            last = p.surname_en or p.surname
+            first = p.name_en or p.name
+            patr = p.patronymic_en or p.patronymic
+            return ' '.join(filter(None, (last, first, patr)))
+
         values = {
             'Name': '<b>' + self.name + '</b>',
             'Type of organization': self.org_type,
             'History': self.history,
             'Comment': self.comment,
             'Related persons': sorted(
-                [['person', member.person.id, str(member.person)] for member in self.members],
+                [['person', member.person.id, person_display(member.person)] for member in self.members],
                 key=lambda x: x[2]
             ),
             'Alumni': sorted(
-                [['person', alum.person.id, str(alum.person)] for alum in self.alumni],
+                [['person', alum.person.id, person_display(alum.person)] for alum in self.alumni],
                 key=lambda x: x[2]
             ),
         }
@@ -318,9 +324,15 @@ class Document(Base):
         Returns a dictionary of the document's attributes with English labels.
         Mirrors values_ru structure.
         """
+        def person_display(p):
+            last = p.surname_en or p.surname
+            first = p.name_en or p.name
+            patr = p.patronymic_en or p.patronymic
+            return ' '.join(filter(None, (last, first, patr)))
+
         values = {
             'Authors': sorted(
-                [['person', author.person.id, str(author.person)] for author in self.authors],
+                [['person', author.person.id, person_display(author.person)] for author in self.authors],
                 key=lambda x: x[2]
             ),
             'Source': self.source,
@@ -369,10 +381,16 @@ class FieldOfStudy(Base):
         Returns a dictionary of the field of study's attributes with English labels.
         Mirrors values_ru structure.
         """
+        def person_display(p):
+            last = p.surname_en or p.surname
+            first = p.name_en or p.name
+            patr = p.patronymic_en or p.patronymic
+            return ' '.join(filter(None, (last, first, patr)))
+
         values = {
             'Name': self.name,
             'Related persons': sorted(
-                [['person', member.person.id, str(member.person)] for member in self.members],
+                [['person', member.person.id, person_display(member.person)] for member in self.members],
                 key=lambda x: x[2]
             ),
         }
