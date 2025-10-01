@@ -541,7 +541,7 @@ msgstr "Удалить"
 
 #: templates/view.html:78
 msgid "Скачать файл"
-msgstr "Скачать файл"
+msgstr "Открыть файл"
 
 #~ msgid "Список академических степеней - "
 #~ msgstr ""

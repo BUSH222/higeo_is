@@ -745,6 +745,7 @@ def save():
             session.query(PersonEducation).filter(PersonEducation.person_id == obj_id).delete()
         elif obj_type == 'org':
             session.query(OrganizationMembership).filter(OrganizationMembership.organization_id == obj_id).delete()
+            session.query(PersonEducation).filter(PersonEducation.organization_id == obj_id).delete()
         elif obj_type == 'doc':
             session.query(DocumentAuthorship).filter(DocumentAuthorship.document_id == obj_id).delete()
         session.commit()
