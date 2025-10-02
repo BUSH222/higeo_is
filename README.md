@@ -1,5 +1,4 @@
 # Information System for HIGEO
-> README SLIGHTLY OUT OF DATE
 #### View the running version of the website! [higeo.ru](https://higeo.ru)
 
 This project is a web-based information system for the Department of History of Geology of the Russian Academy of Sciences. It allows users to view, search, and manage information about organizations, people, and documents related to the department.
@@ -35,13 +34,18 @@ This project is a web-based information system for the Department of History of 
     - Ensure PostgreSQL is installed and running.
     - Create a `.env` file with the following content:
         ```env
-        DATABASE_USER=your_db_user
-        DATABASE_PASSWORD=your_db_password
-        DATABASE_NAME=your_db_name
-        DATABASE_HOST=localhost
-        DATABASE_PORT=5432
+        DATABASE_NAME = ...
+        DATABASE_HOST = ...
+        DATABASE_PORT = ...
+        DATABASE_USER = ...
+        DATABASE_PASSWORD = ...
+        GOOGLE_CLIENT_ID = ... (google oauth2 credentials)
+        GOOGLE_CLIENT_SECRET = ... (google oauth2 credentials)
+        GOOGLE_DISCOVERY_URL = ... (google oauth2 credentials)
+        ADMIN_DATA = '{"0": "email1@example.com", "1": "email2@example.com", "2": ...}' (admin users)
+        SECRET_KEY = ... (random string)
         ```
-    - Initialize the database and fill database with old data:
+    - Initialize the database and fill database with old data, and migrate over the files:
         ```sh
         sh quicksetup.sh
         ```
@@ -50,7 +54,8 @@ This project is a web-based information system for the Department of History of 
 
 1. **Run the application**:
     ```sh
-    flask run
+    cd /path/to/higeo_is
+    python3 main.py
     ```
 
 2. **Access the application**:
