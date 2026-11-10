@@ -112,6 +112,9 @@ def test_academic_degree_list(client):
     [
         ("type=person&fullName=вЕРН", ["Вернадский Владимир Иванович"]),
         ("type=person&fullName=ёЛК", ["Ёлкин Пётр"]),
+        ("type=person&fullName=ЕЛК", ["Ёлкин Пётр"]),
+        ("type=person&fullName=Елкин Петр", ["Ёлкин Пётр"]),
+        ("type=person&fullName=Ёлкин Пётр", ["Ёлкин Пётр"]),
         ("type=person&fullName=ВЕРНАДСКИЙ владимир", ["Вернадский Владимир Иванович"]),
         ("type=person&fullName=вернадский владимир ИВАНОВИЧ", ["Вернадский Владимир Иванович"]),
         ("type=person&fullName=никто", []),

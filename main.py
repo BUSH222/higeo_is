@@ -44,6 +44,18 @@ UPLOAD_DIR = "static/uploads"  # relative to the project, and stored in the data
 MAX_CONTENT_LENGTH = 32 * 1024 * 1024
 
 # The pages are HTML for people, so the generated API documentation is switched off.
+
+
+def fold_text(value: str) -> str:
+    """Lower-case a search string and treat ё as е, so "Елкин" finds "Ёлкин"."""
+    return value.lower().replace("ё", "е")
+
+
+def fold(column):
+    """The SQL counterpart of fold_text, for comparing a column against a folded search string."""
+    return func.replace(func.lower(column), "ё", "е")
+
+
 app = FastAPI(title="HIGEO IS", docs_url=None, redoc_url=None, openapi_url=None)
 # The middleware added last runs first: the session must be loaded before the locale is chosen.
 app.add_middleware(LocaleMiddleware)
@@ -167,7 +179,11 @@ def view(request: Request):
 
     if request.query_params.get("type") == "geography":
         place = request.query_params.get("id")
-        stmt = select(Person).filter(Person.area_of_study.ilike(f"%{place}%")).order_by(Person.surname, Person.name)
+        stmt = (
+            select(Person)
+            .filter(fold(Person.area_of_study).contains(fold_text(place), autoescape=True))
+            .order_by(Person.surname, Person.name)
+        )
         with Session(engine) as session:
             people = session.execute(stmt).scalars().all()
         # Localize keys for geography view
@@ -306,16 +322,14 @@ def search(request: Request):
         else:
             parts = query.split()
             if len(parts) == 1:
-                where_stmt.append(func.lower(last_col).startswith(parts[0].lower()))
+                where_stmt.append(fold(last_col).startswith(fold_text(parts[0])))
             elif len(parts) == 2:
-                where_stmt.append(
-                    (func.lower(last_col) == parts[0].lower()) & (func.lower(first_col) == parts[1].lower())
-                )
+                where_stmt.append((fold(last_col) == fold_text(parts[0])) & (fold(first_col) == fold_text(parts[1])))
             elif len(parts) == 3:
                 where_stmt.append(
-                    (func.lower(last_col) == parts[0].lower())
-                    & (func.lower(first_col) == parts[1].lower())
-                    & (func.lower(patr_col) == parts[2].lower())
+                    (fold(last_col) == fold_text(parts[0]))
+                    & (fold(first_col) == fold_text(parts[1]))
+                    & (fold(patr_col) == fold_text(parts[2]))
                 )
 
         final_where = and_(*where_stmt) if where_stmt else True
@@ -338,7 +352,7 @@ def search(request: Request):
         content = request.query_params.get("content")
         stmt = (
             select(Person.id, Person.surname, Person.name, Person.patronymic)
-            .where(Person.bibliography.ilike(f"%{content}%"))
+            .where(fold(Person.bibliography).contains(fold_text(content), autoescape=True))
             .order_by(byte_order(Person.surname), byte_order(Person.name))
         )
         results = []
@@ -356,27 +370,27 @@ def search(request: Request):
             if query is not None:
                 parts = query.split()
                 if len(parts) == 1:
-                    where_stmt.append(func.lower(last_col).startswith(parts[0].lower()))
+                    where_stmt.append(fold(last_col).startswith(fold_text(parts[0])))
                 elif len(parts) == 2:
                     where_stmt.append(
-                        (func.lower(last_col) == parts[0].lower()) & (func.lower(first_col) == parts[1].lower())
+                        (fold(last_col) == fold_text(parts[0])) & (fold(first_col) == fold_text(parts[1]))
                     )
                 elif len(parts) == 3:
                     where_stmt.append(
-                        (func.lower(last_col) == parts[0].lower())
-                        & (func.lower(first_col) == parts[1].lower())
-                        & (func.lower(patr_col) == parts[2].lower())
+                        (fold(last_col) == fold_text(parts[0]))
+                        & (fold(first_col) == fold_text(parts[1]))
+                        & (fold(patr_col) == fold_text(parts[2]))
                     )
         else:
             firstname = request.query_params.get("firstName")
             lastname = request.query_params.get("lastName")
             patronymic = request.query_params.get("patronymic")
             if firstname:
-                where_stmt.append(func.lower(first_col).startswith(firstname.lower()))
+                where_stmt.append(fold(first_col).startswith(fold_text(firstname)))
             if lastname:
-                where_stmt.append(func.lower(last_col).startswith(lastname.lower()))
+                where_stmt.append(fold(last_col).startswith(fold_text(lastname)))
             if patronymic:
-                where_stmt.append(func.lower(patr_col).startswith(patronymic.lower()))
+                where_stmt.append(fold(patr_col).startswith(fold_text(patronymic)))
 
         year_query = request.query_params.get("birthYear")
         if year_query is not None:
@@ -404,7 +418,7 @@ def search(request: Request):
         if query:
             stmt = (
                 select(obj.id, obj.name)
-                .where(func.lower(obj.name).startswith(query.lower()))
+                .where(fold(obj.name).startswith(fold_text(query)))
                 .order_by(byte_order(func.lower(obj.name)))
             )
         else:
