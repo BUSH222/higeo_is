@@ -1,8 +1,9 @@
 import os
 import re
 import shutil
+import threading
 from collections import Counter
-from datetime import datetime
+from datetime import date, datetime
 from http import HTTPStatus
 from pathlib import Path
 from typing import NoReturn
@@ -102,6 +103,27 @@ def index(request: Request):
     return render(request, "index.html")
 
 
+_person_count_cache: tuple[date, int] | None = None
+_person_count_lock = threading.Lock()
+
+
+def get_person_count() -> int:
+    """The number of persons, counted in the database at most once per day and kept in memory."""
+    global _person_count_cache
+    today = date.today()
+    with _person_count_lock:
+        if _person_count_cache is None or _person_count_cache[0] != today:
+            with Session(engine) as session:
+                _person_count_cache = (today, session.execute(select(func.count(Person.id))).scalar_one())
+        return _person_count_cache[1]
+
+
+@app.get("/count_persons")
+def count_persons():
+    """Returns the number of persons in the system as JSON, e.g. {"count": 1734}. Cached for a day."""
+    return {"count": get_person_count()}
+
+
 @app.get("/about")
 def about(request: Request):
     """
@@ -114,7 +136,7 @@ def about(request: Request):
     Returns:
     - Renders the 'about.html' template.
     """
-    return render(request, "about.html")
+    return render(request, "about.html", person_count=f"{get_person_count()}")
 
 
 @app.get("/view")

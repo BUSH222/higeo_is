@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-10 15:31+0300\n"
+"POT-Creation-Date: 2026-11-10 17:47+0300\n"
 "PO-Revision-Date: 2025-09-23 21:10+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -18,99 +18,99 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: main.py:170
+#: main.py:203
 #, python-format
 msgid "Географический регион: %(place)s"
 msgstr "Geographic region: %(place)s"
 
-#: main.py:171
+#: main.py:204
 #, python-format
 msgid "Geographic region: %(place)s"
 msgstr "Geographic region: %(place)s"
 
-#: main.py:202
+#: main.py:235
 msgid "Организация"
 msgstr "Organization"
 
-#: main.py:203
+#: main.py:236
 msgid "Персоналия"
 msgstr "Person"
 
-#: main.py:204
+#: main.py:237
 msgid "Документ"
 msgstr "Document"
 
-#: main.py:205
+#: main.py:238
 msgid "Область знаний"
 msgstr "Field of study"
 
-#: main.py:209
+#: main.py:242
 #, python-format
 msgid "View %(name)s"
 msgstr "View %(name)s"
 
-#: main.py:259 templates/about.html:37 templates/about.html:43
+#: main.py:292 templates/about.html:37 templates/about.html:43
 #: templates/about.html:49 templates/base.html:31 templates/base.html:70
 #: templates/base.html:71 templates/search.html:92 templates/search.html:128
 #: templates/search.html:163
 msgid "Поиск"
 msgstr "Search"
 
-#: main.py:259
+#: main.py:292
 msgid "Search"
 msgstr "Search"
 
-#: main.py:415 templates/base.html:40
+#: main.py:446 templates/base.html:40
 msgid "Организации"
 msgstr "Organizations"
 
-#: main.py:416
+#: main.py:447
 msgid "Персоналии"
 msgstr "Persons"
 
-#: main.py:417
+#: main.py:448
 msgid "Документы"
 msgstr "Documents"
 
-#: main.py:418
+#: main.py:449
 msgid "Области исследования"
 msgstr "Fields of study"
 
-#: main.py:499 main.py:500
+#: main.py:510 main.py:511
 msgid "Самые популярные географические регионы"
 msgstr "Most popular geographic regions"
 
-#: main.py:506
+#: main.py:514
 #, python-format
 msgid "%(place)s - %(count)s results"
 msgstr "%(place)s - %(count)s results"
 
-#: main.py:520
+#: main.py:529
 msgid "действительный член"
 msgstr "full member"
 
-#: main.py:521
+#: main.py:530
 msgid "иностранный член"
 msgstr "foreign member"
 
-#: main.py:522
+#: main.py:531
 msgid "почётный член"
 msgstr "honorary member"
 
-#: main.py:523
+#: main.py:532
 msgid "член-корреспондент"
 msgstr "corresponding member"
 
-#: main.py:524
+#: main.py:533
 msgid "профессор РАН"
 msgstr "RAS professor"
 
-#: main.py:537 main.py:538
+#: main.py:546 main.py:547
 #, python-format
 msgid "Список академических степеней - %(degree)s"
 msgstr "List of academic degrees - %(degree)s"
 
-#: helper/login/login.py:44
+#: helper/login/login.py:37
 msgid "Неверный email или пароль."
 msgstr "Invalid email or password."
 
@@ -186,15 +186,15 @@ msgid "Поиск персоналии"
 msgstr "Search for a person"
 
 #: templates/about.html:37
+#, python-format
 msgid ""
 "Напишите в строке поиска (полностью или частично) фамилии, имена и "
 "отчества учёных. На странице персоналии показаны биографии, библиографии,"
-" документы и фото. В системе более 1700 персоналий учёных из разных "
-"стран."
+" документы и фото. В системе %(count)s персоналий учёных из разных стран."
 msgstr ""
 "Enter surnames, first names, and patronymics (fully or partially) in the "
 "search bar. The person page shows biographies, bibliographies, documents,"
-" and photos. The system contains over 1,700 profiles of scholars from "
+" and photos. The system contains %(count)s profiles of scholars from "
 "different countries."
 
 #: templates/about.html:42
@@ -561,4 +561,20 @@ msgstr "Download file"
 
 #~ msgid "Фотография"
 #~ msgstr "Photo"
+
+#~ msgid ""
+#~ "Напишите в строке поиска (полностью или"
+#~ " частично) фамилии, имена и отчества "
+#~ "учёных. На странице персоналии показаны "
+#~ "биографии, библиографии, документы и фото. "
+#~ "В системе более 1700 персоналий учёных"
+#~ " из разных стран."
+#~ msgstr ""
+#~ "Enter surnames, first names, and "
+#~ "patronymics (fully or partially) in the"
+#~ " search bar. The person page shows"
+#~ " biographies, bibliographies, documents, and "
+#~ "photos. The system contains over 1,700"
+#~ " profiles of scholars from different "
+#~ "countries."
 

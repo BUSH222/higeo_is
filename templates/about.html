@@ -34,7 +34,7 @@
                 <div class="col">
                     <div class="card h-100 d-flex flex-column px-0">
                         <div class="card-header higeo-color-2">{{ _('Поиск персоналии') }}</div>
-                        <div class="card-body flex-grow-1">{% trans %}Напишите в строке поиска (полностью или частично) фамилии, имена и отчества учёных. На странице персоналии показаны биографии, библиографии, документы и фото. В системе более 1700 персоналий учёных из разных стран.{% endtrans %}<br><a href="/search?defaultopen=1">{{ _('Поиск') }}</a></div>
+                        <div class="card-body flex-grow-1">{% trans count=person_count %}Напишите в строке поиска (полностью или частично) фамилии, имена и отчества учёных. На странице персоналии показаны биографии, библиографии, документы и фото. В системе {{ count }} персоналий учёных из разных стран.{% endtrans %}<br><a href="/search?defaultopen=1">{{ _('Поиск') }}</a></div>
                     </div>
                 </div>
                 <div class="col">

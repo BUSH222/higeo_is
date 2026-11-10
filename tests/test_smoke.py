@@ -339,3 +339,30 @@ def test_save_rejects_bad_input(staff):
     assert staff.get("/new").status_code == 501
     assert staff.get("/edit?type=person").status_code == 501
     assert staff.get("/edit?type=person&id=999999").status_code == 404
+
+
+# --- person count ---------------------------------------------------------------------------------------------
+
+
+def test_count_persons_is_cached_per_day(client, monkeypatch):
+    monkeypatch.setattr(main, "_person_count_cache", None)
+    count = client.get("/count_persons").json()["count"]
+    assert count == len(SEEDED_PEOPLE)
+
+    with Session(db.engine) as session:
+        extra = db.Person(surname="Кэш", name="Тест")
+        session.add(extra)
+        session.commit()
+        try:
+            assert client.get("/count_persons").json()["count"] == count  # still cached
+            monkeypatch.setattr(main, "_person_count_cache", (main.date.min, count))  # a day passes
+            assert client.get("/count_persons").json()["count"] == count + 1
+        finally:
+            session.delete(extra)
+            session.commit()
+
+
+def test_about_shows_person_count(client, monkeypatch):
+    monkeypatch.setattr(main, "_person_count_cache", None)
+    assert f"В системе {len(SEEDED_PEOPLE)} персоналий" in client.get("/about?lang=ru").text
+    assert "1700" not in client.get("/about?lang=en").text
