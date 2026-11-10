@@ -1,51 +1,33 @@
 import re
 
 
+def strip_document_wrapper(txt):
+    """Remove the parts of a pasted Word/HTML document that must not end up inside a page.
+
+    A pasted document brings its own <head> and <style> with it. Such a style block applies to the whole
+    page, e.g. its `a:link` rule turns the navbar links blue. The text and markup of the body are kept.
+    """
+    txt = re.sub(r"<head\b.*?</head\s*>", "", txt, flags=re.IGNORECASE | re.DOTALL)
+    txt = re.sub(r"<style\b.*?</style\s*>", "", txt, flags=re.IGNORECASE | re.DOTALL)
+    return re.sub(r"</?\s*(html|head|body|meta|title|link)\b[^>]*>", "", txt, flags=re.IGNORECASE)
+
+
 def clean_html(txt):
     try:
-        rightstyle = """<style>
-<!--
- /* Style Definitions */
-p.GIN
-    {margin-top:0cm;
-    margin-right:0cm;
-    margin-bottom:0cm;
-    margin-left:36.0pt;
-    text-align:justify;
-    text-indent:-36.0pt;
-    punctuation-wrap:simple;
-    text-autospace:none;
-    font-size:12.0pt;
-    font-family:Times New Roman CYR,serif;}
--->
-</style>"""
+        txt = strip_document_wrapper(txt)
         for _i in range(5):
             txt = re.sub(r"<\/?span[^>]*>", "", txt)
             txt = re.sub(r"<\/?/span[^>]*>", "", txt)
             txt = re.sub(r"<\/?div[^>]*>", "", txt)
-            txt = re.sub(r"<style>.*?</style>", rightstyle, txt, flags=re.DOTALL)
-            txt = re.sub("\u2013", "-", txt)
-            txt = re.sub(r"<script(.|\n)*script>", "", txt)
+            txt = re.sub("–", "-", txt)
+            txt = re.sub(r"<script\b.*?</script\s*>", "", txt, flags=re.IGNORECASE | re.DOTALL)
             txt = re.sub(r"<a name[\S\s]*?>([\S\s]*?)<\/a>", r"\1", txt)
-            txt = re.sub("<body lang=RU link=.*?>", "", txt)
-            txt = re.sub(
-                "<title>.*?</title>",
-                "<title>Информационная система: История геологии и горного дела ГИН РАН</title>",
-                txt,
-                flags=re.DOTALL,
-            )
-            while "<body lang=RU link=blue vlink=#954F72 style=word-wrap:break-word>" in txt:
-                txt = txt.replace(
-                    "<body lang=RU link=blue vlink=#954F72 style=word-wrap:break-word>", "<body lang=RU>"
-                )
             while "MsoNormalCxSpFirst" in txt:
                 txt = txt.replace("MsoNormalCxSpFirst", "GIN")
             while "MsoNormalCxSpMiddle" in txt:
                 txt = txt.replace("MsoNormalCxSpMiddle", "GIN")
             while "MsoNormalCxSpLast" in txt:
                 txt = txt.replace("MsoNormalCxSpLast", "GIN")
-            while "MsoNormalCxSpLast" in txt:
-                txt = txt.replace("MsoNormal", "GIN")
             while "&nbsp;" in txt:
                 txt = txt.replace("&nbsp;", " ")
             while "</i><i>" in txt:
@@ -70,12 +52,8 @@ p.GIN
                 txt = txt.replace("  ", " ")
             while "\n\n\n" in txt:
                 txt = txt.replace("\n\n\n", "\n\n")
-            while "\u00a0" in txt:
-                txt = txt.replace("\u00a0", " ")
-            while "<meta name=Generator content=Microsoft Word 15 (filtered)>" in txt:
-                txt = txt.replace("<meta name=Generator content=Microsoft Word 15 (filtered)>", " ")
-            while "<body lang=RU link=blue vlink=purple style=word-wrap:break-word>" in txt:
-                txt = txt.replace("<body lang=RU link=blue vlink=purple style=word-wrap:break-word>", "<body lang=RU>")
+            while " " in txt:
+                txt = txt.replace(" ", " ")
         return txt.strip()
     except Exception as e:
         print(f"Error cleaning HTML: {e}")
