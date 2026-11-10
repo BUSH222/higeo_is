@@ -371,17 +371,17 @@ msgstr "Objectives:"
 
 #: templates/index.html:22
 msgid ""
-"Систематизация и удобный поиск информации по истории геологии и горного "
-"дела."
+"<a href=\"/about\">Систематизация</a> и удобный <a href=\"/search\">поиск "
+"информации</a> по истории геологии и горного дела."
 msgstr ""
-"Systematization and convenient search of information on the history of "
-"geology and mining."
+"<a href=\"/about\">Systematization</a> and convenient <a href=\"/search\">search of information</a> on the history of geology and mining."
 
 #: templates/index.html:23
 msgid ""
-"Поддержка научных исследований за счёт актуальных и структурированных "
-"данных."
-msgstr "Support for scientific research through up-to-date and structured data."
+"Поддержка научных исследований за счёт актуальных и <a href=\"/list?"
+"type=field_of_study\">структурированных данных</a>."
+msgstr ""
+"Support for scientific research through up-to-date and <a href=\"/list?type=field_of_study\">structured data</a>."
 
 #: templates/index.html:25
 msgid "Функции:"
