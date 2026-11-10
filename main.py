@@ -766,7 +766,7 @@ async def save(request: Request):
     - Renders the 'redirect.html' template to redirect to the search page after saving. [TO BE REMOVED]
     """
     obj_type = request.query_params.get("type")
-    if obj_type not in ["org", "person", "doc"]:
+    if obj_type not in ["org", "person", "doc", "field_of_study"]:
         abort(404)
     if int(request.headers.get("content-length") or 0) > MAX_CONTENT_LENGTH:
         abort(413)
@@ -787,7 +787,7 @@ async def save(request: Request):
 
 def save_object(obj_type: str, formdata: dict, uploads: dict[str, UploadFile], connections: list[str]) -> int:
     """Create or update an object and replace its connections. Returns the id of the object."""
-    obj = {"org": Organization, "person": Person, "doc": Document}[obj_type]
+    obj = {"org": Organization, "person": Person, "doc": Document, "field_of_study": FieldOfStudy}[obj_type]
     formdata = {key: (value if value not in ("", "None") else None) for key, value in formdata.items()}
     for key, value in formdata.items():
         if key.endswith("date") and value is not None:

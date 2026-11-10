@@ -391,3 +391,19 @@ def test_print_person_omits_biography_and_bibliography(client, ids):
 )
 def test_print_rejects_bad_requests(client, url):
     assert client.get(url).status_code == 404
+
+
+def test_field_of_study_comment(staff, client, ids):
+    field_id = ids["Геохимия"]
+    url = f"/view?type=field_of_study&id={field_id}"
+    assert "Комментарий" not in client.get(url).text
+    form = {"id": str(field_id), "name": "Геохимия"}
+    saved = staff.post("/save?type=field_of_study", data={**form, "comment": "Заметка"})
+    assert saved_id(saved) == field_id
+    assert "Заметка" in client.get(url).text
+    staff.post("/save?type=field_of_study", data={**form, "comment": ""})
+    assert "Комментарий" not in client.get(url).text
+
+
+def test_field_of_study_save_needs_login(client):
+    assert client.post("/save?type=field_of_study", data={"name": "X"}).status_code in (302, 303, 307)

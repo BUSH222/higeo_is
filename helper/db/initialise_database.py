@@ -399,11 +399,13 @@ class FieldOfStudy(Base):
     __tablename__ = "field_of_study"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(nullable=False)
+    comment: Mapped[str] = mapped_column(nullable=True)
     members: Mapped[list[OrganizationMembership]] = relationship("PersonFieldOfStudy", back_populates="field_of_study")
 
     def values_ru(self):
         values = {
             "Название": self.name,
+            "Комментарий": self.comment,
             "Связанные персоналии": sorted(
                 [["person", member.person.id, str(member.person)] for member in self.members], key=lambda x: x[2]
             ),
@@ -424,6 +426,7 @@ class FieldOfStudy(Base):
 
         values = {
             "Name": self.name,
+            "Comment": self.comment,
             "Related persons": sorted(
                 [["person", member.person.id, person_display(member.person)] for member in self.members],
                 key=lambda x: x[2],
