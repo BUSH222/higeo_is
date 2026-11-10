@@ -595,11 +595,11 @@ def new(request: Request):
     Renders the 'New' page for creating a new organization, person, or document.
 
     This route handles the display of the 'New' page, which allows users to create a new entry
-    for an organization, person, or document based on the query parameters provided in the request.
+    for an organization, person, document, or field of study based on the query parameters provided in the request.
     It expects a 'type' parameter in the request arguments.
 
     Query Parameters:
-    - type (str): The type of object to create ('org', 'person', 'doc').
+    - type (str): The type of object to create ('org', 'person', 'doc', 'field_of_study').
 
     Returns:
     - Renders the 'new.html' template with the necessary data for creating the specified object type.
@@ -608,7 +608,7 @@ def new(request: Request):
     if len(request.query_params) != 1 or not request.query_params.get("type"):
         abort(501)
     obj_type = request.query_params.get("type")
-    obj_dict = {"org": Organization, "person": Person, "doc": Document}
+    obj_dict = {"org": Organization, "person": Person, "doc": Document, "field_of_study": FieldOfStudy}
     if obj_type not in obj_dict:
         abort(404)
     page = {
@@ -881,7 +881,7 @@ def delete(request: Request):
     in the request arguments.
 
     Query Parameters:
-    - type (str): The type of object to delete ('org', 'person', 'doc').
+    - type (str): The type of object to delete ('org', 'person', 'doc', 'field_of_study').
     - id (int): The ID of the object to delete.
 
     Returns:
@@ -893,7 +893,7 @@ def delete(request: Request):
         abort(501)
     obj_type = request.query_params.get("type")
     obj_id = to_int(request.query_params.get("id"))
-    obj_dict = {"org": Organization, "person": Person, "doc": Document}
+    obj_dict = {"org": Organization, "person": Person, "doc": Document, "field_of_study": FieldOfStudy}
     if obj_type not in obj_dict:
         abort(404)
     obj = obj_dict[obj_type]
@@ -911,6 +911,8 @@ def delete(request: Request):
                 session.query(PersonEducation).filter(PersonEducation.organization_id == obj_id).delete()
             elif obj_type == "doc":
                 session.query(DocumentAuthorship).filter(DocumentAuthorship.document_id == obj_id).delete()
+            elif obj_type == "field_of_study":
+                session.query(PersonFieldOfStudy).filter(PersonFieldOfStudy.field_of_study_id == obj_id).delete()
             session.delete(data)
             session.commit()
         else:

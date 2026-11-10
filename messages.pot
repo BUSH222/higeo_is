@@ -497,6 +497,10 @@ msgstr ""
 msgid "New document"
 msgstr ""
 
+#: templates/search.html:175
+msgid "New field of study"
+msgstr ""
+
 #: templates/search.html:179
 msgid "Результаты поиска"
 msgstr ""

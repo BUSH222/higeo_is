@@ -173,7 +173,16 @@ def test_english_view_uses_english_labels(client, ids):
 # --- login ----------------------------------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("url", ["/new?type=person", "/edit?type=person&id=1", "/delete?type=person&id=1"])
+@pytest.mark.parametrize(
+    "url",
+    [
+        "/new?type=person",
+        "/edit?type=person&id=1",
+        "/delete?type=person&id=1",
+        "/new?type=field_of_study",
+        "/delete?type=field_of_study&id=1",
+    ],
+)
 def test_staff_pages_redirect_anonymous_visitors_to_login(client, url):
     response = client.get(url)
     assert response.status_code == 302
@@ -407,3 +416,23 @@ def test_field_of_study_comment(staff, client, ids):
 
 def test_field_of_study_save_needs_login(client):
     assert client.post("/save?type=field_of_study", data={"name": "X"}).status_code in (302, 303, 307)
+
+
+def test_field_of_study_new_and_delete(staff, client, ids):
+    form = staff.get("/new?type=field_of_study")
+    assert form.status_code == 200 and 'name="name"' in form.text and 'name="comment"' in form.text
+    assert "/new?type=field_of_study" in staff.get("/search").text
+    field_id = saved_id(staff.post("/save?type=field_of_study", data={"name": "Тестовая область", "comment": "temp"}))
+    assert "Тестовая область" in client.get(f"/view?type=field_of_study&id={field_id}").text
+    person_id = saved_id(
+        staff.post(
+            "/save?type=person",
+            data={"surname": "Удаляемый", "name": "Тест", "connection": [f"field_of_study:{field_id}:field_of_study"]},
+        )
+    )
+    assert "Тестовая область" in client.get(f"/view?type=person&id={person_id}").text
+    assert staff.get(f"/delete?type=field_of_study&id={field_id}").status_code == 200
+    assert client.get(f"/view?type=field_of_study&id={field_id}").status_code == 404
+    page = client.get(f"/view?type=person&id={person_id}")
+    assert page.status_code == 200 and "Тестовая область" not in page.text
+    assert staff.get(f"/delete?type=person&id={person_id}").status_code == 200
