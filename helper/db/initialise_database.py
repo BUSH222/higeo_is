@@ -12,6 +12,18 @@ DRIVERS = {"sqlite": "sqlite", "postgresql": "postgresql+psycopg2", "mysql": "my
 BYTE_ORDER_COLLATIONS = {"sqlite": "BINARY", "postgresql": "C", "mysql": "utf8mb4_bin"}
 
 
+def _documents_by_year(authorships: list[DocumentAuthorship]) -> list[list]:
+    """Entries ``["doc", id, "<year> - <title>"]``, oldest first; documents without a year go last (by title)."""
+    documents = sorted(
+        (authorship.document for authorship in authorships),
+        key=lambda document: (document.year is None, document.year or "", str(document)),
+    )
+    return [
+        ["doc", document.id, f"{document.year} - {document}" if document.year else str(document)]
+        for document in documents
+    ]
+
+
 def database_url(database: str | None = DATABASE_NAME) -> URL:
     """Build the connection URL of the configured engine, for the given database."""
     if DATABASE_ENGINE == "sqlite":
@@ -190,9 +202,7 @@ class Person(Timestamped, Base):
             "Биография": self.biography,
             "Библиография": self.bibliography,
             "Фотография": self.photo,
-            "Документы": sorted(
-                [["doc", doc.document.id, str(doc.document)] for doc in self.documents], key=lambda x: x[2]
-            ),
+            "Документы": _documents_by_year(self.documents),
             "Комментарии": self.comment,
         }
         return clean_dict(values)
@@ -223,9 +233,7 @@ class Person(Timestamped, Base):
             "Biography": self.biography,
             "Bibliography": self.bibliography,
             "Photo": self.photo,
-            "Documents": sorted(
-                [["doc", doc.document.id, str(doc.document)] for doc in self.documents], key=lambda x: x[2]
-            ),
+            "Documents": _documents_by_year(self.documents),
             "Comments": self.comment,
         }
         return clean_dict(values)

@@ -72,6 +72,14 @@ def test_not_found_is_an_html_page(client, url):
     assert "404" in response.text
 
 
+def test_person_documents_sorted_by_year(client, ids):
+    page = client.get(f"/view?type=person&id={ids['Вернадский']}").text
+    entries = ["1900 - Ящик", "1926 - Биосфера", "1940 - Яблоко", "Аннотация"]
+    positions = [page.index(entry) for entry in entries]
+    assert positions == sorted(positions)
+    assert "- Аннотация" not in page
+
+
 def test_view_pages(client, ids):
     person = client.get(f"/view?type=person&id={ids['Вернадский']}").text
     for expected in ["Вернадский Владимир Иванович", "1863-03-12", "Геологический институт", "Биосфера", "Геохимия"]:

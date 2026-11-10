@@ -71,8 +71,25 @@ def database():
         institute = db.Organization(name="Геологический институт", org_type="Научные учреждения")
         university = db.Organization(name="Московский университет", org_type="Высшие учебные заведения")
         biosphere = db.Document(name="Биосфера", doc_type="книга", year="1926")
+        later_work = db.Document(name="Яблоко", doc_type="статья", year="1940")
+        early_work = db.Document(name="Ящик", doc_type="статья", year="1900")
+        undated_work = db.Document(name="Аннотация", doc_type="статья", year=None)
         geochemistry = db.FieldOfStudy(name="Геохимия")
-        session.add_all([vernadsky, fersman, obruchev, yolkin, institute, university, biosphere, geochemistry])
+        session.add_all(
+            [
+                vernadsky,
+                fersman,
+                obruchev,
+                yolkin,
+                institute,
+                university,
+                biosphere,
+                later_work,
+                early_work,
+                undated_work,
+                geochemistry,
+            ]
+        )
         session.flush()
         session.add_all(
             [
@@ -80,6 +97,9 @@ def database():
                 db.OrganizationMembership(person_id=fersman.id, organization_id=institute.id),
                 db.PersonEducation(person_id=vernadsky.id, organization_id=university.id),
                 db.DocumentAuthorship(person_id=vernadsky.id, document_id=biosphere.id),
+                db.DocumentAuthorship(person_id=vernadsky.id, document_id=later_work.id),
+                db.DocumentAuthorship(person_id=vernadsky.id, document_id=early_work.id),
+                db.DocumentAuthorship(person_id=vernadsky.id, document_id=undated_work.id),
                 db.PersonFieldOfStudy(person_id=vernadsky.id, field_of_study_id=geochemistry.id),
                 db.PersonFieldOfStudy(person_id=fersman.id, field_of_study_id=geochemistry.id),
             ]
