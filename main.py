@@ -807,10 +807,13 @@ def save_object(obj_type: str, formdata: dict, uploads: dict[str, UploadFile], c
             data = session.execute(stmt).scalar_one_or_none()
             if data is None:
                 abort(404)
+            old_files = [getattr(data, key) for key in FILE_FIELDS if key in formdata and getattr(data, key)]
             for key, value in formdata.items():
                 setattr(data, key, value)
             data.last_updated = datetime.now()  # also when only the connections change
             session.commit()
+        for old_file in old_files:
+            (BASE_DIR / old_file).unlink(missing_ok=True)
     else:
         formdata.pop("id", None)
         data = obj(**formdata)
@@ -909,10 +912,14 @@ def delete(request: Request, csrf_token: Annotated[str, Form()] = ""):
                 session.query(DocumentAuthorship).filter(DocumentAuthorship.document_id == obj_id).delete()
             elif obj_type == "field_of_study":
                 session.query(PersonFieldOfStudy).filter(PersonFieldOfStudy.field_of_study_id == obj_id).delete()
+            old_files = [getattr(data, key) for key in FILE_FIELDS if getattr(data, key, None)]
             session.delete(data)
             session.commit()
         else:
             abort(404)
+
+    for old_file in old_files:
+        (BASE_DIR / old_file).unlink(missing_ok=True)
 
     return render(request, "redirect.html", url="/search")
 

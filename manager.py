@@ -1,6 +1,8 @@
 import argparse
 import getpass
 import os
+import re
+from pathlib import Path
 
 from dotenv import dotenv_values, find_dotenv, set_key
 
@@ -8,6 +10,8 @@ DATABASE_ENGINES = ("sqlite", "postgresql", "mysql")
 DEFAULT_PORTS = {"postgresql": "5432", "mysql": "3306"}
 DEFAULT_SQLITE_FILE = "higeo.sqlite3"
 ENV_FILE = find_dotenv() or os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+BASE_DIR = Path(__file__).resolve().parent
+UPLOAD_DIR = "static/uploads"  # relative to the project, and stored in the database in this form
 
 
 def prompt_password():
@@ -51,6 +55,13 @@ def main():
 
     subparsers.add_parser("user_list", help="List all users.")
 
+    files_gc_parser = subparsers.add_parser(
+        "files_gc", help="Delete uploaded files that are no longer referenced by any record."
+    )
+    files_gc_parser.add_argument(
+        "-n", "--dry-run", action="store_true", help="List the files that would be deleted, without deleting them."
+    )
+
     args = parser.parse_args()
 
     try:
@@ -68,6 +79,8 @@ def run(args, parser):
         db_set(args)
     elif args.command == "db_show":
         db_show()
+    elif args.command == "files_gc":
+        files_gc(args)
     else:
         run_user_command(args, parser)
 
@@ -117,6 +130,48 @@ def db_show():
         print(f"DATABASE_PORT = {helper.DATABASE_PORT or DEFAULT_PORTS[helper.DATABASE_ENGINE]}")
         print(f"DATABASE_USER = {helper.DATABASE_USER or ''}")
         print(f"DATABASE_PASSWORD = {'***' if helper.DATABASE_PASSWORD else ''}")
+
+
+def files_gc(args):
+    """Delete files in the upload folder that no column in the database points to.
+
+    Every text column of every table is checked, not just the known file fields (Document.file, Person.photo):
+    some rows were populated by a one-off import script rather than through the app's own upload form, so a
+    fixed field list could miss a file that is still in use and delete it.
+    """
+    from sqlalchemy import String, select
+    from sqlalchemy.orm import Session
+
+    from helper.db.initialise_database import Base, engine
+
+    upload_dir = BASE_DIR / UPLOAD_DIR
+    if not upload_dir.is_dir():
+        print("No upload folder yet, nothing to do.")
+        return
+
+    # A path can be the column's whole value (Document.file, Person.photo) or be embedded in richer text
+    # (biography/bibliography HTML), and some rows imported long ago store it as "/static/uploads/..." with a
+    # leading slash instead of "static/uploads/..." like the app itself writes, so this extracts the path itself
+    # rather than trusting the column's full value or a fixed leading character.
+    path_pattern = re.compile(rf"/?{re.escape(UPLOAD_DIR)}/[^\s\"'<>]+")
+    referenced = set()
+    with Session(engine) as session:
+        for table in Base.metadata.tables.values():
+            for column in table.columns:
+                if isinstance(column.type, String):
+                    stmt = select(column).where(column.like(f"%{UPLOAD_DIR}/%"))
+                    for (value,) in session.execute(stmt):
+                        if value:
+                            referenced.update(match.lstrip("/") for match in path_pattern.findall(value))
+
+    removed = 0
+    for entry in sorted(upload_dir.iterdir()):
+        if entry.is_file() and f"{UPLOAD_DIR}/{entry.name}" not in referenced:
+            print(f"{'Would delete' if args.dry_run else 'Deleting'} {entry}")
+            if not args.dry_run:
+                entry.unlink()
+            removed += 1
+    print(f"{'Would remove' if args.dry_run else 'Removed'} {removed} orphaned file(s).")
 
 
 def run_user_command(args, parser):

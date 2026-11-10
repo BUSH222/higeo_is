@@ -369,6 +369,32 @@ def test_document_with_an_uploaded_file(staff, ids, tmp_path, monkeypatch):
         assert (document.file, document.year) == (stored, "1922")
 
     assert staff.post(f"/delete?type=doc&id={doc_id}", data={"csrf_token": staff.csrf_token}).status_code == 200
+    assert not (tmp_path / stored).exists()  # the deleted document's file is removed from disk
+
+
+def test_replacing_an_uploaded_file_deletes_the_old_one(staff, ids, tmp_path, monkeypatch):
+    monkeypatch.setattr(main, "BASE_DIR", tmp_path)
+    created = staff.post(
+        "/save?type=doc",
+        data={"name": "Геохимия России", "doc_type": "книга", "csrf_token": staff.csrf_token},
+        files={"file": ("first.pdf", b"first version", "application/pdf")},
+    )
+    doc_id = saved_id(created)
+    with Session(db.engine) as session:
+        first_path = session.get(db.Document, doc_id).file
+    assert (tmp_path / first_path).exists()
+
+    edited = staff.post(
+        "/save?type=doc",
+        data={"id": str(doc_id), "name": "Геохимия России", "doc_type": "книга", "csrf_token": staff.csrf_token},
+        files={"file": ("second.pdf", b"second version", "application/pdf")},
+    )
+    assert saved_id(edited) == doc_id
+    with Session(db.engine) as session:
+        second_path = session.get(db.Document, doc_id).file
+    assert second_path != first_path
+    assert not (tmp_path / first_path).exists()  # the replaced file is removed from disk
+    assert (tmp_path / second_path).read_bytes() == b"second version"
 
 
 def test_save_rejects_bad_input(staff):
