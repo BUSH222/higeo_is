@@ -97,6 +97,9 @@
                             {% endif %}
                         {% endif %}
                     {% endfor %}
+                    {% if last_updated %}
+                    <p class="mt-3 mb-0 text-muted"><em>{{ _('Последнее обновление') }}: {{ last_updated.strftime('%d.%m.%Y') }}</em></p>
+                    {% endif %}
                 </div>
             </div>
         </div>

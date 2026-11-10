@@ -55,6 +55,10 @@
 
     <button type="submit" class="btn higeo-color-1 mt-5">{{ _('Сохранить') }}</button>
     </form>
+
+    {% if last_updated %}
+    <p class="mt-4 text-muted"><em>{{ _('Последнее обновление') }}: {{ last_updated.strftime('%d.%m.%Y') }}</em></p>
+    {% endif %}
 </div>
 
 <script>

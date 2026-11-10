@@ -291,6 +291,7 @@ def view(request: Request):
             abort(404)
         # Use localized value dictionaries
         data = obj_instance.values_en() if get_locale() == "en" else obj_instance.values_ru()
+        last_updated = obj_instance.last_updated
     # Localized heading labels
     heading_map = {
         "org": _("Организация"),
@@ -305,7 +306,7 @@ def view(request: Request):
         "type": viewtype,
     }
     data = enrich_person_data(data)
-    return render(request, "view.html", data=data, page=page, parameters=parameters)
+    return render(request, "view.html", data=data, page=page, parameters=parameters, last_updated=last_updated)
 
 
 @app.get("/print")
@@ -623,7 +624,7 @@ def new(request: Request):
         if (
             column.key
             not in ["organizations", "documents", "members", "authors", "field_of_study", "education", "alumni"]
-            and column.key != "id"
+            and column.key not in ("id", "last_updated")
         ):
             data_fin[column.key] = ""
     data2 = {}
@@ -689,6 +690,7 @@ def edit(request: Request):
         for column in mapper.attrs:
             if not isinstance(getattr(data, column.key), list):
                 data_fin[column.key] = getattr(data, column.key)
+        last_updated = data_fin.pop("last_updated", None)
     data_fin2 = {}
     for k, v in data_fin.items():
         if isinstance(v, list):
@@ -740,6 +742,7 @@ def edit(request: Request):
         data1=data_fin2,
         data2=data2,
         obj_type=obj_type,
+        last_updated=last_updated,
         multiple_choice=MULTIPLE_CHOICE_FIELDS,
         file=FILE_FIELDS,
         connection_types=CONNECTION_TYPE_MAPPING,
@@ -789,6 +792,7 @@ def save_object(obj_type: str, formdata: dict, uploads: dict[str, UploadFile], c
     """Create or update an object and replace its connections. Returns the id of the object."""
     obj = {"org": Organization, "person": Person, "doc": Document, "field_of_study": FieldOfStudy}[obj_type]
     formdata = {key: (value if value not in ("", "None") else None) for key, value in formdata.items()}
+    formdata.pop("last_updated", None)  # set by the server, never by the form
     for key, value in formdata.items():
         if key.endswith("date") and value is not None:
             try:
@@ -815,6 +819,7 @@ def save_object(obj_type: str, formdata: dict, uploads: dict[str, UploadFile], c
                 abort(404)
             for key, value in formdata.items():
                 setattr(data, key, value)
+            data.last_updated = datetime.now()  # also when only the connections change
             session.commit()
     else:
         formdata.pop("id", None)

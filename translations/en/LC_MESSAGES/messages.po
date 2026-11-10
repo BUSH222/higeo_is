@@ -586,3 +586,6 @@ msgstr "Download file"
 #: templates/view.html
 msgid "Печать"
 msgstr "Print"
+
+msgid "Последнее обновление"
+msgstr "Last updated"

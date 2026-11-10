@@ -99,7 +99,13 @@ class Base(DeclarativeBase):
     type_annotation_map = {str: Text().with_variant(LONGTEXT(), "mysql")}  # noqa: RUF012 (read by SQLAlchemy)
 
 
-class Person(Base):
+class Timestamped:
+    """Adds the date of the last change, which the administrator's pages show in cursive at the end."""
+
+    last_updated: Mapped[datetime] = mapped_column(nullable=True, default=datetime.now, onupdate=datetime.now)
+
+
+class Person(Timestamped, Base):
     """
     Represents a person with various attributes and relationships.
     Attributes:
@@ -130,7 +136,6 @@ class Person(Base):
 
     __tablename__ = "person"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    _oldid: Mapped[int] = mapped_column(nullable=True)
     surname: Mapped[str] = mapped_column(nullable=False)
     name: Mapped[str] = mapped_column(nullable=False)
     patronymic: Mapped[str] = mapped_column(nullable=True)
@@ -229,7 +234,7 @@ class Person(Base):
         return " ".join(filter(None, (self.surname, self.name, self.patronymic)))
 
 
-class Organization(Base):
+class Organization(Timestamped, Base):
     """
     Represents an organization entity in the database.
     Attributes:
@@ -248,7 +253,6 @@ class Organization(Base):
 
     __tablename__ = "organization"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    _oldid: Mapped[int] = mapped_column(nullable=True)
     name: Mapped[str] = mapped_column(nullable=False)
     members: Mapped[list[OrganizationMembership]] = relationship(
         "OrganizationMembership", back_populates="organization"
@@ -304,7 +308,7 @@ class Organization(Base):
         return self.name
 
 
-class Document(Base):
+class Document(Timestamped, Base):
     """
     Represents a document entity in the database.
     Attributes:
@@ -326,7 +330,6 @@ class Document(Base):
 
     __tablename__ = "document"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    _oldid: Mapped[int] = mapped_column(nullable=True)
     name: Mapped[str] = mapped_column(nullable=False)
     doc_type: Mapped[str] = mapped_column(nullable=False)
     language: Mapped[str] = mapped_column(nullable=True)
@@ -382,7 +385,7 @@ class Document(Base):
         return self.name
 
 
-class FieldOfStudy(Base):
+class FieldOfStudy(Timestamped, Base):
     """
     Represents a field of study entity in the database.
     Attributes:

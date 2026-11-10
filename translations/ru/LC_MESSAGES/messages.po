@@ -585,3 +585,6 @@ msgstr "Открыть файл"
 #: templates/view.html
 msgid "Печать"
 msgstr "Печать"
+
+msgid "Последнее обновление"
+msgstr ""
