@@ -1,67 +1,87 @@
 from datetime import datetime  # noqa: TC003 (needed at runtime by SQLAlchemy Mapped[])
 
-import psycopg2
-from psycopg2 import sql
-from sqlalchemy import ForeignKey, create_engine
+from sqlalchemy import URL, ForeignKey, String, Text, create_engine, event, text
+from sqlalchemy.dialects.mysql import LONGTEXT
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
-from helper import DATABASE_HOST, DATABASE_NAME, DATABASE_PASSWORD, DATABASE_PORT, DATABASE_USER
+from helper import DATABASE_ENGINE, DATABASE_HOST, DATABASE_NAME, DATABASE_PASSWORD, DATABASE_PORT, DATABASE_USER
 from helper.cleanup.clean_dict import clean_dict
 
-DATABASE_URL = (
-    f"postgresql+psycopg2://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}"
-)
+DRIVERS = {"sqlite": "sqlite", "postgresql": "postgresql+psycopg2", "mysql": "mysql+pymysql"}
+# Collations that sort by code point, so that every engine orders names the same way.
+BYTE_ORDER_COLLATIONS = {"sqlite": "BINARY", "postgresql": "C", "mysql": "utf8mb4_bin"}
+
+
+def database_url(database: str | None = DATABASE_NAME) -> URL:
+    """Build the connection URL of the configured engine, for the given database."""
+    if DATABASE_ENGINE == "sqlite":
+        return URL.create(DRIVERS["sqlite"], database=database)
+    return URL.create(
+        DRIVERS[DATABASE_ENGINE],
+        username=DATABASE_USER,
+        password=DATABASE_PASSWORD,
+        host=DATABASE_HOST,
+        port=int(DATABASE_PORT) if DATABASE_PORT else None,
+        database=database,
+        query={"charset": "utf8mb4"} if DATABASE_ENGINE == "mysql" else {},
+    )
+
+
+def byte_order(column):
+    """Order by code point rather than by the locale of the database."""
+    return column.collate(BYTE_ORDER_COLLATIONS[DATABASE_ENGINE])
 
 
 def create_database():
     """
-    Creates a PostgreSQL database if it does not already exist.
-    This function connects to the PostgreSQL server using the provided
-    credentials and checks if a database with the specified name exists.
-    If the database does not exist, it creates a new database with the
-    specified name and configuration.
-    Raises:
-        psycopg2.DatabaseError: If there is an error connecting to the
-        PostgreSQL server or executing the SQL queries.
-    Notes:
-        - The function assumes that the PostgreSQL server is running and
-          accessible with the provided credentials.
-        - The function uses the `psycopg2` library to interact with the
-          PostgreSQL server.
-        - The database is created with the following configuration:
-            - Owner: postgres
-            - Encoding: UTF8
-            - Connection limit: -1 (unlimited)
-            - Is template: False
+    Creates the configured database if it does not already exist.
+
+    - sqlite: nothing to do, the file is created on the first connection.
+    - postgresql: connects to the `postgres` maintenance database and creates a UTF8 database
+      with the ru_RU.UTF-8 locale, owned by the connecting user.
+    - mysql: connects to the server and creates a utf8mb4 database. Its collation is utf8mb4_bin, so that
+      comparisons are exact, as they are on the other two engines.
     """
-    conn = psycopg2.connect(dbname="postgres", user=DATABASE_USER, password=DATABASE_PASSWORD, host=DATABASE_HOST)
-    conn.autocommit = True
-    cursor = conn.cursor()
+    if DATABASE_ENGINE == "sqlite":
+        print("SQLite creates the database file on first use. Skipping creation.")
+        return
 
-    cursor.execute("SELECT 1 FROM pg_database WHERE datname = %s", (DATABASE_NAME,))
-    exists = cursor.fetchone()
+    maintenance_database = "postgres" if DATABASE_ENGINE == "postgresql" else None
+    server = create_engine(database_url(maintenance_database), isolation_level="AUTOCOMMIT")
+    quoted_name = server.dialect.identifier_preparer.quote(DATABASE_NAME)
+    with server.connect() as conn:
+        if DATABASE_ENGINE == "postgresql":
+            exists = conn.execute(text("SELECT 1 FROM pg_database WHERE datname = :name"), {"name": DATABASE_NAME})
+            create = (
+                f"CREATE DATABASE {quoted_name} WITH ENCODING = 'UTF8' TEMPLATE = template0"
+                " LC_COLLATE = 'ru_RU.UTF-8' LC_CTYPE = 'ru_RU.UTF-8'"
+            )
+        else:
+            exists = conn.execute(
+                text("SELECT 1 FROM information_schema.schemata WHERE schema_name = :name"), {"name": DATABASE_NAME}
+            )
+            create = f"CREATE DATABASE {quoted_name} CHARACTER SET utf8mb4 COLLATE utf8mb4_bin"
+        if exists.first():
+            print("Database already exists. Skipping creation.")
+        else:
+            print("Creating the database for the first time...")
+            conn.execute(text(create))
+    server.dispose()
 
-    if not exists:
-        print("Creating the database for the first time...")
-        query = sql.SQL(
-            "CREATE DATABASE {} WITH\
-                        OWNER = postgres\
-                        ENCODING = 'UTF8'\
-                        TEMPLATE = template0\
-                        LC_COLLATE='ru_RU.UTF-8'\
-                        LC_CTYPE='ru_RU.UTF-8'\
-                        CONNECTION LIMIT = -1\
-                        IS_TEMPLATE = False;"
-        ).format(sql.Identifier(DATABASE_NAME))
-        cursor.execute(query)
-    else:
-        print("Database already exists. Skipping creation.")
 
-    cursor.close()
-    conn.close()
+engine = create_engine(database_url(), pool_pre_ping=True)
 
+if DATABASE_ENGINE == "sqlite":
 
-engine = create_engine(DATABASE_URL)
+    @event.listens_for(engine, "connect")
+    def _configure_sqlite(dbapi_connection, _connection_record):
+        # SQLite only folds ASCII in lower() and does not enforce foreign keys unless asked to.
+        dbapi_connection.create_function(
+            "lower", 1, lambda value: value.lower() if isinstance(value, str) else value, deterministic=True
+        )
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
 
 
 class Base(DeclarativeBase):
@@ -74,7 +94,9 @@ class Base(DeclarativeBase):
         None
     """
 
-    pass
+    # MySQL needs a length for VARCHAR and caps TEXT at 64 KB, which a biography can exceed,
+    # so strings are TEXT (LONGTEXT on MySQL) unless a column says otherwise.
+    type_annotation_map = {str: Text().with_variant(LONGTEXT(), "mysql")}  # noqa: RUF012 (read by SQLAlchemy)
 
 
 class Person(Base):
@@ -499,7 +521,7 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    email: Mapped[str] = mapped_column(unique=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True)
     password_hash: Mapped[str]
 
 

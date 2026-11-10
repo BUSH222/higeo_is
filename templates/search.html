@@ -178,10 +178,10 @@
     <div class="results-box p-3">
     <h5 class="mb-2 mt-3 text-center result-counter" style="font-size: 1.5rem;">{{ _('Результаты поиска') }}</h5>
         <div class="row">
-            {% if not request.args.get('quicksearch') %}
+            {% if not request.query_params.get('quicksearch') %}
             <h6 class="text-center text-muted" style="font-size: 0.8rem;">{{ _('Здесь будут показаны результаты поиска') }}</h6>
             {% endif %}
-            {% if results|length == 0 and request.args %}
+            {% if results|length == 0 and request.query_params %}
                 <h6 class="text-center">{{ _('Поиск не дал результатов') }}</h6>
             {% elif results|length > 0 %}
                 <h6 class="text-center">{{ _('Найдено') }} {{ results|length }} {{ _('результатов') }}</h6>

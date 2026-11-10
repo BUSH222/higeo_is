@@ -53,12 +53,12 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="langMenu">
                             <li>
-                                <a class="dropdown-item d-flex align-items-center {% if current_locale.startswith('en') %}active{% endif %}" href="{{ url_for('set_language', lang_code='en') }}">
+                                <a class="dropdown-item d-flex align-items-center {% if current_locale.startswith('en') %}active{% endif %}" href="/set_language/en">
                                     <i class="flag-icon flag-icon-gb me-2"></i> {{ _('English') }}
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item d-flex align-items-center {% if current_locale.startswith('ru') %}active{% endif %}" href="{{ url_for('set_language', lang_code='ru') }}">
+                                <a class="dropdown-item d-flex align-items-center {% if current_locale.startswith('ru') %}active{% endif %}" href="/set_language/ru">
                                     <i class="flag-icon flag-icon-ru me-2"></i> {{ _('Русский') }}
                                 </a>
                             </li>

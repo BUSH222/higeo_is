@@ -5,15 +5,20 @@ from dotenv import find_dotenv, load_dotenv
 
 load_dotenv(find_dotenv())
 
-# Database configuration
-DATABASE_NAME = os.environ.get("DATABASE_NAME")
-DATABASE_HOST = os.environ.get("DATABASE_HOST")
-DATABASE_PORT = os.environ.get("DATABASE_PORT")
-DATABASE_USER = os.environ.get("DATABASE_USER")
-DATABASE_PASSWORD = os.environ.get("DATABASE_PASSWORD")
+# Database configuration (written by `manager.py db_set`)
+DATABASE_ENGINES = ("sqlite", "postgresql", "mysql")
+DATABASE_ENGINE = os.environ.get("DATABASE_ENGINE") or "sqlite"
+if DATABASE_ENGINE not in DATABASE_ENGINES:
+    raise RuntimeError(f"DATABASE_ENGINE must be one of {', '.join(DATABASE_ENGINES)}, not {DATABASE_ENGINE!r}.")
+# For sqlite this is the path of the database file; the host, port, user and password are not used.
+DATABASE_NAME = os.environ.get("DATABASE_NAME") or ("higeo.sqlite3" if DATABASE_ENGINE == "sqlite" else "higeo")
+DATABASE_HOST = os.environ.get("DATABASE_HOST") or "localhost"
+DATABASE_PORT = os.environ.get("DATABASE_PORT") or None
+DATABASE_USER = os.environ.get("DATABASE_USER") or None
+DATABASE_PASSWORD = os.environ.get("DATABASE_PASSWORD") or None
 
-# Flask configuration
-SECRET_KEY = os.environ.get("SECRET_KEY", token_urlsafe(16))
+# Web application configuration
+SECRET_KEY = os.environ.get("SECRET_KEY") or token_urlsafe(16)
 
 # Project constants
 MULTIPLE_CHOICE_FIELDS = {

@@ -1,52 +1,45 @@
 """Staff login with email and password. Intentionally not linked from any page."""
 
+from typing import Annotated
 from urllib.parse import urlsplit
 
-from flask import Blueprint, redirect, render_template, request, url_for
-from flask_babel import gettext as _
-from flask_login import LoginManager, login_user, logout_user
+from fastapi import APIRouter, Form, Request
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from helper.db.initialise_database import engine
+from helper.i18n import gettext as _
 from helper.login import users
+from helper.login.auth import log_in, log_out
 from helper.login.objects import LoginUser
+from helper.templating import render
 
-app_login = Blueprint("app_login", __name__)
-login_manager = LoginManager()
-login_manager.login_view = "app_login.login"
-
-
-@login_manager.user_loader
-def load_user(user_id):
-    try:
-        user_pk = int(user_id)
-    except ValueError:
-        return None
-    with Session(engine) as session:
-        user = users.get(session, user_pk)
-        return LoginUser(user.id, user.email) if user else None
+router = APIRouter()
 
 
 def _safe_next(target):
     """Only allow redirects to a path on this site."""
     if target and not urlsplit(target).netloc and target.startswith("/") and not target.startswith("//"):
         return target
-    return url_for("search")
+    return "/search"
 
 
-@app_login.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "GET":
-        return render_template("login.html", error=None)
+@router.get("/login")
+def login_form(request: Request):
+    return render(request, "login.html", error=None)
+
+
+@router.post("/login")
+def login(request: Request, email: Annotated[str, Form()] = "", password: Annotated[str, Form()] = ""):
     with Session(engine) as session:
-        user = users.authenticate(session, request.form.get("email", ""), request.form.get("password", ""))
+        user = users.authenticate(session, email, password)
         if user is None:
-            return render_template("login.html", error=_("Неверный email или пароль.")), 401
-        login_user(LoginUser(user.id, user.email))
-    return redirect(_safe_next(request.args.get("next")))
+            return render(request, "login.html", status_code=401, error=_("Неверный email или пароль."))
+        log_in(request, LoginUser(user.id, user.email))
+    return RedirectResponse(_safe_next(request.query_params.get("next")), status_code=303)
 
 
-@app_login.route("/logout")
-def logout():
-    logout_user()
-    return redirect("/")
+@router.get("/logout")
+def logout(request: Request):
+    log_out(request)
+    return RedirectResponse("/", status_code=302)

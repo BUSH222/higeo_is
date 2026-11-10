@@ -53,6 +53,9 @@ jobs:
       - name: Type check with ty
         run: uv run ty check .
       
+      - name: Run tests
+        run: uv run pytest
+      
       - name: Verify lock file is up-to-date
         run: |
           uv lock --check

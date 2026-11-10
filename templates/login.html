@@ -11,7 +11,7 @@
                 </div>
                 <div class="card-body">
                     {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
-                    <form method="post" action="{{ url_for('app_login.login', next=request.args.get('next')) }}">
+                    <form method="post" action="/login{% if request.query_params.get('next') %}?next={{ request.query_params.get('next')|urlencode }}{% endif %}">
                         <div class="mb-3">
                             <label class="form-label" for="email">Email</label>
                             <input type="email" class="form-control" id="email" name="email" required autofocus>

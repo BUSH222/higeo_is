@@ -1,13 +1,22 @@
+import os
 import re
+import shutil
+from collections import Counter
 from datetime import datetime
+from http import HTTPStatus
+from pathlib import Path
+from typing import NoReturn
 
 from dateutil.parser import parse
-from flask import Flask, abort, jsonify, redirect, render_template, request, session, url_for
-from flask_babel import Babel
-from flask_babel import gettext as _
-from flask_login import login_required
-from sqlalchemy import and_, extract, func, inspect, select, text
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from sqlalchemy import and_, extract, func, inspect, select
 from sqlalchemy.orm import Session
+from starlette.datastructures import UploadFile
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.middleware.sessions import SessionMiddleware
 
 from helper import CONNECTION_TYPE_MAPPING, FILE_FIELDS, MULTIPLE_CHOICE_FIELDS, SECRET_KEY, TITLE_CONVERTER_NEW_EDIT
 from helper.cleanup.htmlcleaner import clean_html
@@ -20,69 +29,66 @@ from helper.db.initialise_database import (
     Person,
     PersonEducation,
     PersonFieldOfStudy,
+    byte_order,
     engine,
 )
-from helper.login.login import app_login, login_manager
+from helper.i18n import LANGUAGES, LocaleMiddleware, get_locale
+from helper.i18n import gettext as _
+from helper.login.auth import LoginRequired, require_login
+from helper.login.login import router as login_router
+from helper.templating import render
 
-app = Flask(__name__)
-app.register_blueprint(app_login)
-app.config["SECRET_KEY"] = SECRET_KEY
-app.config["SESSION_COOKIE_DOMAIN"] = False
-app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-app.config["MAX_CONTENT_LENGTH"] = 32 * 1024 * 1024
-app.config["MAX_FORM_MEMORY_SIZE"] = 32 * 1024 * 1024
+BASE_DIR = Path(__file__).resolve().parent
+UPLOAD_DIR = "static/uploads"  # relative to the project, and stored in the database in this form
+MAX_CONTENT_LENGTH = 32 * 1024 * 1024
 
-login_manager.init_app(app)
-
-app.config.update(BABEL_DEFAULT_LOCALE="ru", BABEL_TRANSLATION_DIRECTORIES="translations")
-LANGUAGES = ["ru", "en"]
-babel = Babel(app)
+# The pages are HTML for people, so the generated API documentation is switched off.
+app = FastAPI(title="HIGEO IS", docs_url=None, redoc_url=None, openapi_url=None)
+# The middleware added last runs first: the session must be loaded before the locale is chosen.
+app.add_middleware(LocaleMiddleware)
+app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, same_site="lax", max_age=None)
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+app.include_router(login_router)
 
 
-def get_locale():
-    # Priority: explicit ?lang= -> session -> (optionally user) -> Accept-Language -> default
-    lang = request.args.get("lang")
-    if lang in LANGUAGES:
-        session["lang"] = lang
-        return lang
-    if session.get("lang") in LANGUAGES:
-        return session["lang"]
+@app.exception_handler(LoginRequired)
+def redirect_to_login(request: Request, exc: LoginRequired):
+    return RedirectResponse(exc.login_url, status_code=302)
+
+
+@app.exception_handler(StarletteHTTPException)
+def http_error(request: Request, exc: StarletteHTTPException):
+    """Answer errors with a small HTML page rather than with JSON."""
     try:
-        from flask_login import current_user
-
-        if getattr(current_user, "locale", None) in LANGUAGES:
-            return current_user.locale
-    except Exception:
-        pass
-    return app.config["BABEL_DEFAULT_LOCALE"]
+        phrase = HTTPStatus(exc.status_code).phrase
+    except ValueError:
+        phrase = "Error"
+    body = f"<!doctype html>\n<title>{exc.status_code} {phrase}</title>\n<h1>{exc.status_code} {phrase}</h1>\n"
+    return HTMLResponse(body, status_code=exc.status_code, headers=exc.headers)
 
 
-babel.init_app(app, locale_selector=get_locale)
-app.jinja_env.add_extension("jinja2.ext.i18n")
+def abort(status_code: int) -> NoReturn:
+    raise HTTPException(status_code)
 
 
-@app.context_processor
-def inject_current_locale():
-    """Expose the current locale to templates as `current_locale`."""
+def to_int(value) -> int:
+    """Convert an id from the query string or a form, answering 404 if it is not a number."""
     try:
-        from flask_babel import get_locale as _get_locale
-
-        loc = str(_get_locale())
-    except Exception:
-        loc = app.config.get("BABEL_DEFAULT_LOCALE", "ru")
-    return {"current_locale": loc}
+        return int(value)
+    except TypeError, ValueError:
+        abort(404)
 
 
-@app.get("/set_language/<lang_code>")
-def set_language(lang_code):
+@app.get("/set_language/{lang_code}")
+def set_language(request: Request, lang_code: str):
     if lang_code not in LANGUAGES:
         abort(404)
-    session["lang"] = lang_code
-    return redirect(request.referrer or url_for("index"))
+    request.session["lang"] = lang_code
+    return RedirectResponse(request.headers.get("referer") or "/", status_code=302)
 
 
-@app.route("/")
-def index():
+@app.get("/")
+def index(request: Request):
     """
     Renders the 'Index' page.
 
@@ -93,11 +99,11 @@ def index():
     Returns:
     - Renders the 'index.html' template.
     """
-    return render_template("index.html")
+    return render(request, "index.html")
 
 
-@app.route("/about")
-def about():
+@app.get("/about")
+def about(request: Request):
     """
     Renders the 'About' page.
 
@@ -108,11 +114,11 @@ def about():
     Returns:
     - Renders the 'about.html' template.
     """
-    return render_template("about.html")
+    return render(request, "about.html")
 
 
-@app.route("/view")
-def view():
+@app.get("/view")
+def view(request: Request):
     """
     Universal view for organization, person, and document.
 
@@ -128,13 +134,17 @@ def view():
     - Renders the 'view.html' template with the data and page context if the object is found.
     - Aborts with a 404 status code if the 'type' is not one of the expected values or if the 'id' is missing.
     """
-    if request.args.get("type") not in ["org", "person", "doc", "field_of_study", "geography"] or not request.args.get(
-        "id"
-    ):
+    if request.query_params.get("type") not in [
+        "org",
+        "person",
+        "doc",
+        "field_of_study",
+        "geography",
+    ] or not request.query_params.get("id"):
         abort(404)
 
-    if request.args.get("type") == "geography":
-        place = request.args.get("id")
+    if request.query_params.get("type") == "geography":
+        place = request.query_params.get("id")
         stmt = select(Person).filter(Person.area_of_study.ilike(f"%{place}%")).order_by(Person.surname, Person.name)
         with Session(engine) as session:
             people = session.execute(stmt).scalars().all()
@@ -173,7 +183,7 @@ def view():
             "type": "geography",
         }
 
-        return render_template("view.html", data=data, page=page, parameters=parameters)
+        return render(request, "view.html", data=data, page=page, parameters=parameters)
 
     viewtype_to_object = {"org": Organization, "person": Person, "doc": Document, "field_of_study": FieldOfStudy}
     # Localize which keys are considered single vs multiple for layout
@@ -187,8 +197,8 @@ def view():
             "single": ["Биография", "Библиография"],
             "multiple": ["Связанные персоналии", "Связанные исследователи", "Выпускники"],
         }
-    viewtype = request.args.get("type")
-    viewid = int(request.args.get("id"))
+    viewtype = request.query_params.get("type")
+    viewid = to_int(request.query_params.get("id"))
     obj = viewtype_to_object[viewtype]
     stmt = select(obj).where(obj.id == viewid)
     with Session(engine) as session:
@@ -251,26 +261,26 @@ def view():
                     continue
             items.insert(insert_idx, (death_key, death_value))
             data = dict(items)
-    return render_template("view.html", data=data, page=page, parameters=parameters)
+    return render(request, "view.html", data=data, page=page, parameters=parameters)
 
 
-@app.route("/search")
-def search():
+@app.get("/search")
+def search(request: Request):
     page = {"heading": _("Поиск"), "title": _("Search")}
     # Choose localized name columns for person searches
     use_en = str(get_locale()) == "en"
     first_col = Person.name_en if use_en else Person.name
     last_col = Person.surname_en if use_en else Person.surname
     patr_col = Person.patronymic_en if use_en else Person.patronymic
-    if len(request.args) == 0 or not request.args.get("type"):
-        return render_template("search.html", page=page)
+    if len(request.query_params) == 0 or not request.query_params.get("type"):
+        return render(request, "search.html", page=page)
 
     # Quicksearch: /search?type=person&quicksearch=quicksearch&fullName=...
-    if request.args.get("quicksearch") and request.args.get("type") == "person":
-        query = request.args.get("fullName")
+    if request.query_params.get("quicksearch") and request.query_params.get("type") == "person":
+        query = request.query_params.get("fullName")
         where_stmt = []
         if query is None:
-            return redirect("/search")
+            return RedirectResponse("/search", status_code=302)
         else:
             parts = query.split()
             if len(parts) == 1:
@@ -290,7 +300,7 @@ def search():
         stmt = (
             select(Person.id, last_col, first_col, patr_col)
             .where(final_where)
-            .order_by(last_col.collate("C"), first_col.collate("C"))
+            .order_by(byte_order(last_col), byte_order(first_col))
         )
 
         results = []
@@ -299,28 +309,28 @@ def search():
                 # row: (id, surname, name, patronymic)
                 display = " ".join(filter(None, (row[1], row[2], row[3])))
                 results.append(["person", row[0], display])
-        return render_template("search.html", page=page, results=results)
+        return render(request, "search.html", page=page, results=results)
 
     # Content search (bibliography substring) — return compact JSON
-    elif request.args.get("content"):
-        content = request.args.get("content")
+    elif request.query_params.get("content"):
+        content = request.query_params.get("content")
         stmt = (
             select(Person.id, Person.surname, Person.name, Person.patronymic)
             .where(Person.bibliography.ilike(f"%{content}%"))
-            .order_by(Person.surname.collate("C"), Person.name.collate("C"))
+            .order_by(byte_order(Person.surname), byte_order(Person.name))
         )
         results = []
         with Session(engine) as session:
             for row in session.execute(stmt):
                 display = " ".join(filter(None, (row[1], row[2], row[3])))
                 results.append(["person", row[0], display])
-        return jsonify(results)
+        return results
 
     # Person attribute search — return compact JSON
-    elif request.args.get("type") == "person":
+    elif request.query_params.get("type") == "person":
         where_stmt = []
-        if len(set(request.args.keys()).intersection({"firstName", "lastName", "patronymic"})) == 0:
-            query = request.args.get("fullName")
+        if len(set(request.query_params.keys()).intersection({"firstName", "lastName", "patronymic"})) == 0:
+            query = request.query_params.get("fullName")
             if query is not None:
                 parts = query.split()
                 if len(parts) == 1:
@@ -336,9 +346,9 @@ def search():
                         & (func.lower(patr_col) == parts[2].lower())
                     )
         else:
-            firstname = request.args.get("firstName")
-            lastname = request.args.get("lastName")
-            patronymic = request.args.get("patronymic")
+            firstname = request.query_params.get("firstName")
+            lastname = request.query_params.get("lastName")
+            patronymic = request.query_params.get("patronymic")
             if firstname:
                 where_stmt.append(func.lower(first_col).startswith(firstname.lower()))
             if lastname:
@@ -346,15 +356,15 @@ def search():
             if patronymic:
                 where_stmt.append(func.lower(patr_col).startswith(patronymic.lower()))
 
-        year_query = request.args.get("birthYear")
+        year_query = request.query_params.get("birthYear")
         if year_query is not None:
-            where_stmt.append(extract("year", Person.birth_date) == int(year_query))
+            where_stmt.append(extract("year", Person.birth_date) == to_int(year_query))
 
         final_where = and_(*where_stmt) if where_stmt else True
         stmt = (
             select(Person.id, last_col, first_col, patr_col)
             .where(final_where)
-            .order_by(last_col.collate("C"), first_col.collate("C"))
+            .order_by(byte_order(last_col), byte_order(first_col))
         )
 
         results = []
@@ -362,33 +372,33 @@ def search():
             for row in session.execute(stmt):
                 display = " ".join(filter(None, (row[1], row[2], row[3])))
                 results.append(["person", row[0], display])
-        return jsonify(results)
+        return results
 
     # Name-only search for org/doc/field_of_study — already compact (id, name)
-    elif request.args.get("type") in ["org", "doc", "field_of_study"]:
-        obj_type = request.args.get("type")
+    elif request.query_params.get("type") in ["org", "doc", "field_of_study"]:
+        obj_type = request.query_params.get("type")
         obj = {"org": Organization, "doc": Document, "field_of_study": FieldOfStudy}[obj_type]
-        query = request.args.get("name")
+        query = request.query_params.get("name")
         if query:
             stmt = (
                 select(obj.id, obj.name)
                 .where(func.lower(obj.name).startswith(query.lower()))
-                .order_by(func.lower(obj.name).collate("C"))
+                .order_by(byte_order(func.lower(obj.name)))
             )
         else:
-            stmt = select(obj.id, obj.name).order_by(func.lower(obj.name).collate("C"))
+            stmt = select(obj.id, obj.name).order_by(byte_order(func.lower(obj.name)))
         results = []
         with Session(engine) as session:
             for row in session.execute(stmt):
                 results.append([obj_type, row[0], row[1]])
-        return jsonify(results)
+        return results
 
     else:
         abort(404)
 
 
-@app.route("/list")
-def list_view():
+@app.get("/list")
+def list_view(request: Request):
     """
     Renders a list view for organizations, persons, documents, or fields of study.
     This route provides a list of all items of the specified type without pagination.
@@ -400,12 +410,10 @@ def list_view():
     - Renders the 'list.html' template with the results
     - Aborts with a 404 status code if the type parameter is invalid
     """
-    if not request.args.get("type"):
+    if request.query_params.get("type") not in ["org", "person", "doc", "field_of_study"]:
         abort(404)
 
-    assert request.args.get("type") in ["org", "person", "doc", "field_of_study"]
-
-    obj_type = request.args.get("type")
+    obj_type = request.query_params.get("type")
 
     obj_map = {"org": Organization, "person": Person, "doc": Document, "field_of_study": FieldOfStudy}
 
@@ -420,19 +428,23 @@ def list_view():
 
     # Determine default sort field based on object type
     if obj_type == "person":
-        sort_field = request.args.get("sort", "surname")
+        sort_field = request.query_params.get("sort", "surname")
         if sort_field == "surname":
             # Only select the necessary columns
             stmt = select(Person.id, Person.surname, Person.name, Person.patronymic).order_by(
-                Person.surname.collate("C"), Person.name.collate("C")
+                byte_order(Person.surname), byte_order(Person.name)
             )
-        else:
+        elif sort_field in Person.__table__.columns:
             stmt = select(Person.id, Person.surname, Person.name, Person.patronymic).order_by(
                 getattr(Person, sort_field)
             )
+        else:
+            abort(404)
     else:
-        sort_field = request.args.get("sort", "name")
-        stmt = select(obj.id, obj.name).order_by(func.lower(getattr(obj, sort_field)).collate("C"))
+        sort_field = request.query_params.get("sort", "name")
+        if sort_field not in obj.__table__.columns:
+            abort(404)
+        stmt = select(obj.id, obj.name).order_by(byte_order(func.lower(getattr(obj, sort_field))))
 
     results = []
     with Session(engine) as session:
@@ -447,66 +459,40 @@ def list_view():
 
     page_info = {"heading": heading_map[obj_type], "title": heading_map[obj_type], "type": obj_type}
 
-    return render_template("list.html", results=results, page=page_info, result_use_pagination=True)
+    return render(request, "list.html", results=results, page=page_info, result_use_pagination=True)
 
 
-@app.route("/list_custom")
-def list_view_custom():
-    if not request.args.get("type"):
-        abort(404)
-
-    assert request.args.get("type") in [
+@app.get("/list_custom")
+def list_view_custom(request: Request):
+    obj_type = request.query_params.get("type")
+    if obj_type not in [
         "geography",
         "acad_full_members",  # действительный член
         "acad_foreign_members",  # иностранный член
         "acad_honorary_members",  # почётный член
         "acad_corresponding_members",  # член-корреспондент
         "acad_professors",  # профессор РАН
-    ]
-
-    obj_type = request.args.get("type")
+    ]:
+        abort(404)
 
     if obj_type == "geography":
-        query = text("""
-            WITH split_locations AS (
-            SELECT
-                trim(unnest(string_to_array(area_of_study, ','))) AS location
-            FROM
-                person
-            WHERE
-                area_of_study IS NOT NULL
-            ),
-            valid_locations AS (
-            SELECT
-                location
-            FROM
-                split_locations
-            WHERE
-                length(location) > 0
+        # area_of_study holds a comma separated list of places: count how many people worked in each.
+        stmt = select(Person.area_of_study).where(Person.area_of_study.is_not(None))
+        with Session(engine) as session:
+            places = Counter(
+                place.strip() for areas in session.scalars(stmt) for place in areas.split(",") if place.strip()
             )
-            SELECT
-            location,
-            COUNT(*) AS frequency
-            FROM
-            valid_locations
-            GROUP BY
-            location
-            ORDER BY
-            frequency DESC
-            LIMIT :limit;
-        """)
+        most_common = sorted(places.items(), key=lambda item: (-item[1], item[0]))[:100]
         page_info = {
             "heading": _("Самые популярные географические регионы"),
             "title": _("Самые популярные географические регионы"),
         }
-        with Session(engine) as session:
-            result = session.execute(query, {"limit": 100})
-            results = result.fetchall()
         results = [
-            ["geography", row[0], _("%(place)s - %(count)s results", place=row[0], count=row[1])] for row in results
+            ["geography", place, _("%(place)s - %(count)s results", place=place, count=count)]
+            for place, count in most_common
         ]
         use_pagination = False
-    elif obj_type.startswith("acad_"):
+    else:
         # DB filter labels (do not translate; must match stored values)
         degree_db_map = {
             "acad_full_members": "действительный член",
@@ -527,7 +513,7 @@ def list_view_custom():
         query = (
             select(Person)
             .filter(Person.academic_degree == degree_db_map[obj_type])
-            .order_by(Person.surname.collate("C"))
+            .order_by(byte_order(Person.surname))
         )
         with Session(engine) as session:
             result = session.execute(query)
@@ -538,12 +524,11 @@ def list_view_custom():
             "title": _("Список академических степеней - %(degree)s", degree=degree_label),
         }
         use_pagination = True
-    return render_template("list.html", results=results, page=page_info, result_use_pagination=use_pagination)
+    return render(request, "list.html", results=results, page=page_info, result_use_pagination=use_pagination)
 
 
-@app.route("/new")
-@login_required
-def new():
+@app.get("/new", dependencies=[Depends(require_login)])
+def new(request: Request):
     """
     Renders the 'New' page for creating a new organization, person, or document.
 
@@ -558,14 +543,16 @@ def new():
     - Renders the 'new.html' template with the necessary data for creating the specified object type.
     - Aborts with a 501 status code if the 'type' parameter is missing or invalid.
     """
-    if len(request.args) != 1 or not request.args.get("type"):
+    if len(request.query_params) != 1 or not request.query_params.get("type"):
         abort(501)
-    obj_type = request.args.get("type")
+    obj_type = request.query_params.get("type")
+    obj_dict = {"org": Organization, "person": Person, "doc": Document}
+    if obj_type not in obj_dict:
+        abort(404)
     page = {
         "heading": f"New {TITLE_CONVERTER_NEW_EDIT[obj_type]}",
         "title": f"New {TITLE_CONVERTER_NEW_EDIT[obj_type]}",
     }
-    obj_dict = {"org": Organization, "person": Person, "doc": Document}
     obj = obj_dict[obj_type]
 
     mapper = inspect(obj)
@@ -585,7 +572,8 @@ def new():
     elif obj_type == "org":
         data2 = {"person": [], "alumni": []}
 
-    return render_template(
+    return render(
+        request,
         "new.html",
         page=page,
         data1=data_fin,
@@ -597,9 +585,8 @@ def new():
     )
 
 
-@app.route("/edit")
-@login_required
-def edit():
+@app.get("/edit", dependencies=[Depends(require_login)])
+def edit(request: Request):
     """
     Renders the 'Edit' page for editing an existing organization, person, or document.
     Admin only
@@ -617,19 +604,24 @@ def edit():
     - Aborts with a 501 status code if the 'type' or 'id' parameter is missing or invalid.
     """
     page = {"heading": "Edit document", "title": "Edit document"}
-    if len(request.args) != 2 or not request.args.get("type") or not request.args.get("id"):
+    if len(request.query_params) != 2 or not request.query_params.get("type") or not request.query_params.get("id"):
         abort(501)
-    obj_type = request.args.get("type")
-    obj_id = request.args.get("id")
+    obj_type = request.query_params.get("type")
+    obj_id = to_int(request.query_params.get("id"))
+    obj_dict = {"org": Organization, "person": Person, "doc": Document, "field_of_study": FieldOfStudy}
+    if obj_type not in obj_dict:
+        abort(404)
     page = {
         "heading": f"Edit {TITLE_CONVERTER_NEW_EDIT[obj_type]}",
         "title": f"Edit {TITLE_CONVERTER_NEW_EDIT[obj_type]}",
     }
-    obj = {"org": Organization, "person": Person, "doc": Document, "field_of_study": FieldOfStudy}[obj_type]
+    obj = obj_dict[obj_type]
 
     stmt = select(obj).where(obj.id == obj_id)
     with Session(engine) as session:
         data = session.execute(stmt).scalar_one_or_none()
+        if data is None:
+            abort(404)
         mapper = inspect(obj)
         data_fin = {}
         for column in mapper.attrs:
@@ -649,7 +641,8 @@ def edit():
     data2 = {}
     with Session(engine) as session:
         obj_real = session.query(obj).filter(obj.id == obj_id).one_or_none()
-        assert obj_real is not None
+        if obj_real is None:
+            abort(404)
         if obj_type == "person":
             data2 = {"org": [], "doc": [], "field_of_study": [], "education": []}
             for doc_authorship in obj_real.documents:  # doc_authorship is DocumentAuthorship
@@ -678,7 +671,8 @@ def edit():
                 person = obj_person.person
                 data2["person"].append({"type": "person", "id": person.id, "name": str(person)})
 
-    return render_template(
+    return render(
+        request,
         "new.html",
         page=page,
         data1=data_fin2,
@@ -690,9 +684,8 @@ def edit():
     )
 
 
-@app.route("/save", methods=["POST"])
-@login_required
-def save():
+@app.post("/save", dependencies=[Depends(require_login)])
+async def save(request: Request):
     """
     Saves a new or edited organization, person, or document.
 
@@ -710,35 +703,59 @@ def save():
     Returns:
     - Renders the 'redirect.html' template to redirect to the search page after saving. [TO BE REMOVED]
     """
-    formdata = request.form.to_dict()
-    if "connection" in formdata:
-        formdata.pop("connection")
-    formdata = {key: (value if value != "" else None) for key, value in formdata.items()}
-    for key in request.files:
-        value = request.files[key]
-        upload_path = f"static/uploads/[{datetime.now()!s}]" + value.filename
+    obj_type = request.query_params.get("type")
+    if obj_type not in ["org", "person", "doc"]:
+        abort(404)
+    if int(request.headers.get("content-length") or 0) > MAX_CONTENT_LENGTH:
+        abort(413)
+    # Uploaded files are only readable while the form is open, so the saving happens inside this block.
+    # It runs in a worker thread, because the database calls block.
+    async with request.form(max_fields=100_000, max_part_size=MAX_CONTENT_LENGTH) as form:
+        formdata, uploads = {}, {}
+        for key, value in form.multi_items():
+            if isinstance(value, UploadFile):
+                if value.filename:  # a file input that was left empty is not an upload
+                    uploads.setdefault(key, value)
+            elif key != "connection" and key not in FILE_FIELDS:  # a file field is only ever set by an upload
+                formdata.setdefault(key, value)
+        connections = [value for value in form.getlist("connection") if isinstance(value, str)]
+        obj_id = await run_in_threadpool(save_object, obj_type, formdata, uploads, connections)
+    return render(request, "redirect.html", url=f"/view?type={obj_type}&id={obj_id}")
+
+
+def save_object(obj_type: str, formdata: dict, uploads: dict[str, UploadFile], connections: list[str]) -> int:
+    """Create or update an object and replace its connections. Returns the id of the object."""
+    obj = {"org": Organization, "person": Person, "doc": Document}[obj_type]
+    formdata = {key: (value if value not in ("", "None") else None) for key, value in formdata.items()}
+    for key, value in formdata.items():
+        if key.endswith("date") and value is not None:
+            try:
+                formdata[key] = datetime.strptime(value, "%Y-%m-%d")
+            except ValueError:
+                abort(400)
+    os.makedirs(BASE_DIR / UPLOAD_DIR, exist_ok=True)
+    for key, upload in uploads.items():
+        # basename: the name comes from the browser and must not be able to point outside the upload folder
+        upload_path = f"{UPLOAD_DIR}/[{datetime.now()!s}]{os.path.basename(upload.filename or '')}"
+        with open(BASE_DIR / upload_path, "wb") as destination:
+            shutil.copyfileobj(upload.file, destination)
         formdata[key] = upload_path
-        value.save(upload_path)
     if "bibliography" in formdata:
         formdata["bibliography"] = clean_html(formdata["bibliography"])
     if "biography" in formdata:
         formdata["biography"] = clean_html(formdata["biography"])
-    connections = request.form.getlist("connection")
-    obj_type = request.args.get("type")
-    obj = {"org": Organization, "person": Person, "doc": Document}[obj_type]
     if formdata.get("id"):
-        obj_id = formdata.pop("id")
+        obj_id = to_int(formdata.pop("id"))
         stmt = select(obj).where(obj.id == obj_id)
         with Session(engine) as session:
             data = session.execute(stmt).scalar_one_or_none()
+            if data is None:
+                abort(404)
             for key, value in formdata.items():
-                if value == "" or value == "None":
-                    value = None
-                if key.endswith("date") and value is not None:
-                    value = datetime.strptime(value, "%Y-%m-%d")
                 setattr(data, key, value)
             session.commit()
     else:
+        formdata.pop("id", None)
         data = obj(**formdata)
         with Session(engine) as session:
             session.add(data)
@@ -761,7 +778,7 @@ def save():
         for connection in connections:
             connection_parts = connection.split(":")
             connection_type = connection_parts[0]
-            connection_id = connection_parts[1]
+            connection_id = to_int(connection_parts[1] if len(connection_parts) > 1 else None)
             connection_category = connection_parts[2] if len(connection_parts) > 2 else None
             if obj == Person:
                 if connection_type == "doc":
@@ -789,12 +806,11 @@ def save():
             elif obj == Document:
                 session.add(DocumentAuthorship(document_id=obj_id, person_id=connection_id))
                 session.commit()
-    return render_template("redirect.html", url=f"/view?type={obj_type}&id={obj_id}")
+    return obj_id
 
 
-@app.route("/delete")
-@login_required
-def delete():
+@app.get("/delete", dependencies=[Depends(require_login)])
+def delete(request: Request):
     """
     Deletes an existing organization, person, or document.
 
@@ -811,11 +827,14 @@ def delete():
     - Aborts with a 501 status code if the 'type' or 'id' parameter is missing or invalid.
     - Aborts with a 404 status code if the object to delete is not found.
     """
-    if len(request.args) != 2 or not request.args.get("type") or not request.args.get("id"):
+    if len(request.query_params) != 2 or not request.query_params.get("type") or not request.query_params.get("id"):
         abort(501)
-    obj_type = request.args.get("type")
-    obj_id = request.args.get("id")
-    obj = {"org": Organization, "person": Person, "doc": Document}[obj_type]
+    obj_type = request.query_params.get("type")
+    obj_id = to_int(request.query_params.get("id"))
+    obj_dict = {"org": Organization, "person": Person, "doc": Document}
+    if obj_type not in obj_dict:
+        abort(404)
+    obj = obj_dict[obj_type]
     stmt = select(obj).where(obj.id == obj_id)
     with Session(engine) as session:
         data = session.execute(stmt).scalar_one_or_none()
@@ -827,6 +846,7 @@ def delete():
                 session.query(PersonEducation).filter(PersonEducation.person_id == obj_id).delete()
             elif obj_type == "org":
                 session.query(OrganizationMembership).filter(OrganizationMembership.organization_id == obj_id).delete()
+                session.query(PersonEducation).filter(PersonEducation.organization_id == obj_id).delete()
             elif obj_type == "doc":
                 session.query(DocumentAuthorship).filter(DocumentAuthorship.document_id == obj_id).delete()
             session.delete(data)
@@ -834,10 +854,10 @@ def delete():
         else:
             abort(404)
 
-    return render_template("redirect.html", url="/search")
+    return render(request, "redirect.html", url="/search")
 
 
 if __name__ == "__main__":
-    app.jinja_env.auto_reload = True
-    app.config["TEMPLATES_AUTO_RELOAD"] = True
-    app.run(host="localhost", port=5000, debug=True, ssl_context="adhoc")
+    import uvicorn
+
+    uvicorn.run("main:app", host="localhost", port=5000, reload=True)

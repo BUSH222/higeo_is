@@ -3,9 +3,9 @@
 from typing import TYPE_CHECKING
 
 from sqlalchemy import select
-from werkzeug.security import check_password_hash, generate_password_hash
 
 from helper.db.initialise_database import User
+from helper.login.passwords import check_password_hash, generate_password_hash
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
