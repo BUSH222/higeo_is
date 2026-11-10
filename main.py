@@ -306,9 +306,15 @@ def view(request: Request):
         "doc": _("Документ"),
         "field_of_study": _("Область знаний"),
     }
+    # Use the entity's own name as the page title (shown in search engine results)
+    entity_name = None
+    for name_key in ("Фамилия Имя Отчество", "Full name", "Название", "Name", "Title"):
+        if data.get(name_key):
+            entity_name = re.sub(r"<[^>]+>", "", str(data[name_key])).strip()
+            break
     page = {
         "heading": heading_map[viewtype],
-        "title": _("View %(name)s", name=obj.__name__.lower()),
+        "title": entity_name or _("View %(name)s", name=obj.__name__.lower()),
         "id": viewid,
         "type": viewtype,
     }
