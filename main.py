@@ -151,6 +151,52 @@ def about(request: Request):
     return render(request, "about.html", person_count=f"{get_person_count()}")
 
 
+def enrich_person_data(data: dict) -> dict:
+    """Render the photo as an <img> and derive birth/death dates from the comments when they are missing."""
+    # Photo rendering: handle localized key
+    photo_key = "Photo" if get_locale() == "en" else "Фотография"
+    if photo_key in data:
+        photo_src = data[photo_key]
+        alt_text = _(photo_key)
+        data[photo_key] = f'<img src="{photo_src}" alt="{alt_text}" />'
+    # Insert derived birth date from comments if missing (comments text is Russian; regex remains RU)
+    comments_key = "Comments" if get_locale() == "en" else "Комментарии"
+    fio_key = "Full name" if get_locale() == "en" else "Фамилия Имя Отчество"
+    birth_key = "Birth date" if get_locale() == "en" else "Дата рождения"
+    birth_place_key = "Birth place" if get_locale() == "en" else "Место рождения"
+    death_key = "Death date" if get_locale() == "en" else "Дата смерти"
+
+    if birth_key not in data and comments_key in data and data[comments_key]:
+        match = re.search(r"Дата рождения:\s*([^\.\n]+)", data[comments_key])
+        if match:
+            birth_value = "<i>" + match.group(1).strip() + "</i>"
+            if fio_key in data:
+                items = list(data.items())
+                idx = next(i for i, (k, _) in enumerate(items) if k == fio_key)
+                items.insert(idx + 1, (birth_key, birth_value))
+                data = dict(items)
+            else:
+                items = [(birth_key, birth_value), *list(data.items())]
+                data = dict(items)
+    if death_key not in data and comments_key in data and data[comments_key]:
+        match = re.search(r"Дата смерти:\s*([^\.\n]+)", data[comments_key])
+        if match:
+            death_value = "<i>" + match.group(1).strip() + "</i>"
+            keys_priority = [birth_place_key, birth_key, fio_key]
+            items = list(data.items())
+            insert_idx = 0
+            for key in keys_priority:
+                try:
+                    idx = next(i for i, (k, _) in enumerate(items) if k == key)
+                    insert_idx = idx + 1
+                    break
+                except StopIteration:
+                    continue
+            items.insert(insert_idx, (death_key, death_value))
+            data = dict(items)
+    return data
+
+
 @app.get("/view")
 def view(request: Request):
     """
@@ -258,48 +304,28 @@ def view(request: Request):
         "id": viewid,
         "type": viewtype,
     }
-    # Photo rendering: handle localized key
-    photo_key = "Photo" if get_locale() == "en" else "Фотография"
-    if photo_key in data:
-        photo_src = data[photo_key]
-        alt_text = _(photo_key)
-        data[photo_key] = f'<img src="{photo_src}" alt="{alt_text}" />'
-    # Insert derived birth date from comments if missing (comments text is Russian; regex remains RU)
-    comments_key = "Comments" if get_locale() == "en" else "Комментарии"
-    fio_key = "Full name" if get_locale() == "en" else "Фамилия Имя Отчество"
-    birth_key = "Birth date" if get_locale() == "en" else "Дата рождения"
-    birth_place_key = "Birth place" if get_locale() == "en" else "Место рождения"
-    death_key = "Death date" if get_locale() == "en" else "Дата смерти"
-
-    if birth_key not in data and comments_key in data and data[comments_key]:
-        match = re.search(r"Дата рождения:\s*([^\.\n]+)", data[comments_key])
-        if match:
-            birth_value = "<i>" + match.group(1).strip() + "</i>"
-            if fio_key in data:
-                items = list(data.items())
-                idx = next(i for i, (k, _) in enumerate(items) if k == fio_key)
-                items.insert(idx + 1, (birth_key, birth_value))
-                data = dict(items)
-            else:
-                items = [(birth_key, birth_value), *list(data.items())]
-                data = dict(items)
-    if death_key not in data and comments_key in data and data[comments_key]:
-        match = re.search(r"Дата смерти:\s*([^\.\n]+)", data[comments_key])
-        if match:
-            death_value = "<i>" + match.group(1).strip() + "</i>"
-            keys_priority = [birth_place_key, birth_key, fio_key]
-            items = list(data.items())
-            insert_idx = 0
-            for key in keys_priority:
-                try:
-                    idx = next(i for i, (k, _) in enumerate(items) if k == key)
-                    insert_idx = idx + 1
-                    break
-                except StopIteration:
-                    continue
-            items.insert(insert_idx, (death_key, death_value))
-            data = dict(items)
+    data = enrich_person_data(data)
     return render(request, "view.html", data=data, page=page, parameters=parameters)
+
+
+@app.get("/print")
+def print_person(request: Request):
+    """Plain, unstyled printable version of a person page (no biography or bibliography)."""
+    viewid = to_int(request.query_params.get("id"))
+    if request.query_params.get("type") != "person" or not viewid:
+        abort(404)
+    with Session(engine) as session:
+        person = session.execute(select(Person).where(Person.id == viewid)).scalar_one_or_none()
+        if person is None:
+            abort(404)
+        data = person.values_en() if get_locale() == "en" else person.values_ru()
+    skipped = ("Biography", "Bibliography") if get_locale() == "en" else ("Биография", "Библиография")
+    for key in skipped:
+        data.pop(key, None)
+    data = enrich_person_data(data)
+    photo_key = "Photo" if get_locale() == "en" else "Фотография"
+    photo = data.pop(photo_key, None)
+    return render(request, "print.html", data=data, photo=photo, title=_("Персоналия"))
 
 
 @app.get("/search")

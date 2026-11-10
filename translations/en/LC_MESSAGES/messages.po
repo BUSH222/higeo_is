@@ -578,3 +578,7 @@ msgstr "Download file"
 #~ " profiles of scholars from different "
 #~ "countries."
 
+
+#: templates/view.html
+msgid "Печать"
+msgstr "Print"

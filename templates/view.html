@@ -9,7 +9,18 @@
         <div class="col-12">
             <div class="card rounded">
                 <div class="card-header">
+                    {% if page.type == 'person' %}
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span style="width: 2.5rem;"></span>
+                        <h2 class="mb-0">{{ page.heading }}</h2>
+                        <a class="btn btn-sm higeo-color-1" href="/print?type=person&id={{ page.id }}" target="_blank"
+                            title="{{ _('Печать') }}" aria-label="{{ _('Печать') }}">
+                            <i class="bi bi-printer fs-5"></i>
+                        </a>
+                    </div>
+                    {% else %}
                     <h2 class="d-flex justify-content-center">{{ page.heading }}</h2>
+                    {% endif %}
                 </div>
                 <div class="card-body">
                     {% if current_user.is_authenticated %}

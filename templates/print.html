@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="{{ current_locale }}">
+<head>
+    <meta charset="utf-8">
+    <title>{{ title }}</title>
+    <style>
+        body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; margin: 1.5cm; }
+        img { max-width: 6cm; max-height: 8cm; display: block; margin: 0 0 0.5cm; }
+        dt { font-weight: bold; margin-top: 0.4cm; }
+        dd { margin: 0; }
+        ul { margin: 0; padding-left: 1em; }
+    </style>
+</head>
+<body>
+    {% if photo %}{{ photo|safe }}{% endif %}
+    <dl>
+        {% for key, value in data.items() %}
+            <dt>{{ key }}</dt>
+            <dd>
+                {% if value is iterable and value is not string %}
+                    <ul>{% for item in value %}<li>{{ item[2] }}</li>{% endfor %}</ul>
+                {% else %}
+                    {{ value|safe }}
+                {% endif %}
+            </dd>
+        {% endfor %}
+    </dl>
+    <script>window.onload = function () { window.print(); };</script>
+</body>
+</html>

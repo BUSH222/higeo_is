@@ -369,3 +369,25 @@ def test_about_shows_person_count(client, monkeypatch):
     monkeypatch.setattr(main, "_person_count_cache", None)
     assert f"В системе {len(SEEDED_PEOPLE)} персоналий" in client.get("/about?lang=ru").text
     assert "1700" not in client.get("/about?lang=en").text
+
+
+def test_print_person_omits_biography_and_bibliography(client, ids):
+    with Session(db.engine) as session:
+        person = session.get(db.Person, ids["Ферсман"])
+        person.biography = "СЕКРЕТНАЯ БИОГРАФИЯ"
+        person.bibliography = "СЕКРЕТНАЯ БИБЛИОГРАФИЯ"
+        person.comment = "Важный комментарий"
+        session.commit()
+    response = client.get(f"/print?type=person&id={ids['Ферсман']}")
+    assert response.status_code == 200
+    assert "Ферсман" in response.text
+    assert "Важный комментарий" in response.text
+    assert "СЕКРЕТНАЯ" not in response.text
+    assert "bootstrap" not in response.text
+
+
+@pytest.mark.parametrize(
+    "url", ["/print", "/print?type=org&id=1", "/print?type=person&id=999999", "/print?type=person"]
+)
+def test_print_rejects_bad_requests(client, url):
+    assert client.get(url).status_code == 404
