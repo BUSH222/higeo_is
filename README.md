@@ -19,18 +19,13 @@ This project is a web-based information system for the Department of History of 
     cd higeo_is
     ```
 
-2. **Create a virtual environment**:
+2. **Install dependencies** (requires [uv](https://docs.astral.sh/uv/)):
     ```sh
-    python3 -m venv venv
-    source venv/bin/activate
+    uv sync
+    uv run pre-commit install
     ```
 
-3. **Install dependencies**:
-    ```sh
-    pip install -r requirements.txt
-    ```
-
-4. **Set up the database**:
+3. **Set up the database**:
     - Ensure PostgreSQL is installed and running.
     - Create a `.env` file with the following content:
         ```env
@@ -55,7 +50,7 @@ This project is a web-based information system for the Department of History of 
 1. **Run the application**:
     ```sh
     cd /path/to/higeo_is
-    python3 main.py
+    uv run main.py
     ```
 
 2. **Access the application**:

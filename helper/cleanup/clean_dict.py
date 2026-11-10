@@ -11,7 +11,4 @@ def clean_dict(data: dict) -> dict:
     Returns:
         dict: Cleaned dictionary.
     """
-    return {
-        k: (v.strftime('%Y-%m-%d') if isinstance(v, datetime) else v)
-        for k, v in data.items() if v is not None
-    }
+    return {k: (v.strftime("%Y-%m-%d") if isinstance(v, datetime) else v) for k, v in data.items() if v is not None}

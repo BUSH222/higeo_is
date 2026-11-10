@@ -1,19 +1,21 @@
-from sqlalchemy import create_engine
-import psycopg2
 import csv
+import io
+import os
 import re
-from transliterate import get_translit_function
-from datetime import datetime
 import sys
 import zipfile
-import os
-import io
+from datetime import datetime
+
+import psycopg2
 from dotenv import load_dotenv
+from sqlalchemy import create_engine
+from transliterate import get_translit_function
+
 from helper.cleanup.htmlcleaner import clean_html
 
 csv.field_size_limit(sys.maxsize)
 
-translit_ru = get_translit_function('ru')
+translit_ru = get_translit_function("ru")
 load_dotenv()
 
 postgres_connection_string = (
@@ -24,7 +26,7 @@ postgres_connection_string = (
     f"{os.getenv('DATABASE_NAME')}"
 )
 engine = create_engine(postgres_connection_string)
-zip_file_path = os.path.join(os.path.dirname(__file__), 'data.zip')
+zip_file_path = os.path.join(os.path.dirname(__file__), "data.zip")
 conn = psycopg2.connect(postgres_connection_string)
 cur = conn.cursor()
 
@@ -39,11 +41,10 @@ def load_sources():
         dict: A dictionary with integer keys and string values representing the sources.
     """
     sources = {}
-    with zipfile.ZipFile(zip_file_path, 'r') as z:
-        with z.open('source.csv') as file:
-            reader = csv.reader(io.TextIOWrapper(file, encoding='utf-8'))
-            for row in reader:
-                sources[int(row[0])] = row[1]
+    with zipfile.ZipFile(zip_file_path, "r") as z, z.open("source.csv") as file:
+        reader = csv.reader(io.TextIOWrapper(file, encoding="utf-8"))
+        for row in reader:
+            sources[int(row[0])] = row[1]
     return sources
 
 
@@ -76,9 +77,9 @@ def clean_name(name):
     Returns:
         str: The cleaned name string.
     """
-    name = re.sub(r'[\[\]\(\)]', '', name)
-    name = ''.join(e for e in name if e.isalpha() or e.isspace() or e == '-')
-    name = re.sub(r'\s+', ' ', name)
+    name = re.sub(r"[\[\]\(\)]", "", name)
+    name = "".join(e for e in name if e.isalpha() or e.isspace() or e == "-")
+    name = re.sub(r"\s+", " ", name)
     name = name.strip()
     return name
 
@@ -141,65 +142,96 @@ def clean_date(date_str):
             - str or None: The original date string if no match is found, otherwise None.
     """
     patterns = [
-        (r'^\s*(\d{4})\s*,\s*(\d{1,2})\s*('
-         r'января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря|'
-         r'январь|февраль|март|апрель|май|июнь|июль|август|сентябрь|октябрь|ноябрь|декабрь|'
-         r'дкабря|нояб.|агуста|июн)\s*$', '%Y, %d %B'),
-        (r'^\s*(\d{4})-(\d{1,2})-(\d{1,2})\s*$', '%Y-%m-%d'),
-        (r'^\s*(\d{4})\s*г\.\s*,\s*(\d{1,2})\s*('
-         r'января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря|'
-         r'январь|февраль|март|апрель|май|июнь|июль|август|сентябрь|октябрь|ноябрь|декабрь|'
-         r'дкабря|нояб.|агуста|июн)\s*$', '%Y г., %d %B'),
-        (r'^\s*(\d{1,2})\s*апр\.\s*(\d{4})\s*$', '%d апр. %Y'),
-        (r'^\s*(\d{4})\.\s*(\d{1,2})\s*мая\s*$', '%Y. %d мая'),
-        (r'^\s*(\d{1,2})-(\d{1,2})-(\d{4})\s*$', '%d-%m-%Y')
+        (
+            r"^\s*(\d{4})\s*,\s*(\d{1,2})\s*("
+            r"января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря|"
+            r"январь|февраль|март|апрель|май|июнь|июль|август|сентябрь|октябрь|ноябрь|декабрь|"
+            r"дкабря|нояб.|агуста|июн)\s*$",
+            "%Y, %d %B",
+        ),
+        (r"^\s*(\d{4})-(\d{1,2})-(\d{1,2})\s*$", "%Y-%m-%d"),
+        (
+            r"^\s*(\d{4})\s*г\.\s*,\s*(\d{1,2})\s*("
+            r"января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря|"
+            r"январь|февраль|март|апрель|май|июнь|июль|август|сентябрь|октябрь|ноябрь|декабрь|"
+            r"дкабря|нояб.|агуста|июн)\s*$",
+            "%Y г., %d %B",
+        ),
+        (r"^\s*(\d{1,2})\s*апр\.\s*(\d{4})\s*$", "%d апр. %Y"),
+        (r"^\s*(\d{4})\.\s*(\d{1,2})\s*мая\s*$", "%Y. %d мая"),
+        (r"^\s*(\d{1,2})-(\d{1,2})-(\d{4})\s*$", "%d-%m-%Y"),
     ]
     special_cases = {
-        '1968, 31января ': '1968-01-31',
-        '25, ноябрь 1927': '1927-11-25',
-        '1896, 19 февр.': '1896-02-19',
-        '1934. 29 июля': '1934-07-29',
-        '1948, 28 янв.': '1948-01-28',
-        '1939, 2 апреля.': '1939-04-02',
-        '19 ноября 1883 г.': '1883-11-19',
-        '1941, 16.июля': '1941-07-16',
-        '13 сентября 1909': '1909-09-13',
-        '1883 г  3 апреля': '1883-04-03',
-        '1903 г. 26 декабря': '1903-12-26',
-        '1959 25 июня': '1959-06-25',
-        '1915 26 июля': '1915-07-26',
-        '1940, 17 феврал': '1940-02-17',
-        '29 июня 1976': '1976-06-29',
-        '1947 , 7 марта': '1947-03-07',
-        '1948 3, мая': '1948-05-03',
-        '1969, 1 мая.': '1969-05-01',
-        '1956 11, сентября': '1956-09-11',
-        '10, марта 2013': '2013-03-10',
-        '2017. 25 июня': '2017-06-25',
-        '19 февраля 1956 г.': '1956-02-19',
-        '14 мая 2006': '2006-05-14',
-        '17 февраля 2005': '2005-02-17',
-        '2004 , 20 августа ': '2004-08-20',
-        '1990, 23 августа 199': '1990-08-23',
-        '2005. 15 февраля': '2005-02-15'
+        "1968, 31января ": "1968-01-31",
+        "25, ноябрь 1927": "1927-11-25",
+        "1896, 19 февр.": "1896-02-19",
+        "1934. 29 июля": "1934-07-29",
+        "1948, 28 янв.": "1948-01-28",
+        "1939, 2 апреля.": "1939-04-02",
+        "19 ноября 1883 г.": "1883-11-19",
+        "1941, 16.июля": "1941-07-16",
+        "13 сентября 1909": "1909-09-13",
+        "1883 г  3 апреля": "1883-04-03",
+        "1903 г. 26 декабря": "1903-12-26",
+        "1959 25 июня": "1959-06-25",
+        "1915 26 июля": "1915-07-26",
+        "1940, 17 феврал": "1940-02-17",
+        "29 июня 1976": "1976-06-29",
+        "1947 , 7 марта": "1947-03-07",
+        "1948 3, мая": "1948-05-03",
+        "1969, 1 мая.": "1969-05-01",
+        "1956 11, сентября": "1956-09-11",
+        "10, марта 2013": "2013-03-10",
+        "2017. 25 июня": "2017-06-25",
+        "19 февраля 1956 г.": "1956-02-19",
+        "14 мая 2006": "2006-05-14",
+        "17 февраля 2005": "2005-02-17",
+        "2004 , 20 августа ": "2004-08-20",
+        "1990, 23 августа 199": "1990-08-23",
+        "2005. 15 февраля": "2005-02-15",
     }
     if date_str in special_cases:
-        return datetime.strptime(special_cases[date_str], '%Y-%m-%d'), None
+        return datetime.strptime(special_cases[date_str], "%Y-%m-%d"), None
 
     for pattern, date_format in patterns:
         match = re.match(pattern, date_str)
         if match:
             try:
                 month_map = {
-                    'января': 'January', 'февраля': 'February', 'марта': 'March', 'апреля': 'April',
-                    'мая': 'May', 'июня': 'June', 'июля': 'July', 'августа': 'August',
-                    'сентября': 'September', 'октября': 'October', 'ноября': 'November', 'декабря': 'December',
-                    'январь': 'January', 'февраль': 'February', 'март': 'March', 'апрель': 'April',
-                    'май': 'May', 'июнь': 'June', 'июль': 'July', 'август': 'August',
-                    'сентябрь': 'September', 'октябрь': 'October', 'ноябрь': 'November', 'декабрь': 'December',
-                    'дкабря': 'December', 'нояб.': 'November', 'агуста': 'August', 'июн': 'June'
+                    "января": "January",
+                    "февраля": "February",
+                    "марта": "March",
+                    "апреля": "April",
+                    "мая": "May",
+                    "июня": "June",
+                    "июля": "July",
+                    "августа": "August",
+                    "сентября": "September",
+                    "октября": "October",
+                    "ноября": "November",
+                    "декабря": "December",
+                    "январь": "January",
+                    "февраль": "February",
+                    "март": "March",
+                    "апрель": "April",
+                    "май": "May",
+                    "июнь": "June",
+                    "июль": "July",
+                    "август": "August",
+                    "сентябрь": "September",
+                    "октябрь": "October",
+                    "ноябрь": "November",
+                    "декабрь": "December",
+                    "дкабря": "December",
+                    "нояб.": "November",
+                    "агуста": "August",
+                    "июн": "June",
                 }
-                date_str = re.sub('|'.join(month_map.keys()), lambda m: month_map[m.group(0)], date_str)
+                date_str = re.sub(
+                    "|".join(month_map),
+                    lambda m, month_map=month_map: month_map[m.group(0)],
+                    date_str,
+                )
                 return datetime.strptime(date_str, date_format), None
             except ValueError:
                 continue
@@ -220,53 +252,51 @@ def convert_person():
         KeyError: If the expected columns are not found in the CSV file.
         ValueError: If there are issues with data conversion or insertion.
     """
-    with zipfile.ZipFile(zip_file_path, 'r') as z:
-        with z.open('person.csv') as file:
-            reader = csv.reader(io.TextIOWrapper(file, encoding='utf-8'))
-            for row in reader:
-                comment = row[21]
+    with zipfile.ZipFile(zip_file_path, "r") as z, z.open("person.csv") as file:
+        reader = csv.reader(io.TextIOWrapper(file, encoding="utf-8"))
+        for row in reader:
+            comment = row[21]
 
-                patronymic = row[5]
-                patronymic_en = translit_ru(patronymic, reversed=True)
+            patronymic = row[5]
+            patronymic_en = translit_ru(patronymic, reversed=True)
 
-                birth_date, birth_date_str = clean_date(row[10])
-                death_date, death_date_str = clean_date(row[12])
-                if birth_date is None and birth_date_str is not None and birth_date_str != '':
-                    comment += f'Дата рождения: {birth_date_str}. '
-                if death_date is None and death_date_str is not None and death_date_str != '':
-                    comment += f'Дата смерти: {death_date_str}. '
+            birth_date, birth_date_str = clean_date(row[10])
+            death_date, death_date_str = clean_date(row[12])
+            if birth_date is None and birth_date_str is not None and birth_date_str != "":
+                comment += f"Дата рождения: {birth_date_str}. "
+            if death_date is None and death_date_str is not None and death_date_str != "":
+                comment += f"Дата смерти: {death_date_str}. "
 
-                surname = row[6]
-                if surname is None or surname == '':
-                    surname = row[1].strip().split()[0]
+            surname = row[6]
+            if surname is None or surname == "":
+                surname = row[1].strip().split()[0]
 
-                photo = row[20]
-                if photo is not None:
-                    if photo.startswith('/higeo/hosted-files') or photo.startswith('/hosted-files'):
-                        photo = 'http://higeo.ginras.ru' + photo
+            photo = row[20]
+            if photo is not None and photo.startswith(("/higeo/hosted-files", "/hosted-files")):
+                photo = "http://higeo.ginras.ru" + photo
 
-                data = {
-                    '_oldid': int(row[0]),
-                    'name': clean_name(row[4]),
-                    'surname': clean_name(surname),
-                    'patronymic': patronymic,
-                    'name_en': clean_name(row[7]),
-                    'surname_en': clean_name(row[8]),
-                    'patronymic_en': patronymic_en,
-                    'birth_date': birth_date,
-                    'birth_place': row[11],
-                    'death_date': death_date,
-                    'death_place': row[13],
-                    'academic_degree': row[14],
-                    'area_of_study': row[16],
-                    'biography': clean_html(row[18]),
-                    'bibliography': clean_html(row[19]),
-                    'photo': photo,
-                    'comment': comment
-                }
-                data = {k: (v if v != '' else None) for k, v in data.items()}
+            data = {
+                "_oldid": int(row[0]),
+                "name": clean_name(row[4]),
+                "surname": clean_name(surname),
+                "patronymic": patronymic,
+                "name_en": clean_name(row[7]),
+                "surname_en": clean_name(row[8]),
+                "patronymic_en": patronymic_en,
+                "birth_date": birth_date,
+                "birth_place": row[11],
+                "death_date": death_date,
+                "death_place": row[13],
+                "academic_degree": row[14],
+                "area_of_study": row[16],
+                "biography": clean_html(row[18]),
+                "bibliography": clean_html(row[19]),
+                "photo": photo,
+                "comment": comment,
+            }
+            data = {k: (v if v != "" else None) for k, v in data.items()}
 
-                insert_data('person', data.keys(), data.values())
+            insert_data("person", data.keys(), data.values())
 
 
 def convert_org():
@@ -291,21 +321,13 @@ def convert_org():
     Raises:
     - Any exceptions raised by the `zipfile.ZipFile`, `csv.reader`, or `insert_data` functions.
     """
-    with zipfile.ZipFile(zip_file_path, 'r') as z:
-        with z.open('org.csv') as file:
-            reader = csv.reader(io.TextIOWrapper(file, encoding='utf-8'))
-            for row in reader:
+    with zipfile.ZipFile(zip_file_path, "r") as z, z.open("org.csv") as file:
+        reader = csv.reader(io.TextIOWrapper(file, encoding="utf-8"))
+        for row in reader:
+            data = {"_oldid": int(row[0]), "name": row[1], "org_type": row[4], "history": row[5], "comment": row[7]}
+            data = {k: (v if v != "" else None) for k, v in data.items()}
 
-                data = {
-                    '_oldid': int(row[0]),
-                    'name': row[1],
-                    'org_type': row[4],
-                    'history': row[5],
-                    'comment': row[7]
-                }
-                data = {k: (v if v != '' else None) for k, v in data.items()}
-
-                insert_data('organization', data.keys(), data.values())
+            insert_data("organization", data.keys(), data.values())
 
 
 def convert_doc():
@@ -329,25 +351,24 @@ def convert_doc():
     """
     sources_dict = load_sources()
 
-    with zipfile.ZipFile(zip_file_path, 'r') as z:
-        with z.open('pub.csv') as file:
-            reader = csv.reader(io.TextIOWrapper(file, encoding='utf-8'))
-            for row in reader:
-                source_id = int(row[1])
-                source_text = sources_dict.get(source_id, None)
+    with zipfile.ZipFile(zip_file_path, "r") as z, z.open("pub.csv") as file:
+        reader = csv.reader(io.TextIOWrapper(file, encoding="utf-8"))
+        for row in reader:
+            source_id = int(row[1])
+            source_text = sources_dict.get(source_id, None)
 
-                data = {
-                    '_oldid': int(row[0]),
-                    'name': row[2],
-                    'doc_type': row[4],
-                    'language': row[5],
-                    'source': source_text,
-                    'year': row[6],
-                    'comment': row[8]
-                }
-                data = {k: (v if v != '' else None) for k, v in data.items()}
+            data = {
+                "_oldid": int(row[0]),
+                "name": row[2],
+                "doc_type": row[4],
+                "language": row[5],
+                "source": source_text,
+                "year": row[6],
+                "comment": row[8],
+            }
+            data = {k: (v if v != "" else None) for k, v in data.items()}
 
-                insert_data('document', data.keys(), data.values())
+            insert_data("document", data.keys(), data.values())
 
 
 def convert_field_of_study():
@@ -398,10 +419,7 @@ def convert_field_of_study():
     ]
 
     for name in options:
-        cur.execute(
-            "INSERT INTO field_of_study (name) VALUES (%s)",
-            (name,)
-        )
+        cur.execute("INSERT INTO field_of_study (name) VALUES (%s)", (name,))
     conn.commit()
 
 
@@ -425,22 +443,18 @@ def convert_document_authorship():
     - The `get_new_document_id` and `get_new_person_id` functions should be implemented to return the new IDs.
     - The `insert_data` function should be implemented to handle the database insertion.
     """
-    with zipfile.ZipFile(zip_file_path, 'r') as z:
-        with z.open('author.csv') as file:
-            reader = csv.reader(io.TextIOWrapper(file, encoding='utf-8'))
-            for row in reader:
-                old_document_id = int(row[0])
-                old_person_id = int(row[1])
+    with zipfile.ZipFile(zip_file_path, "r") as z, z.open("author.csv") as file:
+        reader = csv.reader(io.TextIOWrapper(file, encoding="utf-8"))
+        for row in reader:
+            old_document_id = int(row[0])
+            old_person_id = int(row[1])
 
-                new_person_id = get_new_person_id(old_person_id)
-                new_document_id = get_new_document_id(old_document_id)
+            new_person_id = get_new_person_id(old_person_id)
+            new_document_id = get_new_document_id(old_document_id)
 
-                if new_person_id and new_document_id:
-                    data = {
-                        'document_id': new_document_id,
-                        'person_id': new_person_id
-                    }
-                    insert_data('document_authorship', data.keys(), data.values())
+            if new_person_id and new_document_id:
+                data = {"document_id": new_document_id, "person_id": new_person_id}
+                insert_data("document_authorship", data.keys(), data.values())
 
 
 def convert_organization_membership():
@@ -464,22 +478,18 @@ def convert_organization_membership():
     - The `insert_data` function should be implemented to handle the database insertion.
     """
 
-    with zipfile.ZipFile(zip_file_path, 'r') as z:
-        with z.open('employ.csv') as file:
-            reader = csv.reader(io.TextIOWrapper(file, encoding='utf-8'))
-            for row in reader:
-                old_person_id = int(row[0])
-                old_org_id = int(row[1])
+    with zipfile.ZipFile(zip_file_path, "r") as z, z.open("employ.csv") as file:
+        reader = csv.reader(io.TextIOWrapper(file, encoding="utf-8"))
+        for row in reader:
+            old_person_id = int(row[0])
+            old_org_id = int(row[1])
 
-                new_person_id = get_new_person_id(old_person_id)
-                new_org_id = get_new_org_id(old_org_id)
+            new_person_id = get_new_person_id(old_person_id)
+            new_org_id = get_new_org_id(old_org_id)
 
-                if new_person_id and new_org_id:
-                    data = {
-                        'person_id': new_person_id,
-                        'organization_id': new_org_id
-                    }
-                    insert_data('organization_membership', data.keys(), data.values())
+            if new_person_id and new_org_id:
+                data = {"person_id": new_person_id, "organization_id": new_org_id}
+                insert_data("organization_membership", data.keys(), data.values())
 
 
 def convert_person_field_of_study():
@@ -500,39 +510,35 @@ def convert_person_field_of_study():
     for row in cur.fetchall():
         field_map[row[1]] = row[0]
 
-    with zipfile.ZipFile(zip_file_path, 'r') as z:
-        with z.open('person.csv') as file:
-            reader = csv.reader(io.TextIOWrapper(file, encoding='utf-8'))
-            for row in reader:
-                old_person_id = int(row[0])
-                field_of_study_text = row[15]
-                if not field_of_study_text or field_of_study_text == '':
-                    continue
+    with zipfile.ZipFile(zip_file_path, "r") as z, z.open("person.csv") as file:
+        reader = csv.reader(io.TextIOWrapper(file, encoding="utf-8"))
+        for row in reader:
+            old_person_id = int(row[0])
+            field_of_study_text = row[15]
+            if not field_of_study_text or field_of_study_text == "":
+                continue
 
-                new_person_id = get_new_person_id(old_person_id)
-                if not new_person_id:
-                    continue
+            new_person_id = get_new_person_id(old_person_id)
+            if not new_person_id:
+                continue
 
-                fields = [field.strip() for field in field_of_study_text.split(',')]
-                for field in fields:
-                    field_id = None
-                    for db_field, db_id in field_map.items():
-                        if field == db_field:
-                            field_id = db_id
-                            break
-                    if field_id:
-                        data = {
-                            'person_id': new_person_id,
-                            'field_of_study_id': field_id
-                        }
-                        try:
-                            insert_data('person_field_of_study', data.keys(), data.values())
-                        except Exception as e:
-                            print(f"Error inserting field of study '{field}' for person {new_person_id}: {e}")
+            fields = [field.strip() for field in field_of_study_text.split(",")]
+            for field in fields:
+                field_id = None
+                for db_field, db_id in field_map.items():
+                    if field == db_field:
+                        field_id = db_id
+                        break
+                if field_id:
+                    data = {"person_id": new_person_id, "field_of_study_id": field_id}
+                    try:
+                        insert_data("person_field_of_study", data.keys(), data.values())
+                    except Exception as e:
+                        print(f"Error inserting field of study '{field}' for person {new_person_id}: {e}")
 
 
-if __name__ == '__main__':
-    assert input('proceed with data conversion? (y/n) ') == 'y'
+if __name__ == "__main__":
+    assert input("proceed with data conversion? (y/n) ") == "y"
     cur.execute("TRUNCATE TABLE person CASCADE")
     cur.execute("TRUNCATE TABLE organization CASCADE")
     cur.execute("TRUNCATE TABLE document CASCADE")

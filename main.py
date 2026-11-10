@@ -1,63 +1,64 @@
-from flask import Flask, render_template, request, abort, jsonify, redirect, session, url_for
-from flask_login import login_required
-from flask_babel import Babel, gettext as _
-from helper import (SECRET_KEY,
-                    MULTIPLE_CHOICE_FIELDS,
-                    FILE_FIELDS,
-                    TITLE_CONVERTER_NEW_EDIT,
-                    CONNECTION_TYPE_MAPPING
-                    )
-from helper.db.initialise_database import engine, Organization, Person, Document, FieldOfStudy
-from helper.db.initialise_database import (DocumentAuthorship,
-                                           OrganizationMembership,
-                                           PersonFieldOfStudy,
-                                           PersonEducation)
-from helper.cleanup.htmlcleaner import clean_html
-from helper.login.login import app_login, login_manager
-from sqlalchemy import select, func, extract, and_, inspect, text
-from sqlalchemy.orm import Session
-from datetime import datetime
-from dateutil.parser import parse
 import re
+from datetime import datetime
 
+from dateutil.parser import parse
+from flask import Flask, abort, jsonify, redirect, render_template, request, session, url_for
+from flask_babel import Babel
+from flask_babel import gettext as _
+from flask_login import login_required
+from sqlalchemy import and_, extract, func, inspect, select, text
+from sqlalchemy.orm import Session
+
+from helper import CONNECTION_TYPE_MAPPING, FILE_FIELDS, MULTIPLE_CHOICE_FIELDS, SECRET_KEY, TITLE_CONVERTER_NEW_EDIT
+from helper.cleanup.htmlcleaner import clean_html
+from helper.db.initialise_database import (
+    Document,
+    DocumentAuthorship,
+    FieldOfStudy,
+    Organization,
+    OrganizationMembership,
+    Person,
+    PersonEducation,
+    PersonFieldOfStudy,
+    engine,
+)
+from helper.login.login import app_login, login_manager
 
 app = Flask(__name__)
 app.register_blueprint(app_login)
-app.config['SECRET_KEY'] = SECRET_KEY
-app.config['SESSION_COOKIE_DOMAIN'] = False
-app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024
-app.config['MAX_FORM_MEMORY_SIZE'] = 32 * 1024 * 1024
+app.config["SECRET_KEY"] = SECRET_KEY
+app.config["SESSION_COOKIE_DOMAIN"] = False
+app.config["MAX_CONTENT_LENGTH"] = 32 * 1024 * 1024
+app.config["MAX_FORM_MEMORY_SIZE"] = 32 * 1024 * 1024
 
 login_manager.init_app(app)
-login_manager.login_view = 'app_login.login'
+login_manager.login_view = "app_login.login"
 
-app.config.update(
-    BABEL_DEFAULT_LOCALE='ru',
-    BABEL_TRANSLATION_DIRECTORIES='translations'
-)
-LANGUAGES = ['ru', 'en']
+app.config.update(BABEL_DEFAULT_LOCALE="ru", BABEL_TRANSLATION_DIRECTORIES="translations")
+LANGUAGES = ["ru", "en"]
 babel = Babel(app)
 
 
 def get_locale():
     # Priority: explicit ?lang= -> session -> (optionally user) -> Accept-Language -> default
-    lang = request.args.get('lang')
+    lang = request.args.get("lang")
     if lang in LANGUAGES:
-        session['lang'] = lang
+        session["lang"] = lang
         return lang
-    if session.get('lang') in LANGUAGES:
-        return session['lang']
+    if session.get("lang") in LANGUAGES:
+        return session["lang"]
     try:
         from flask_login import current_user
-        if getattr(current_user, 'locale', None) in LANGUAGES:
+
+        if getattr(current_user, "locale", None) in LANGUAGES:
             return current_user.locale
     except Exception:
         pass
-    return app.config['BABEL_DEFAULT_LOCALE']
+    return app.config["BABEL_DEFAULT_LOCALE"]
 
 
 babel.init_app(app, locale_selector=get_locale)
-app.jinja_env.add_extension('jinja2.ext.i18n')
+app.jinja_env.add_extension("jinja2.ext.i18n")
 
 
 @app.context_processor
@@ -65,21 +66,22 @@ def inject_current_locale():
     """Expose the current locale to templates as `current_locale`."""
     try:
         from flask_babel import get_locale as _get_locale
+
         loc = str(_get_locale())
     except Exception:
-        loc = app.config.get('BABEL_DEFAULT_LOCALE', 'ru')
-    return {'current_locale': loc}
+        loc = app.config.get("BABEL_DEFAULT_LOCALE", "ru")
+    return {"current_locale": loc}
 
 
-@app.get('/set_language/<lang_code>')
+@app.get("/set_language/<lang_code>")
 def set_language(lang_code):
     if lang_code not in LANGUAGES:
         abort(404)
-    session['lang'] = lang_code
-    return redirect(request.referrer or url_for('index'))
+    session["lang"] = lang_code
+    return redirect(request.referrer or url_for("index"))
 
 
-@app.route('/')
+@app.route("/")
 def index():
     """
     Renders the 'Index' page.
@@ -91,10 +93,10 @@ def index():
     Returns:
     - Renders the 'index.html' template.
     """
-    return render_template('index.html')
+    return render_template("index.html")
 
 
-@app.route('/about')
+@app.route("/about")
 def about():
     """
     Renders the 'About' page.
@@ -106,10 +108,10 @@ def about():
     Returns:
     - Renders the 'about.html' template.
     """
-    return render_template('about.html')
+    return render_template("about.html")
 
 
-@app.route('/view')
+@app.route("/view")
 def view():
     """
     Universal view for organization, person, and document.
@@ -126,68 +128,67 @@ def view():
     - Renders the 'view.html' template with the data and page context if the object is found.
     - Aborts with a 404 status code if the 'type' is not one of the expected values or if the 'id' is missing.
     """
-    if request.args.get('type') not in ['org', 'person', 'doc', 'field_of_study', 'geography'] \
-            or not request.args.get('id'):
+    if request.args.get("type") not in ["org", "person", "doc", "field_of_study", "geography"] or not request.args.get(
+        "id"
+    ):
         abort(404)
 
-    if request.args.get('type') == 'geography':
-        place = request.args.get('id')
-        stmt = select(Person).filter(Person.area_of_study.ilike(f'%{place}%')).order_by(Person.surname, Person.name)
+    if request.args.get("type") == "geography":
+        place = request.args.get("id")
+        stmt = select(Person).filter(Person.area_of_study.ilike(f"%{place}%")).order_by(Person.surname, Person.name)
         with Session(engine) as session:
             people = session.execute(stmt).scalars().all()
         # Localize keys for geography view
-        if get_locale() == 'en':
+        if get_locale() == "en":
             data = {
                 "Geographic region": place,
                 "Related researchers": [
                     [
-                        'person',
+                        "person",
                         person.id,
                         (
                             f"{person.surname_en or person.surname} "
                             f"{person.name_en or person.name} "
                             f"{person.patronymic_en or person.patronymic or ''}"
-                        )
-                    ] for person in people
+                        ),
+                    ]
+                    for person in people
                 ],
             }
-            parameters = {'single': [], 'multiple': ['Related researchers']}
+            parameters = {"single": [], "multiple": ["Related researchers"]}
         else:
             data = {
                 "Географический регион": place,
                 "Связанные исследователи": [
-                    [
-                        'person',
-                        person.id,
-                        f"{person.surname} {person.name} {person.patronymic or ''}"
-                    ] for person in people
+                    ["person", person.id, f"{person.surname} {person.name} {person.patronymic or ''}"]
+                    for person in people
                 ],
             }
-            parameters = {'single': [], 'multiple': ['Связанные исследователи']}
+            parameters = {"single": [], "multiple": ["Связанные исследователи"]}
 
         page = {
-            'heading': _('Географический регион: %(place)s', place=place),
-            'title': _('Geographic region: %(place)s', place=place),
-            'id': place,
-            'type': 'geography'
+            "heading": _("Географический регион: %(place)s", place=place),
+            "title": _("Geographic region: %(place)s", place=place),
+            "id": place,
+            "type": "geography",
         }
 
-        return render_template('view.html', data=data, page=page, parameters=parameters)
+        return render_template("view.html", data=data, page=page, parameters=parameters)
 
-    viewtype_to_object = {'org': Organization, 'person': Person, 'doc': Document, 'field_of_study': FieldOfStudy}
+    viewtype_to_object = {"org": Organization, "person": Person, "doc": Document, "field_of_study": FieldOfStudy}
     # Localize which keys are considered single vs multiple for layout
-    if get_locale() == 'en':
+    if get_locale() == "en":
         parameters = {
-            'single': ['Biography', 'Bibliography'],
-            'multiple': ['Related persons', 'Related researchers', 'Alumni'],
+            "single": ["Biography", "Bibliography"],
+            "multiple": ["Related persons", "Related researchers", "Alumni"],
         }
     else:
         parameters = {
-            'single': ['Биография', 'Библиография'],
-            'multiple': ['Связанные персоналии', 'Связанные исследователи', 'Выпускники'],
+            "single": ["Биография", "Библиография"],
+            "multiple": ["Связанные персоналии", "Связанные исследователи", "Выпускники"],
         }
-    viewtype = request.args.get('type')
-    viewid = int(request.args.get('id'))
+    viewtype = request.args.get("type")
+    viewid = int(request.args.get("id"))
     obj = viewtype_to_object[viewtype]
     stmt = select(obj).where(obj.id == viewid)
     with Session(engine) as session:
@@ -195,52 +196,49 @@ def view():
         if obj_instance is None:
             abort(404)
         # Use localized value dictionaries
-        if get_locale() == 'en':
-            data = obj_instance.values_en()
-        else:
-            data = obj_instance.values_ru()
+        data = obj_instance.values_en() if get_locale() == "en" else obj_instance.values_ru()
     # Localized heading labels
     heading_map = {
-        'org': _('Организация'),
-        'person': _('Персоналия'),
-        'doc': _('Документ'),
-        'field_of_study': _('Область знаний'),
+        "org": _("Организация"),
+        "person": _("Персоналия"),
+        "doc": _("Документ"),
+        "field_of_study": _("Область знаний"),
     }
     page = {
-        'heading': heading_map[viewtype],
-        'title': _('View %(name)s', name=obj.__name__.lower()),
-        'id': viewid,
-        'type': viewtype,
+        "heading": heading_map[viewtype],
+        "title": _("View %(name)s", name=obj.__name__.lower()),
+        "id": viewid,
+        "type": viewtype,
     }
     # Photo rendering: handle localized key
-    photo_key = 'Photo' if get_locale() == 'en' else 'Фотография'
+    photo_key = "Photo" if get_locale() == "en" else "Фотография"
     if photo_key in data:
         photo_src = data[photo_key]
         alt_text = _(photo_key)
         data[photo_key] = f'<img src="{photo_src}" alt="{alt_text}" />'
     # Insert derived birth date from comments if missing (comments text is Russian; regex remains RU)
-    comments_key = 'Comments' if get_locale() == 'en' else 'Комментарии'
-    fio_key = 'Full name' if get_locale() == 'en' else 'Фамилия Имя Отчество'
-    birth_key = 'Birth date' if get_locale() == 'en' else 'Дата рождения'
-    birth_place_key = 'Birth place' if get_locale() == 'en' else 'Место рождения'
-    death_key = 'Death date' if get_locale() == 'en' else 'Дата смерти'
+    comments_key = "Comments" if get_locale() == "en" else "Комментарии"
+    fio_key = "Full name" if get_locale() == "en" else "Фамилия Имя Отчество"
+    birth_key = "Birth date" if get_locale() == "en" else "Дата рождения"
+    birth_place_key = "Birth place" if get_locale() == "en" else "Место рождения"
+    death_key = "Death date" if get_locale() == "en" else "Дата смерти"
 
     if birth_key not in data and comments_key in data and data[comments_key]:
-        match = re.search(r'Дата рождения:\s*([^\.\n]+)', data[comments_key])
+        match = re.search(r"Дата рождения:\s*([^\.\n]+)", data[comments_key])
         if match:
-            birth_value = '<i>' + match.group(1).strip() + '</i>'
+            birth_value = "<i>" + match.group(1).strip() + "</i>"
             if fio_key in data:
                 items = list(data.items())
                 idx = next(i for i, (k, _) in enumerate(items) if k == fio_key)
                 items.insert(idx + 1, (birth_key, birth_value))
                 data = dict(items)
             else:
-                items = [(birth_key, birth_value)] + list(data.items())
+                items = [(birth_key, birth_value), *list(data.items())]
                 data = dict(items)
     if death_key not in data and comments_key in data and data[comments_key]:
-        match = re.search(r'Дата смерти:\s*([^\.\n]+)', data[comments_key])
+        match = re.search(r"Дата смерти:\s*([^\.\n]+)", data[comments_key])
         if match:
-            death_value = '<i>' + match.group(1).strip() + '</i>'
+            death_value = "<i>" + match.group(1).strip() + "</i>"
             keys_priority = [birth_place_key, birth_key, fio_key]
             items = list(data.items())
             insert_idx = 0
@@ -253,34 +251,33 @@ def view():
                     continue
             items.insert(insert_idx, (death_key, death_value))
             data = dict(items)
-    return render_template('view.html', data=data, page=page, parameters=parameters)
+    return render_template("view.html", data=data, page=page, parameters=parameters)
 
 
-@app.route('/search')
+@app.route("/search")
 def search():
-    page = {'heading': _('Поиск'), 'title': _('Search')}
+    page = {"heading": _("Поиск"), "title": _("Search")}
     # Choose localized name columns for person searches
-    use_en = (str(get_locale()) == 'en')
+    use_en = str(get_locale()) == "en"
     first_col = Person.name_en if use_en else Person.name
     last_col = Person.surname_en if use_en else Person.surname
     patr_col = Person.patronymic_en if use_en else Person.patronymic
-    if len(request.args) == 0 or not request.args.get('type'):
-        return render_template('search.html', page=page)
+    if len(request.args) == 0 or not request.args.get("type"):
+        return render_template("search.html", page=page)
 
     # Quicksearch: /search?type=person&quicksearch=quicksearch&fullName=...
-    if request.args.get('quicksearch') and request.args.get('type') == 'person':
-        query = request.args.get('fullName')
+    if request.args.get("quicksearch") and request.args.get("type") == "person":
+        query = request.args.get("fullName")
         where_stmt = []
         if query is None:
-            return redirect('/search')
+            return redirect("/search")
         else:
             parts = query.split()
             if len(parts) == 1:
                 where_stmt.append(func.lower(last_col).startswith(parts[0].lower()))
             elif len(parts) == 2:
                 where_stmt.append(
-                    (func.lower(last_col) == parts[0].lower())
-                    & (func.lower(first_col) == parts[1].lower())
+                    (func.lower(last_col) == parts[0].lower()) & (func.lower(first_col) == parts[1].lower())
                 )
             elif len(parts) == 3:
                 where_stmt.append(
@@ -293,45 +290,44 @@ def search():
         stmt = (
             select(Person.id, last_col, first_col, patr_col)
             .where(final_where)
-            .order_by(last_col.collate('C'), first_col.collate('C'))
+            .order_by(last_col.collate("C"), first_col.collate("C"))
         )
 
         results = []
         with Session(engine) as session:
             for row in session.execute(stmt):
                 # row: (id, surname, name, patronymic)
-                display = ' '.join(filter(None, (row[1], row[2], row[3])))
-                results.append(['person', row[0], display])
-        return render_template('search.html', page=page, results=results)
+                display = " ".join(filter(None, (row[1], row[2], row[3])))
+                results.append(["person", row[0], display])
+        return render_template("search.html", page=page, results=results)
 
     # Content search (bibliography substring) — return compact JSON
-    elif request.args.get('content'):
-        content = request.args.get('content')
+    elif request.args.get("content"):
+        content = request.args.get("content")
         stmt = (
             select(Person.id, Person.surname, Person.name, Person.patronymic)
-            .where(Person.bibliography.ilike(f'%{content}%'))
-            .order_by(Person.surname.collate('C'), Person.name.collate('C'))
+            .where(Person.bibliography.ilike(f"%{content}%"))
+            .order_by(Person.surname.collate("C"), Person.name.collate("C"))
         )
         results = []
         with Session(engine) as session:
             for row in session.execute(stmt):
-                display = ' '.join(filter(None, (row[1], row[2], row[3])))
-                results.append(['person', row[0], display])
+                display = " ".join(filter(None, (row[1], row[2], row[3])))
+                results.append(["person", row[0], display])
         return jsonify(results)
 
     # Person attribute search — return compact JSON
-    elif request.args.get('type') == 'person':
+    elif request.args.get("type") == "person":
         where_stmt = []
-        if len(set(request.args.keys()).intersection({'firstName', 'lastName', 'patronymic'})) == 0:
-            query = request.args.get('fullName')
+        if len(set(request.args.keys()).intersection({"firstName", "lastName", "patronymic"})) == 0:
+            query = request.args.get("fullName")
             if query is not None:
                 parts = query.split()
                 if len(parts) == 1:
                     where_stmt.append(func.lower(last_col).startswith(parts[0].lower()))
                 elif len(parts) == 2:
                     where_stmt.append(
-                        (func.lower(last_col) == parts[0].lower())
-                        & (func.lower(first_col) == parts[1].lower())
+                        (func.lower(last_col) == parts[0].lower()) & (func.lower(first_col) == parts[1].lower())
                     )
                 elif len(parts) == 3:
                     where_stmt.append(
@@ -340,9 +336,9 @@ def search():
                         & (func.lower(patr_col) == parts[2].lower())
                     )
         else:
-            firstname = request.args.get('firstName')
-            lastname = request.args.get('lastName')
-            patronymic = request.args.get('patronymic')
+            firstname = request.args.get("firstName")
+            lastname = request.args.get("lastName")
+            patronymic = request.args.get("patronymic")
             if firstname:
                 where_stmt.append(func.lower(first_col).startswith(firstname.lower()))
             if lastname:
@@ -350,37 +346,37 @@ def search():
             if patronymic:
                 where_stmt.append(func.lower(patr_col).startswith(patronymic.lower()))
 
-        year_query = request.args.get('birthYear')
+        year_query = request.args.get("birthYear")
         if year_query is not None:
-            where_stmt.append(extract('year', Person.birth_date) == int(year_query))
+            where_stmt.append(extract("year", Person.birth_date) == int(year_query))
 
         final_where = and_(*where_stmt) if where_stmt else True
         stmt = (
             select(Person.id, last_col, first_col, patr_col)
             .where(final_where)
-            .order_by(last_col.collate('C'), first_col.collate('C'))
+            .order_by(last_col.collate("C"), first_col.collate("C"))
         )
 
         results = []
         with Session(engine) as session:
             for row in session.execute(stmt):
-                display = ' '.join(filter(None, (row[1], row[2], row[3])))
-                results.append(['person', row[0], display])
+                display = " ".join(filter(None, (row[1], row[2], row[3])))
+                results.append(["person", row[0], display])
         return jsonify(results)
 
     # Name-only search for org/doc/field_of_study — already compact (id, name)
-    elif request.args.get('type') in ['org', 'doc', 'field_of_study']:
-        obj_type = request.args.get('type')
-        obj = {'org': Organization, 'doc': Document, 'field_of_study': FieldOfStudy}[obj_type]
-        query = request.args.get('name')
+    elif request.args.get("type") in ["org", "doc", "field_of_study"]:
+        obj_type = request.args.get("type")
+        obj = {"org": Organization, "doc": Document, "field_of_study": FieldOfStudy}[obj_type]
+        query = request.args.get("name")
         if query:
             stmt = (
                 select(obj.id, obj.name)
                 .where(func.lower(obj.name).startswith(query.lower()))
-                .order_by(func.lower(obj.name).collate('C'))
+                .order_by(func.lower(obj.name).collate("C"))
             )
         else:
-            stmt = select(obj.id, obj.name).order_by(func.lower(obj.name).collate('C'))
+            stmt = select(obj.id, obj.name).order_by(func.lower(obj.name).collate("C"))
         results = []
         with Session(engine) as session:
             for row in session.execute(stmt):
@@ -391,7 +387,7 @@ def search():
         abort(404)
 
 
-@app.route('/list')
+@app.route("/list")
 def list_view():
     """
     Renders a list view for organizations, persons, documents, or fields of study.
@@ -404,79 +400,73 @@ def list_view():
     - Renders the 'list.html' template with the results
     - Aborts with a 404 status code if the type parameter is invalid
     """
-    if not request.args.get('type'):
+    if not request.args.get("type"):
         abort(404)
 
-    assert request.args.get('type') in ['org', 'person', 'doc', 'field_of_study']
+    assert request.args.get("type") in ["org", "person", "doc", "field_of_study"]
 
-    obj_type = request.args.get('type')
+    obj_type = request.args.get("type")
 
-    obj_map = {
-        'org': Organization,
-        'person': Person,
-        'doc': Document,
-        'field_of_study': FieldOfStudy
-    }
+    obj_map = {"org": Organization, "person": Person, "doc": Document, "field_of_study": FieldOfStudy}
 
     obj = obj_map[obj_type]
 
     heading_map = {
-        'org': _('Организации'),
-        'person': _('Персоналии'),
-        'doc': _('Документы'),
-        'field_of_study': _('Области исследования'),
+        "org": _("Организации"),
+        "person": _("Персоналии"),
+        "doc": _("Документы"),
+        "field_of_study": _("Области исследования"),
     }
 
     # Determine default sort field based on object type
-    if obj_type == 'person':
-        sort_field = request.args.get('sort', 'surname')
-        if sort_field == 'surname':
+    if obj_type == "person":
+        sort_field = request.args.get("sort", "surname")
+        if sort_field == "surname":
             # Only select the necessary columns
-            stmt = select(Person.id, Person.surname, Person.name, Person.patronymic)\
-                .order_by(Person.surname.collate('C'), Person.name.collate('C'))
+            stmt = select(Person.id, Person.surname, Person.name, Person.patronymic).order_by(
+                Person.surname.collate("C"), Person.name.collate("C")
+            )
         else:
-            stmt = select(Person.id, Person.surname, Person.name, Person.patronymic)\
-                .order_by(getattr(Person, sort_field))
+            stmt = select(Person.id, Person.surname, Person.name, Person.patronymic).order_by(
+                getattr(Person, sort_field)
+            )
     else:
-        sort_field = request.args.get('sort', 'name')
-        stmt = select(obj.id, obj.name).order_by(func.lower(getattr(obj, sort_field)).collate('C'))
+        sort_field = request.args.get("sort", "name")
+        stmt = select(obj.id, obj.name).order_by(func.lower(getattr(obj, sort_field)).collate("C"))
 
     results = []
     with Session(engine) as session:
         data = session.execute(stmt)
         for row in data:
-            if obj_type == 'person':
+            if obj_type == "person":
                 # row: (id, surname, name, patronymic)
-                person_str = ' '.join(filter(None, (row[1], row[2], row[3])))
+                person_str = " ".join(filter(None, (row[1], row[2], row[3])))
                 results.append([obj_type, row[0], person_str])
             else:
                 results.append([obj_type, row[0], row[1]])
 
-    page_info = {
-        'heading': heading_map[obj_type],
-        'title': heading_map[obj_type],
-        'type': obj_type
-    }
+    page_info = {"heading": heading_map[obj_type], "title": heading_map[obj_type], "type": obj_type}
 
-    return render_template('list.html', results=results, page=page_info, result_use_pagination=True)
+    return render_template("list.html", results=results, page=page_info, result_use_pagination=True)
 
 
-@app.route('/list_custom')
+@app.route("/list_custom")
 def list_view_custom():
-    if not request.args.get('type'):
+    if not request.args.get("type"):
         abort(404)
 
-    assert request.args.get('type') in ['geography',
-                                        'acad_full_members',  # действительный член
-                                        'acad_foreign_members',  # иностранный член
-                                        'acad_honorary_members',  # почётный член
-                                        'acad_corresponding_members',  # член-корреспондент
-                                        'acad_professors',  # профессор РАН
-                                        ]
+    assert request.args.get("type") in [
+        "geography",
+        "acad_full_members",  # действительный член
+        "acad_foreign_members",  # иностранный член
+        "acad_honorary_members",  # почётный член
+        "acad_corresponding_members",  # член-корреспондент
+        "acad_professors",  # профессор РАН
+    ]
 
-    obj_type = request.args.get('type')
+    obj_type = request.args.get("type")
 
-    if obj_type == 'geography':
+    if obj_type == "geography":
         query = text("""
             WITH split_locations AS (
             SELECT
@@ -506,55 +496,52 @@ def list_view_custom():
             LIMIT :limit;
         """)
         page_info = {
-            'heading': _('Самые популярные географические регионы'),
-            'title': _('Самые популярные географические регионы'),
+            "heading": _("Самые популярные географические регионы"),
+            "title": _("Самые популярные географические регионы"),
         }
         with Session(engine) as session:
             result = session.execute(query, {"limit": 100})
             results = result.fetchall()
         results = [
-            [
-                'geography',
-                row[0],
-                _('%(place)s - %(count)s results', place=row[0], count=row[1])
-            ]
-            for row in results
+            ["geography", row[0], _("%(place)s - %(count)s results", place=row[0], count=row[1])] for row in results
         ]
         use_pagination = False
-    elif obj_type.startswith('acad_'):
+    elif obj_type.startswith("acad_"):
         # DB filter labels (do not translate; must match stored values)
         degree_db_map = {
-            'acad_full_members': 'действительный член',
-            'acad_foreign_members': 'иностранный член',
-            'acad_honorary_members': 'почётный член',
-            'acad_corresponding_members': 'член-корреспондент',
-            'acad_professors': 'профессор РАН'
+            "acad_full_members": "действительный член",
+            "acad_foreign_members": "иностранный член",
+            "acad_honorary_members": "почётный член",
+            "acad_corresponding_members": "член-корреспондент",
+            "acad_professors": "профессор РАН",
         }
         # UI labels (translate for display)
         degree_label_map = {
-            'acad_full_members': _('действительный член'),
-            'acad_foreign_members': _('иностранный член'),
-            'acad_honorary_members': _('почётный член'),
-            'acad_corresponding_members': _('член-корреспондент'),
-            'acad_professors': _('профессор РАН')
+            "acad_full_members": _("действительный член"),
+            "acad_foreign_members": _("иностранный член"),
+            "acad_honorary_members": _("почётный член"),
+            "acad_corresponding_members": _("член-корреспондент"),
+            "acad_professors": _("профессор РАН"),
         }
 
-        query = select(Person).filter(
-            Person.academic_degree == degree_db_map[obj_type]
-        ).order_by(Person.surname.collate('C'))
+        query = (
+            select(Person)
+            .filter(Person.academic_degree == degree_db_map[obj_type])
+            .order_by(Person.surname.collate("C"))
+        )
         with Session(engine) as session:
             result = session.execute(query)
-            results = [['person', person[0].id, str(person[0])] for person in result.fetchall()]
+            results = [["person", person[0].id, str(person[0])] for person in result.fetchall()]
         degree_label = degree_label_map[obj_type]
         page_info = {
-            'heading': _('Список академических степеней - %(degree)s', degree=degree_label),
-            'title': _('Список академических степеней - %(degree)s', degree=degree_label),
+            "heading": _("Список академических степеней - %(degree)s", degree=degree_label),
+            "title": _("Список академических степеней - %(degree)s", degree=degree_label),
         }
         use_pagination = True
-    return render_template('list.html', results=results, page=page_info, result_use_pagination=use_pagination)
+    return render_template("list.html", results=results, page=page_info, result_use_pagination=use_pagination)
 
 
-@app.route('/new')
+@app.route("/new")
 @login_required
 def new():
     """
@@ -571,34 +558,46 @@ def new():
     - Renders the 'new.html' template with the necessary data for creating the specified object type.
     - Aborts with a 501 status code if the 'type' parameter is missing or invalid.
     """
-    if len(request.args) != 1 or not request.args.get('type'):
+    if len(request.args) != 1 or not request.args.get("type"):
         abort(501)
-    obj_type = request.args.get('type')
-    page = {'heading': f'New {TITLE_CONVERTER_NEW_EDIT[obj_type]}',
-            'title': f'New {TITLE_CONVERTER_NEW_EDIT[obj_type]}'}
-    obj_dict = {'org': Organization, 'person': Person, 'doc': Document}
+    obj_type = request.args.get("type")
+    page = {
+        "heading": f"New {TITLE_CONVERTER_NEW_EDIT[obj_type]}",
+        "title": f"New {TITLE_CONVERTER_NEW_EDIT[obj_type]}",
+    }
+    obj_dict = {"org": Organization, "person": Person, "doc": Document}
     obj = obj_dict[obj_type]
 
     mapper = inspect(obj)
-    data_fin = dict()
+    data_fin = {}
     for column in mapper.attrs:
-        if column.key not in ['organizations', 'documents', 'members', 'authors', 'field_of_study',
-                              'education', 'alumni'] and column.key != 'id':
-            data_fin[column.key] = ''
+        if (
+            column.key
+            not in ["organizations", "documents", "members", "authors", "field_of_study", "education", "alumni"]
+            and column.key != "id"
+        ):
+            data_fin[column.key] = ""
     data2 = {}
-    if obj_type == 'person':
-        data2 = {'doc': [], 'org': [], 'field_of_study': [], 'education': []}
-    elif obj_type == 'doc':
-        data2 = {'person': []}
-    elif obj_type == 'org':
-        data2 = {'person': [], 'alumni': []}
+    if obj_type == "person":
+        data2 = {"doc": [], "org": [], "field_of_study": [], "education": []}
+    elif obj_type == "doc":
+        data2 = {"person": []}
+    elif obj_type == "org":
+        data2 = {"person": [], "alumni": []}
 
-    return render_template('new.html', page=page, data1=data_fin, data2=data2,
-                           obj_type=obj_type, file=FILE_FIELDS, multiple_choice=MULTIPLE_CHOICE_FIELDS,
-                           connection_types=CONNECTION_TYPE_MAPPING)
+    return render_template(
+        "new.html",
+        page=page,
+        data1=data_fin,
+        data2=data2,
+        obj_type=obj_type,
+        file=FILE_FIELDS,
+        multiple_choice=MULTIPLE_CHOICE_FIELDS,
+        connection_types=CONNECTION_TYPE_MAPPING,
+    )
 
 
-@app.route('/edit')
+@app.route("/edit")
 @login_required
 def edit():
     """
@@ -617,20 +616,22 @@ def edit():
     - Renders the 'new.html' template with the necessary data for editing the specified object type.
     - Aborts with a 501 status code if the 'type' or 'id' parameter is missing or invalid.
     """
-    page = {'heading': 'Edit document', 'title': 'Edit document'}
-    if len(request.args) != 2 or not request.args.get('type') or not request.args.get('id'):
+    page = {"heading": "Edit document", "title": "Edit document"}
+    if len(request.args) != 2 or not request.args.get("type") or not request.args.get("id"):
         abort(501)
-    obj_type = request.args.get('type')
-    obj_id = request.args.get('id')
-    page = {'heading': f'Edit {TITLE_CONVERTER_NEW_EDIT[obj_type]}',
-            'title': f'Edit {TITLE_CONVERTER_NEW_EDIT[obj_type]}'}
-    obj = {'org': Organization, 'person': Person, 'doc': Document, 'field_of_study': FieldOfStudy}[obj_type]
+    obj_type = request.args.get("type")
+    obj_id = request.args.get("id")
+    page = {
+        "heading": f"Edit {TITLE_CONVERTER_NEW_EDIT[obj_type]}",
+        "title": f"Edit {TITLE_CONVERTER_NEW_EDIT[obj_type]}",
+    }
+    obj = {"org": Organization, "person": Person, "doc": Document, "field_of_study": FieldOfStudy}[obj_type]
 
     stmt = select(obj).where(obj.id == obj_id)
     with Session(engine) as session:
         data = session.execute(stmt).scalar_one_or_none()
         mapper = inspect(obj)
-        data_fin = dict()
+        data_fin = {}
         for column in mapper.attrs:
             if not isinstance(getattr(data, column.key), list):
                 data_fin[column.key] = getattr(data, column.key)
@@ -639,8 +640,8 @@ def edit():
         if isinstance(v, list):
             continue
         elif v is None:
-            data_fin2[k] = ''
-        elif k.endswith('date'):
+            data_fin2[k] = ""
+        elif k.endswith("date"):
             data_fin2[k] = parse(str(v)).date()
         else:
             data_fin2[k] = str(v)
@@ -649,40 +650,47 @@ def edit():
     with Session(engine) as session:
         obj_real = session.query(obj).filter(obj.id == obj_id).one_or_none()
         assert obj_real is not None
-        if obj_type == 'person':
-            data2 = {"org": [], "doc": [], "field_of_study": [], 'education': []}
+        if obj_type == "person":
+            data2 = {"org": [], "doc": [], "field_of_study": [], "education": []}
             for doc_authorship in obj_real.documents:  # doc_authorship is DocumentAuthorship
                 doc = doc_authorship.document
-                data2['doc'].append({'type': 'doc', 'id': doc.id, 'name': doc.name})
+                data2["doc"].append({"type": "doc", "id": doc.id, "name": doc.name})
             for org_membership in obj_real.organizations:
                 org = org_membership.organization
-                data2['org'].append({'type': 'org', 'id': org.id, 'name': org.name})
+                data2["org"].append({"type": "org", "id": org.id, "name": org.name})
             for field_relationship in obj_real.field_of_study:
                 field = field_relationship.field_of_study
-                data2['field_of_study'].append({'type': 'field_of_study', 'id': field.id, 'name': field.name})
+                data2["field_of_study"].append({"type": "field_of_study", "id": field.id, "name": field.name})
             for person_education in obj_real.education:
                 org = person_education.organization
-                data2['education'].append({'type': 'org', 'id': org.id, 'name': org.name})
-        elif obj_type == 'org':
-            data2 = {'person': [], 'alumni': []}
+                data2["education"].append({"type": "org", "id": org.id, "name": org.name})
+        elif obj_type == "org":
+            data2 = {"person": [], "alumni": []}
             for obj_person in obj_real.members:
                 person = obj_person.person
-                data2['person'].append({'type': 'person', 'id': person.id, 'name': str(person)})
+                data2["person"].append({"type": "person", "id": person.id, "name": str(person)})
             for person_education in obj_real.alumni:
                 person = person_education.person
-                data2['alumni'].append({'type': 'person', 'id': person.id, 'name': str(person)})
-        elif obj_type == 'doc':
-            data2 = {'person': []}
+                data2["alumni"].append({"type": "person", "id": person.id, "name": str(person)})
+        elif obj_type == "doc":
+            data2 = {"person": []}
             for obj_person in obj_real.authors:
                 person = obj_person.person
-                data2['person'].append({'type': 'person', 'id': person.id, 'name': str(person)})
+                data2["person"].append({"type": "person", "id": person.id, "name": str(person)})
 
-    return render_template('new.html', page=page, data1=data_fin2, data2=data2, obj_type=obj_type,
-                           multiple_choice=MULTIPLE_CHOICE_FIELDS, file=FILE_FIELDS,
-                           connection_types=CONNECTION_TYPE_MAPPING)
+    return render_template(
+        "new.html",
+        page=page,
+        data1=data_fin2,
+        data2=data2,
+        obj_type=obj_type,
+        multiple_choice=MULTIPLE_CHOICE_FIELDS,
+        file=FILE_FIELDS,
+        connection_types=CONNECTION_TYPE_MAPPING,
+    )
 
 
-@app.route('/save', methods=['POST'])
+@app.route("/save", methods=["POST"])
 @login_required
 def save():
     """
@@ -703,31 +711,31 @@ def save():
     - Renders the 'redirect.html' template to redirect to the search page after saving. [TO BE REMOVED]
     """
     formdata = request.form.to_dict()
-    if 'connection' in formdata.keys():
-        formdata.pop('connection')
-    formdata = {key: (value if value != '' else None) for key, value in formdata.items()}
+    if "connection" in formdata:
+        formdata.pop("connection")
+    formdata = {key: (value if value != "" else None) for key, value in formdata.items()}
     for key in request.files:
         value = request.files[key]
-        upload_path = f'static/uploads/[{str(datetime.now())}]' + value.filename
+        upload_path = f"static/uploads/[{datetime.now()!s}]" + value.filename
         formdata[key] = upload_path
         value.save(upload_path)
-    if 'bibliography' in formdata:
-        formdata['bibliography'] = clean_html(formdata['bibliography'])
-    if 'biography' in formdata:
-        formdata['biography'] = clean_html(formdata['biography'])
-    connections = request.form.getlist('connection')
-    obj_type = request.args.get('type')
-    obj = {'org': Organization, 'person': Person, 'doc': Document}[obj_type]
-    if formdata.get('id'):
-        obj_id = formdata.pop('id')
+    if "bibliography" in formdata:
+        formdata["bibliography"] = clean_html(formdata["bibliography"])
+    if "biography" in formdata:
+        formdata["biography"] = clean_html(formdata["biography"])
+    connections = request.form.getlist("connection")
+    obj_type = request.args.get("type")
+    obj = {"org": Organization, "person": Person, "doc": Document}[obj_type]
+    if formdata.get("id"):
+        obj_id = formdata.pop("id")
         stmt = select(obj).where(obj.id == obj_id)
         with Session(engine) as session:
             data = session.execute(stmt).scalar_one_or_none()
             for key, value in formdata.items():
-                if value == '' or value == 'None':
+                if value == "" or value == "None":
                     value = None
-                if key.endswith('date') and value is not None:
-                    value = datetime.strptime(value, '%Y-%m-%d')
+                if key.endswith("date") and value is not None:
+                    value = datetime.strptime(value, "%Y-%m-%d")
                 setattr(data, key, value)
             session.commit()
     else:
@@ -738,29 +746,29 @@ def save():
             obj_id = data.id
 
     with Session(engine) as session:
-        if obj_type == 'person':
+        if obj_type == "person":
             session.query(DocumentAuthorship).filter(DocumentAuthorship.person_id == obj_id).delete()
             session.query(OrganizationMembership).filter(OrganizationMembership.person_id == obj_id).delete()
             session.query(PersonFieldOfStudy).filter(PersonFieldOfStudy.person_id == obj_id).delete()
             session.query(PersonEducation).filter(PersonEducation.person_id == obj_id).delete()
-        elif obj_type == 'org':
+        elif obj_type == "org":
             session.query(OrganizationMembership).filter(OrganizationMembership.organization_id == obj_id).delete()
             session.query(PersonEducation).filter(PersonEducation.organization_id == obj_id).delete()
-        elif obj_type == 'doc':
+        elif obj_type == "doc":
             session.query(DocumentAuthorship).filter(DocumentAuthorship.document_id == obj_id).delete()
         session.commit()
 
         for connection in connections:
-            connection_parts = connection.split(':')
+            connection_parts = connection.split(":")
             connection_type = connection_parts[0]
             connection_id = connection_parts[1]
             connection_category = connection_parts[2] if len(connection_parts) > 2 else None
             if obj == Person:
-                if connection_type == 'doc':
+                if connection_type == "doc":
                     session.add(DocumentAuthorship(document_id=connection_id, person_id=obj_id))
                     session.commit()
-                elif connection_type == 'org':
-                    if connection_category == 'education':
+                elif connection_type == "org":
+                    if connection_category == "education":
                         # This is an education relationship
                         session.add(PersonEducation(organization_id=connection_id, person_id=obj_id))
                         session.commit()
@@ -768,11 +776,11 @@ def save():
                         # This is a regular organization membership
                         session.add(OrganizationMembership(organization_id=connection_id, person_id=obj_id))
                         session.commit()
-                elif connection_type == 'field_of_study':
+                elif connection_type == "field_of_study":
                     session.add(PersonFieldOfStudy(field_of_study_id=connection_id, person_id=obj_id))
                     session.commit()
             elif obj == Organization:
-                if connection_category == 'alumni':
+                if connection_category == "alumni":
                     session.add(PersonEducation(organization_id=obj_id, person_id=connection_id))
                     session.commit()
                 else:
@@ -781,10 +789,10 @@ def save():
             elif obj == Document:
                 session.add(DocumentAuthorship(document_id=obj_id, person_id=connection_id))
                 session.commit()
-    return render_template('redirect.html', url=f'/view?type={obj_type}&id={obj_id}')
+    return render_template("redirect.html", url=f"/view?type={obj_type}&id={obj_id}")
 
 
-@app.route('/delete')
+@app.route("/delete")
 @login_required
 def delete():
     """
@@ -803,33 +811,33 @@ def delete():
     - Aborts with a 501 status code if the 'type' or 'id' parameter is missing or invalid.
     - Aborts with a 404 status code if the object to delete is not found.
     """
-    if len(request.args) != 2 or not request.args.get('type') or not request.args.get('id'):
+    if len(request.args) != 2 or not request.args.get("type") or not request.args.get("id"):
         abort(501)
-    obj_type = request.args.get('type')
-    obj_id = request.args.get('id')
-    obj = {'org': Organization, 'person': Person, 'doc': Document}[obj_type]
+    obj_type = request.args.get("type")
+    obj_id = request.args.get("id")
+    obj = {"org": Organization, "person": Person, "doc": Document}[obj_type]
     stmt = select(obj).where(obj.id == obj_id)
     with Session(engine) as session:
         data = session.execute(stmt).scalar_one_or_none()
         if data:
-            if obj_type == 'person':
+            if obj_type == "person":
                 session.query(DocumentAuthorship).filter(DocumentAuthorship.person_id == obj_id).delete()
                 session.query(OrganizationMembership).filter(OrganizationMembership.person_id == obj_id).delete()
                 session.query(PersonFieldOfStudy).filter(PersonFieldOfStudy.person_id == obj_id).delete()
                 session.query(PersonEducation).filter(PersonEducation.person_id == obj_id).delete()
-            elif obj_type == 'org':
+            elif obj_type == "org":
                 session.query(OrganizationMembership).filter(OrganizationMembership.organization_id == obj_id).delete()
-            elif obj_type == 'doc':
+            elif obj_type == "doc":
                 session.query(DocumentAuthorship).filter(DocumentAuthorship.document_id == obj_id).delete()
             session.delete(data)
             session.commit()
         else:
             abort(404)
 
-    return render_template('redirect.html', url='/search')
+    return render_template("redirect.html", url="/search")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.jinja_env.auto_reload = True
-    app.config['TEMPLATES_AUTO_RELOAD'] = True
-    app.run(host='localhost', port=5000, debug=True, ssl_context='adhoc')
+    app.config["TEMPLATES_AUTO_RELOAD"] = True
+    app.run(host="localhost", port=5000, debug=True, ssl_context="adhoc")

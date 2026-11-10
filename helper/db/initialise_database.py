@@ -1,11 +1,12 @@
-from sqlalchemy import create_engine, ForeignKey
-from sqlalchemy.orm import DeclarativeBase, relationship, Mapped, mapped_column
+from datetime import datetime  # noqa: TC003 (needed at runtime by SQLAlchemy Mapped[])
+
 import psycopg2
 from psycopg2 import sql
-from datetime import datetime
-from helper import DATABASE_USER, DATABASE_PASSWORD, DATABASE_NAME, DATABASE_HOST, DATABASE_PORT
-from helper.cleanup.clean_dict import clean_dict
+from sqlalchemy import ForeignKey, create_engine
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
+from helper import DATABASE_HOST, DATABASE_NAME, DATABASE_PASSWORD, DATABASE_PORT, DATABASE_USER
+from helper.cleanup.clean_dict import clean_dict
 
 DATABASE_URL = f"postgresql://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}"
 
@@ -31,26 +32,28 @@ def create_database():
             - Connection limit: -1 (unlimited)
             - Is template: False
     """
-    conn = psycopg2.connect(dbname='postgres', user=DATABASE_USER, password=DATABASE_PASSWORD, host=DATABASE_HOST)
+    conn = psycopg2.connect(dbname="postgres", user=DATABASE_USER, password=DATABASE_PASSWORD, host=DATABASE_HOST)
     conn.autocommit = True
     cursor = conn.cursor()
 
-    cursor.execute("SELECT 1 FROM pg_database WHERE datname = %s", (DATABASE_NAME, ))
+    cursor.execute("SELECT 1 FROM pg_database WHERE datname = %s", (DATABASE_NAME,))
     exists = cursor.fetchone()
 
     if not exists:
-        print('Creating the database for the first time...')
-        query = sql.SQL("CREATE DATABASE {} WITH\
+        print("Creating the database for the first time...")
+        query = sql.SQL(
+            "CREATE DATABASE {} WITH\
                         OWNER = postgres\
                         ENCODING = 'UTF8'\
                         TEMPLATE = template0\
                         LC_COLLATE='ru_RU.UTF-8'\
                         LC_CTYPE='ru_RU.UTF-8'\
                         CONNECTION LIMIT = -1\
-                        IS_TEMPLATE = False;").format(sql.Identifier(DATABASE_NAME))
+                        IS_TEMPLATE = False;"
+        ).format(sql.Identifier(DATABASE_NAME))
         cursor.execute(query)
     else:
-        print('Database already exists. Skipping creation.')
+        print("Database already exists. Skipping creation.")
 
     cursor.close()
     conn.close()
@@ -68,6 +71,7 @@ class Base(DeclarativeBase):
     Attributes:
         None
     """
+
     pass
 
 
@@ -99,7 +103,8 @@ class Person(Base):
         values_ru(): Returns a dictionary of the person's attributes in Russian.
         __str__(): Returns a string representation of the person's full name.
     """
-    __tablename__ = 'person'
+
+    __tablename__ = "person"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     _oldid: Mapped[int] = mapped_column(nullable=True)
     surname: Mapped[str] = mapped_column(nullable=False)
@@ -117,18 +122,16 @@ class Person(Base):
 
     academic_degree: Mapped[str] = mapped_column(nullable=True)
 
-    field_of_study: Mapped[list["FieldOfStudy"]] = \
-        relationship("PersonFieldOfStudy", back_populates="person")
+    field_of_study: Mapped[list[FieldOfStudy]] = relationship("PersonFieldOfStudy", back_populates="person")
 
     area_of_study: Mapped[str] = mapped_column(nullable=True)  # geography
 
-    education: Mapped[list["PersonEducation"]] = \
-        relationship("PersonEducation", back_populates="person")
+    education: Mapped[list[PersonEducation]] = relationship("PersonEducation", back_populates="person")
 
-    organizations: Mapped[list["OrganizationMembership"]] = \
-        relationship("OrganizationMembership", back_populates="person")
-    documents: Mapped[list["DocumentAuthorship"]] = \
-        relationship("DocumentAuthorship", back_populates="person")
+    organizations: Mapped[list[OrganizationMembership]] = relationship(
+        "OrganizationMembership", back_populates="person"
+    )
+    documents: Mapped[list[DocumentAuthorship]] = relationship("DocumentAuthorship", back_populates="person")
 
     biography: Mapped[str] = mapped_column(nullable=True)
     bibliography: Mapped[str] = mapped_column(nullable=True)
@@ -137,28 +140,32 @@ class Person(Base):
     comment: Mapped[str] = mapped_column(nullable=True)
 
     def values_ru(self):
-        values = {'Фамилия Имя Отчество': '<b>' + str(self) + '</b>',
-                  'Дата рождения': self.birth_date,
-                  'Место рождения': self.birth_place,
-                  'Дата смерти': self.death_date,
-                  'Место смерти': self.death_place,
-                  'Академическое звание': self.academic_degree,
-                  'Область исследования':
-                  sorted([['field_of_study', f.field_of_study.id, str(f.field_of_study)] for f in self.field_of_study],
-                         key=lambda x: x[2]),
-                  'Районы работ': self.area_of_study,
-                  'Образование':
-                  sorted([['org', org.organization.id, str(org.organization)] for org in self.education],
-                         key=lambda x: x[2]),
-                  'Места работы':
-                  sorted([['org', org.organization.id, str(org.organization)] for org in self.organizations],
-                         key=lambda x: x[2]),
-                  'Биография': self.biography,
-                  'Библиография': self.bibliography,
-                  'Фотография': self.photo,
-                  'Документы': sorted([['doc', doc.document.id, str(doc.document)] for doc in self.documents],
-                                      key=lambda x: x[2]),
-                  'Комментарии': self.comment}
+        values = {
+            "Фамилия Имя Отчество": "<b>" + str(self) + "</b>",
+            "Дата рождения": self.birth_date,
+            "Место рождения": self.birth_place,
+            "Дата смерти": self.death_date,
+            "Место смерти": self.death_place,
+            "Академическое звание": self.academic_degree,
+            "Область исследования": sorted(
+                [["field_of_study", f.field_of_study.id, str(f.field_of_study)] for f in self.field_of_study],
+                key=lambda x: x[2],
+            ),
+            "Районы работ": self.area_of_study,
+            "Образование": sorted(
+                [["org", org.organization.id, str(org.organization)] for org in self.education], key=lambda x: x[2]
+            ),
+            "Места работы": sorted(
+                [["org", org.organization.id, str(org.organization)] for org in self.organizations], key=lambda x: x[2]
+            ),
+            "Биография": self.biography,
+            "Библиография": self.bibliography,
+            "Фотография": self.photo,
+            "Документы": sorted(
+                [["doc", doc.document.id, str(doc.document)] for doc in self.documents], key=lambda x: x[2]
+            ),
+            "Комментарии": self.comment,
+        }
         return clean_dict(values)
 
     def values_en(self):
@@ -167,38 +174,35 @@ class Person(Base):
         Structure mirrors values_ru and keeps the same data values.
         """
         values = {
-            'Full name': '<b>' + ' '.join(filter(None, (self.surname_en, self.name_en, self.patronymic_en))) + '</b>',
-            'Birth date': self.birth_date,
-            'Birth place': self.birth_place,
-            'Death date': self.death_date,
-            'Death place': self.death_place,
-            'Academic degree': self.academic_degree,
-            'Field of study': sorted(
-                [['field_of_study', f.field_of_study.id, str(f.field_of_study)] for f in self.field_of_study],
-                key=lambda x: x[2]
+            "Full name": "<b>" + " ".join(filter(None, (self.surname_en, self.name_en, self.patronymic_en))) + "</b>",
+            "Birth date": self.birth_date,
+            "Birth place": self.birth_place,
+            "Death date": self.death_date,
+            "Death place": self.death_place,
+            "Academic degree": self.academic_degree,
+            "Field of study": sorted(
+                [["field_of_study", f.field_of_study.id, str(f.field_of_study)] for f in self.field_of_study],
+                key=lambda x: x[2],
             ),
-            'Work areas': self.area_of_study,
-            'Education': sorted(
-                [['org', org.organization.id, str(org.organization)] for org in self.education],
-                key=lambda x: x[2]
+            "Work areas": self.area_of_study,
+            "Education": sorted(
+                [["org", org.organization.id, str(org.organization)] for org in self.education], key=lambda x: x[2]
             ),
-            'Workplaces': sorted(
-                [['org', org.organization.id, str(org.organization)] for org in self.organizations],
-                key=lambda x: x[2]
+            "Workplaces": sorted(
+                [["org", org.organization.id, str(org.organization)] for org in self.organizations], key=lambda x: x[2]
             ),
-            'Biography': self.biography,
-            'Bibliography': self.bibliography,
-            'Photo': self.photo,
-            'Documents': sorted(
-                [['doc', doc.document.id, str(doc.document)] for doc in self.documents],
-                key=lambda x: x[2]
+            "Biography": self.biography,
+            "Bibliography": self.bibliography,
+            "Photo": self.photo,
+            "Documents": sorted(
+                [["doc", doc.document.id, str(doc.document)] for doc in self.documents], key=lambda x: x[2]
             ),
-            'Comments': self.comment,
+            "Comments": self.comment,
         }
         return clean_dict(values)
 
     def __str__(self):
-        return ' '.join(filter(None, (self.surname, self.name, self.patronymic)))
+        return " ".join(filter(None, (self.surname, self.name, self.patronymic)))
 
 
 class Organization(Base):
@@ -217,30 +221,32 @@ class Organization(Base):
         __str__():
             Returns the name of the organization as its string representation.
     """
-    __tablename__ = 'organization'
+
+    __tablename__ = "organization"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     _oldid: Mapped[int] = mapped_column(nullable=True)
     name: Mapped[str] = mapped_column(nullable=False)
-    members: Mapped[list["OrganizationMembership"]] = \
-        relationship("OrganizationMembership", back_populates="organization")
-    alumni: Mapped[list["PersonEducation"]] = \
-        relationship("PersonEducation", back_populates="organization")
+    members: Mapped[list[OrganizationMembership]] = relationship(
+        "OrganizationMembership", back_populates="organization"
+    )
+    alumni: Mapped[list[PersonEducation]] = relationship("PersonEducation", back_populates="organization")
     org_type: Mapped[str] = mapped_column(nullable=True)
     history: Mapped[str] = mapped_column(nullable=True)
     comment: Mapped[str] = mapped_column(nullable=True)
 
     def values_ru(self):
-        values = {'Название': '<b>' + self.name + '</b>',
-                  'Тип организации': self.org_type,
-                  'История': self.history,
-                  'Комментарий': self.comment,
-                  'Связанные персоналии':
-                  sorted([['person', member.person.id, str(member.person)] for member in self.members],
-                         key=lambda x: x[2]),
-                  'Выпускники':
-                  sorted([['person', alum.person.id, str(alum.person)] for alum in self.alumni],
-                         key=lambda x: x[2])
-                  }
+        values = {
+            "Название": "<b>" + self.name + "</b>",
+            "Тип организации": self.org_type,
+            "История": self.history,
+            "Комментарий": self.comment,
+            "Связанные персоналии": sorted(
+                [["person", member.person.id, str(member.person)] for member in self.members], key=lambda x: x[2]
+            ),
+            "Выпускники": sorted(
+                [["person", alum.person.id, str(alum.person)] for alum in self.alumni], key=lambda x: x[2]
+            ),
+        }
         return clean_dict(values)
 
     def values_en(self):
@@ -248,24 +254,24 @@ class Organization(Base):
         Returns a dictionary of the organization's attributes with English labels.
         Mirrors values_ru structure.
         """
+
         def person_display(p):
             last = p.surname_en or p.surname
             first = p.name_en or p.name
             patr = p.patronymic_en or p.patronymic
-            return ' '.join(filter(None, (last, first, patr)))
+            return " ".join(filter(None, (last, first, patr)))
 
         values = {
-            'Name': '<b>' + self.name + '</b>',
-            'Type of organization': self.org_type,
-            'History': self.history,
-            'Comment': self.comment,
-            'Related persons': sorted(
-                [['person', member.person.id, person_display(member.person)] for member in self.members],
-                key=lambda x: x[2]
+            "Name": "<b>" + self.name + "</b>",
+            "Type of organization": self.org_type,
+            "History": self.history,
+            "Comment": self.comment,
+            "Related persons": sorted(
+                [["person", member.person.id, person_display(member.person)] for member in self.members],
+                key=lambda x: x[2],
             ),
-            'Alumni': sorted(
-                [['person', alum.person.id, person_display(alum.person)] for alum in self.alumni],
-                key=lambda x: x[2]
+            "Alumni": sorted(
+                [["person", alum.person.id, person_display(alum.person)] for alum in self.alumni], key=lambda x: x[2]
             ),
         }
         return clean_dict(values)
@@ -294,29 +300,31 @@ class Document(Base):
             Returns the name of the document as its string representation.
     """
 
-    __tablename__ = 'document'
+    __tablename__ = "document"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     _oldid: Mapped[int] = mapped_column(nullable=True)
     name: Mapped[str] = mapped_column(nullable=False)
     doc_type: Mapped[str] = mapped_column(nullable=False)
     language: Mapped[str] = mapped_column(nullable=True)
     source: Mapped[str] = mapped_column(nullable=True)
-    authors: Mapped[list["DocumentAuthorship"]] = relationship("DocumentAuthorship", back_populates="document")
+    authors: Mapped[list[DocumentAuthorship]] = relationship("DocumentAuthorship", back_populates="document")
     year: Mapped[str] = mapped_column(nullable=True)
     file: Mapped[str] = mapped_column(nullable=True)
     comment: Mapped[str] = mapped_column(nullable=True)
 
     def values_ru(self):
-        values = {'Авторы':
-                  sorted([['person', author.person.id, str(author.person)] for author in self.authors],
-                         key=lambda x: x[2]),
-                  'Источник': self.source,
-                  'Название': '<b>' + self.name + '</b>',
-                  'Тип документа': self.doc_type,
-                  'Язык': self.language,
-                  'Год издания': self.year,
-                  'Файл': self.file,
-                  'Комментарий': self.comment}
+        values = {
+            "Авторы": sorted(
+                [["person", author.person.id, str(author.person)] for author in self.authors], key=lambda x: x[2]
+            ),
+            "Источник": self.source,
+            "Название": "<b>" + self.name + "</b>",
+            "Тип документа": self.doc_type,
+            "Язык": self.language,
+            "Год издания": self.year,
+            "Файл": self.file,
+            "Комментарий": self.comment,
+        }
         return clean_dict(values)
 
     def values_en(self):
@@ -324,24 +332,25 @@ class Document(Base):
         Returns a dictionary of the document's attributes with English labels.
         Mirrors values_ru structure.
         """
+
         def person_display(p):
             last = p.surname_en or p.surname
             first = p.name_en or p.name
             patr = p.patronymic_en or p.patronymic
-            return ' '.join(filter(None, (last, first, patr)))
+            return " ".join(filter(None, (last, first, patr)))
 
         values = {
-            'Authors': sorted(
-                [['person', author.person.id, person_display(author.person)] for author in self.authors],
-                key=lambda x: x[2]
+            "Authors": sorted(
+                [["person", author.person.id, person_display(author.person)] for author in self.authors],
+                key=lambda x: x[2],
             ),
-            'Source': self.source,
-            'Title': '<b>' + self.name + '</b>',
-            'Document type': self.doc_type,
-            'Language': self.language,
-            'Year of publication': self.year,
-            'File': self.file,
-            'Comment': self.comment,
+            "Source": self.source,
+            "Title": "<b>" + self.name + "</b>",
+            "Document type": self.doc_type,
+            "Language": self.language,
+            "Year of publication": self.year,
+            "File": self.file,
+            "Comment": self.comment,
         }
         return clean_dict(values)
 
@@ -362,17 +371,18 @@ class FieldOfStudy(Base):
         __str__():
             Returns the name of the field of study as its string representation.
     """
-    __tablename__ = 'field_of_study'
+
+    __tablename__ = "field_of_study"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(nullable=False)
-    members: Mapped[list["OrganizationMembership"]] = \
-        relationship("PersonFieldOfStudy", back_populates="field_of_study")
+    members: Mapped[list[OrganizationMembership]] = relationship("PersonFieldOfStudy", back_populates="field_of_study")
 
     def values_ru(self):
         values = {
-            'Название': self.name,
-            'Связанные персоналии':
-            sorted([['person', member.person.id, str(member.person)] for member in self.members], key=lambda x: x[2])
+            "Название": self.name,
+            "Связанные персоналии": sorted(
+                [["person", member.person.id, str(member.person)] for member in self.members], key=lambda x: x[2]
+            ),
         }
         return clean_dict(values)
 
@@ -381,17 +391,18 @@ class FieldOfStudy(Base):
         Returns a dictionary of the field of study's attributes with English labels.
         Mirrors values_ru structure.
         """
+
         def person_display(p):
             last = p.surname_en or p.surname
             first = p.name_en or p.name
             patr = p.patronymic_en or p.patronymic
-            return ' '.join(filter(None, (last, first, patr)))
+            return " ".join(filter(None, (last, first, patr)))
 
         values = {
-            'Name': self.name,
-            'Related persons': sorted(
-                [['person', member.person.id, person_display(member.person)] for member in self.members],
-                key=lambda x: x[2]
+            "Name": self.name,
+            "Related persons": sorted(
+                [["person", member.person.id, person_display(member.person)] for member in self.members],
+                key=lambda x: x[2],
             ),
         }
         return clean_dict(values)
@@ -410,13 +421,14 @@ class OrganizationMembership(Base):
         person (Person): The relationship to the Person model.
         organization (Organization): The relationship to the Organization model.
     """
-    __tablename__ = 'organization_membership'
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    person_id: Mapped[int] = mapped_column(ForeignKey('person.id'))
-    organization_id: Mapped[int] = mapped_column(ForeignKey('organization.id'))
 
-    person: Mapped["Person"] = relationship("Person", back_populates="organizations")
-    organization: Mapped["Organization"] = relationship("Organization", back_populates="members")
+    __tablename__ = "organization_membership"
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    person_id: Mapped[int] = mapped_column(ForeignKey("person.id"))
+    organization_id: Mapped[int] = mapped_column(ForeignKey("organization.id"))
+
+    person: Mapped[Person] = relationship("Person", back_populates="organizations")
+    organization: Mapped[Organization] = relationship("Organization", back_populates="members")
 
 
 class PersonEducation(Base):
@@ -429,13 +441,14 @@ class PersonEducation(Base):
         person (Person): The relationship to the Person model.
         organization (Organization): The relationship to the Organization model.
     """
-    __tablename__ = 'person_education'
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    person_id: Mapped[int] = mapped_column(ForeignKey('person.id'))
-    organization_id: Mapped[int] = mapped_column(ForeignKey('organization.id'))
 
-    person: Mapped["Person"] = relationship("Person", back_populates="education")
-    organization: Mapped["Organization"] = relationship("Organization", back_populates="alumni")
+    __tablename__ = "person_education"
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    person_id: Mapped[int] = mapped_column(ForeignKey("person.id"))
+    organization_id: Mapped[int] = mapped_column(ForeignKey("organization.id"))
+
+    person: Mapped[Person] = relationship("Person", back_populates="education")
+    organization: Mapped[Organization] = relationship("Organization", back_populates="alumni")
 
 
 class DocumentAuthorship(Base):
@@ -448,13 +461,14 @@ class DocumentAuthorship(Base):
         person (Person): The relationship to the Person model, representing the author.
         document (Document): The relationship to the Document model, representing the authored document.
     """
-    __tablename__ = 'document_authorship'
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    person_id: Mapped[int] = mapped_column(ForeignKey('person.id'))
-    document_id: Mapped[int] = mapped_column(ForeignKey('document.id'))
 
-    person: Mapped["Person"] = relationship("Person", back_populates="documents")
-    document: Mapped["Document"] = relationship("Document", back_populates="authors")
+    __tablename__ = "document_authorship"
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    person_id: Mapped[int] = mapped_column(ForeignKey("person.id"))
+    document_id: Mapped[int] = mapped_column(ForeignKey("document.id"))
+
+    person: Mapped[Person] = relationship("Person", back_populates="documents")
+    document: Mapped[Document] = relationship("Document", back_populates="authors")
 
 
 class PersonFieldOfStudy(Base):
@@ -467,13 +481,14 @@ class PersonFieldOfStudy(Base):
         person (Person): The relationship to the Person model.
         field_of_study (FieldOfStudy): The relationship to the FieldOfStudy model.
     """
-    __tablename__ = 'person_field_of_study'
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    person_id: Mapped[int] = mapped_column(ForeignKey('person.id'))
-    field_of_study_id: Mapped[int] = mapped_column(ForeignKey('field_of_study.id'))
 
-    person: Mapped["Person"] = relationship("Person")
-    field_of_study: Mapped["FieldOfStudy"] = relationship("FieldOfStudy")
+    __tablename__ = "person_field_of_study"
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    person_id: Mapped[int] = mapped_column(ForeignKey("person.id"))
+    field_of_study_id: Mapped[int] = mapped_column(ForeignKey("field_of_study.id"))
+
+    person: Mapped[Person] = relationship("Person")
+    field_of_study: Mapped[FieldOfStudy] = relationship("FieldOfStudy")
 
 
 def create_tables():
@@ -481,7 +496,7 @@ def create_tables():
     Creates all tables defined in the metadata.
     """
     Base.metadata.create_all(engine)
-    print('Tables created.')
+    print("Tables created.")
 
 
 def drop_tables():
@@ -489,4 +504,4 @@ def drop_tables():
     Drops all tables defined in the metadata.
     """
     Base.metadata.drop_all(engine)
-    print('Tables dropped.')
+    print("Tables dropped.")

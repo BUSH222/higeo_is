@@ -1,0 +1,82 @@
+[project]
+name = "higeo-is"
+version = "0.1.0"
+description = "Higeo information system"
+requires-python = ">=3.15"
+dependencies = [
+    "Flask>=3.1.3",
+    "Flask_Login>=0.6.3",
+    "Flask_Babel>=4.0.0",
+    "Babel>=2.17.0",
+    "oauthlib>=4.0.0",
+    "psycopg2_binary>=2.9.9",
+    "python-dotenv>=1.2.2",
+    "python_dateutil>=2.9.0.post0",
+    "Requests>=2.33.0",
+    "SQLAlchemy>=2.0.37",
+    "transliterate>=1.10.2",
+    "cryptography>=50.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.6.2",
+    "ruff>=0.16.5",
+    "ty>=0.0.78",
+]
+
+
+[tool.ruff]
+target-version = "py315"
+line-length = 119
+exclude = [
+    ".venv",
+    "__pycache__",
+    ".git",
+    ".mypy_cache",
+    ".pytest_cache",
+    "build",
+    "dist",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle
+    "F",   # Pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+    "C4",  # flake8-comprehensions
+    "RUF", # Ruff-specific rules
+    "TCH", # flake8-type-checking
+]
+fixable = ["ALL"]
+
+ignore = [
+    "RUF001", # ambiguous unicode in strings (project is Russian/Cyrillic)
+    "RUF002",
+    "RUF003",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
+
+[tool.ty.environment]
+python-version = "3.15"
+
+[tool.ty.terminal]
+error-on-warning = false
+
+[tool.ty.rules]
+all = "warn"
+
