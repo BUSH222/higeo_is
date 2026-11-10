@@ -1,79 +1,52 @@
-import json
+"""Staff login with email and password. Intentionally not linked from any page."""
 
-import requests
-from flask import Blueprint, abort, redirect, request, url_for
+from urllib.parse import urlsplit
+
+from flask import Blueprint, redirect, render_template, request, url_for
+from flask_babel import gettext as _
 from flask_login import LoginManager, login_user, logout_user
-from oauthlib.oauth2 import WebApplicationClient
+from sqlalchemy.orm import Session
 
-from helper import ADMIN_DATA, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_DISCOVERY_URL
-from helper.login.objects import User
+from helper.db.initialise_database import engine
+from helper.login import users
+from helper.login.objects import LoginUser
 
 app_login = Blueprint("app_login", __name__)
-login_manager = LoginManager(app_login)
-login_manager.login_view = "login"
-
-try:
-    google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
-except requests.exceptions.ConnectionError:
-    print("WARNING: google authentication is not working. Either no internet connection or google is unreachable")
-    google_provider_cfg = None  # This will throw errors when you try to log in.
-
-client = WebApplicationClient(GOOGLE_CLIENT_ID)
+login_manager = LoginManager()
+login_manager.login_view = "app_login.login"
 
 
 @login_manager.user_loader
 def load_user(user_id):
-    if user_id in ADMIN_DATA:
-        return User(user_id, ADMIN_DATA[user_id])
-    return None
+    try:
+        user_pk = int(user_id)
+    except ValueError:
+        return None
+    with Session(engine) as session:
+        user = users.get(session, user_pk)
+        return LoginUser(user.id, user.email) if user else None
+
+
+def _safe_next(target):
+    """Only allow redirects to a path on this site."""
+    if target and not urlsplit(target).netloc and target.startswith("/") and not target.startswith("//"):
+        return target
+    return url_for("search")
 
 
 @app_login.route("/login", methods=["GET", "POST"])
 def login():
-    authorization_endpoint = google_provider_cfg["authorization_endpoint"]
-    request_uri = client.prepare_request_uri(
-        authorization_endpoint,
-        redirect_uri=request.base_url + "/callback",
-        scope=["openid", "email", "profile"],
-    )
-    return redirect(request_uri)
+    if request.method == "GET":
+        return render_template("login.html", error=None)
+    with Session(engine) as session:
+        user = users.authenticate(session, request.form.get("email", ""), request.form.get("password", ""))
+        if user is None:
+            return render_template("login.html", error=_("Неверный email или пароль.")), 401
+        login_user(LoginUser(user.id, user.email))
+    return redirect(_safe_next(request.args.get("next")))
 
 
 @app_login.route("/logout")
 def logout():
     logout_user()
     return redirect("/")
-
-
-@app_login.route("/login/callback")
-def callback():
-    code = request.args.get("code")
-    google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
-    token_endpoint = google_provider_cfg["token_endpoint"]
-    token_url, headers, body = client.prepare_token_request(
-        token_endpoint, authorization_response=request.url, redirect_url=request.base_url, code=code
-    )
-    token_response = requests.post(
-        token_url, headers=headers, data=body, auth=(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET)
-    )
-    client.parse_request_body_response(json.dumps(token_response.json()))
-    userinfo_endpoint = google_provider_cfg["userinfo_endpoint"]
-    uri, headers, body = client.add_token(userinfo_endpoint)
-    userinfo_response = requests.get(uri, headers=headers, data=body)
-
-    if userinfo_response.json().get("email_verified"):
-        user_email = userinfo_response.json()["email"]
-    else:
-        return abort(403)
-
-    for key, value in ADMIN_DATA.items():
-        if value == user_email:
-            user = User(key, value)
-            login_user(user)
-            return redirect(url_for("search"))
-    else:
-        abort(403)
-
-
-if __name__ == "__main__":
-    app_login.run(host="0.0.0.0", port=5000, ssl_context="adhoc")

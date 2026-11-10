@@ -1,112 +1,116 @@
 # Translations template for PROJECT.
-# Copyright (C) 2025 ORGANIZATION
+# Copyright (C) 2026 ORGANIZATION
 # This file is distributed under the same license as the PROJECT project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-09-23 23:27+0300\n"
+"POT-Creation-Date: 2026-11-10 15:31+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.17.0\n"
+"Generated-By: Babel 2.18.0\n"
 
-#: main.py:165
+#: main.py:170
 #, python-format
 msgid "Географический регион: %(place)s"
 msgstr ""
 
-#: main.py:166
+#: main.py:171
 #, python-format
 msgid "Geographic region: %(place)s"
 msgstr ""
 
-#: main.py:200
+#: main.py:202
 msgid "Организация"
 msgstr ""
 
-#: main.py:201
+#: main.py:203
 msgid "Персоналия"
 msgstr ""
 
-#: main.py:202
+#: main.py:204
 msgid "Документ"
 msgstr ""
 
-#: main.py:203
+#: main.py:205
 msgid "Область знаний"
 msgstr ""
 
-#: main.py:207
+#: main.py:209
 #, python-format
 msgid "View %(name)s"
 msgstr ""
 
-#: main.py:257 templates/about.html:37 templates/about.html:43
+#: main.py:259 templates/about.html:37 templates/about.html:43
 #: templates/about.html:49 templates/base.html:31 templates/base.html:70
 #: templates/base.html:71 templates/search.html:92 templates/search.html:128
 #: templates/search.html:163
 msgid "Поиск"
 msgstr ""
 
-#: main.py:257
+#: main.py:259
 msgid "Search"
 msgstr ""
 
-#: main.py:420 templates/base.html:40
+#: main.py:415 templates/base.html:40
 msgid "Организации"
 msgstr ""
 
-#: main.py:421
+#: main.py:416
 msgid "Персоналии"
 msgstr ""
 
-#: main.py:422
+#: main.py:417
 msgid "Документы"
 msgstr ""
 
-#: main.py:423
+#: main.py:418
 msgid "Области исследования"
 msgstr ""
 
-#: main.py:505 main.py:506
+#: main.py:499 main.py:500
 msgid "Самые популярные географические регионы"
 msgstr ""
 
-#: main.py:515
+#: main.py:506
 #, python-format
 msgid "%(place)s - %(count)s results"
 msgstr ""
 
-#: main.py:531
+#: main.py:520
 msgid "действительный член"
 msgstr ""
 
-#: main.py:532
+#: main.py:521
 msgid "иностранный член"
 msgstr ""
 
-#: main.py:533
+#: main.py:522
 msgid "почётный член"
 msgstr ""
 
-#: main.py:534
+#: main.py:523
 msgid "член-корреспондент"
 msgstr ""
 
-#: main.py:535
+#: main.py:524
 msgid "профессор РАН"
 msgstr ""
 
-#: main.py:546 main.py:547
+#: main.py:537 main.py:538
 #, python-format
 msgid "Список академических степеней - %(degree)s"
+msgstr ""
+
+#: helper/login/login.py:44
+msgid "Неверный email или пароль."
 msgstr ""
 
 #: templates/about.html:2 templates/index.html:3
@@ -371,6 +375,18 @@ msgstr ""
 
 #: templates/list.html:12 templates/search.html:187
 msgid "результатов"
+msgstr ""
+
+#: templates/login.html:2 templates/login.html:10
+msgid "Вход"
+msgstr ""
+
+#: templates/login.html:20
+msgid "Пароль"
+msgstr ""
+
+#: templates/login.html:23
+msgid "Войти"
 msgstr ""
 
 #: templates/new.html:23

@@ -34,10 +34,6 @@ This project is a web-based information system for the Department of History of 
         DATABASE_PORT = ...
         DATABASE_USER = ...
         DATABASE_PASSWORD = ...
-        GOOGLE_CLIENT_ID = ... (google oauth2 credentials)
-        GOOGLE_CLIENT_SECRET = ... (google oauth2 credentials)
-        GOOGLE_DISCOVERY_URL = ... (google oauth2 credentials)
-        ADMIN_DATA = '{"0": "email1@example.com", "1": "email2@example.com", "2": ...}' (admin users)
         SECRET_KEY = ... (random string)
         ```
     - Initialize the database and fill database with old data, and migrate over the files:
@@ -46,6 +42,13 @@ This project is a web-based information system for the Department of History of 
         ```
 
 ## Usage
+
+0. **Create an admin account** (admins can create, edit and delete records; log in at `/login`):
+    ```sh
+    uv run manager.py user_add admin@example.com
+    uv run manager.py user_edit admin@example.com -e new@example.com -p   # change email and/or password
+    uv run manager.py user_delete admin@example.com
+    ```
 
 1. **Run the application**:
     ```sh

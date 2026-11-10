@@ -8,7 +8,9 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from helper import DATABASE_HOST, DATABASE_NAME, DATABASE_PASSWORD, DATABASE_PORT, DATABASE_USER
 from helper.cleanup.clean_dict import clean_dict
 
-DATABASE_URL = f"postgresql://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}"
+DATABASE_URL = (
+    f"postgresql+psycopg2://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}"
+)
 
 
 def create_database():
@@ -489,6 +491,16 @@ class PersonFieldOfStudy(Base):
 
     person: Mapped[Person] = relationship("Person")
     field_of_study: Mapped[FieldOfStudy] = relationship("FieldOfStudy")
+
+
+class User(Base):
+    """A staff user who can create, edit and delete records."""
+
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    email: Mapped[str] = mapped_column(unique=True)
+    password_hash: Mapped[str]
 
 
 def create_tables():

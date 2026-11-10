@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Вход') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-3">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card rounded">
+                <div class="card-header">
+                    <h1 class="h3 d-flex justify-content-center mb-0">{{ _('Вход') }}</h1>
+                </div>
+                <div class="card-body">
+                    {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+                    <form method="post" action="{{ url_for('app_login.login', next=request.args.get('next')) }}">
+                        <div class="mb-3">
+                            <label class="form-label" for="email">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" required autofocus>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="password">{{ _('Пароль') }}</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        <button type="submit" class="btn higeo-color-1">{{ _('Войти') }}</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
