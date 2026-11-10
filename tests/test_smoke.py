@@ -186,13 +186,18 @@ def test_english_view_uses_english_labels(client, ids):
     [
         "/new?type=person",
         "/edit?type=person&id=1",
-        "/delete?type=person&id=1",
         "/new?type=field_of_study",
-        "/delete?type=field_of_study&id=1",
     ],
 )
 def test_staff_pages_redirect_anonymous_visitors_to_login(client, url):
     response = client.get(url)
+    assert response.status_code == 302
+    assert response.headers["location"].startswith("/login?next=%2F")
+
+
+@pytest.mark.parametrize("url", ["/delete?type=person&id=1", "/delete?type=field_of_study&id=1"])
+def test_delete_redirects_anonymous_visitors_to_login(client, url):
+    response = client.post(url)
     assert response.status_code == 302
     assert response.headers["location"].startswith("/login?next=%2F")
 
@@ -268,6 +273,7 @@ def test_person_lifecycle(staff, ids):
                 f"doc:{ids['Биосфера']}:doc",
                 f"field_of_study:{ids['Геохимия']}:field_of_study",
             ],
+            "csrf_token": staff.csrf_token,
         },
     )
     person_id = saved_id(created)
@@ -290,6 +296,7 @@ def test_person_lifecycle(staff, ids):
             "patronymic": "Петрович",
             "birth_date": "",
             "connection": [f"org:{ids['Геологический институт']}:org"],
+            "csrf_token": staff.csrf_token,
         },
     )
     assert saved_id(edited) == person_id
@@ -297,9 +304,10 @@ def test_person_lifecycle(staff, ids):
     assert "Карпинский Александр Петрович" in page and "1847-01-07" not in page
     assert "Геологический институт" in page and "Московский университет" not in page and "Биосфера" not in page
 
-    assert staff.get(f"/delete?type=person&id={person_id}").status_code == 200
+    delete_data = {"csrf_token": staff.csrf_token}
+    assert staff.post(f"/delete?type=person&id={person_id}", data=delete_data).status_code == 200
     assert staff.get(f"/view?type=person&id={person_id}").status_code == 404
-    assert staff.get(f"/delete?type=person&id={person_id}").status_code == 404
+    assert staff.post(f"/delete?type=person&id={person_id}", data=delete_data).status_code == 404
 
 
 def test_organization_with_members_and_alumni_can_be_deleted(staff, ids):
@@ -309,6 +317,7 @@ def test_organization_with_members_and_alumni_can_be_deleted(staff, ids):
             "name": "Горный институт",
             "org_type": "Высшие учебные заведения",
             "connection": [f"person:{ids['Обручев']}:alumni", f"person:{ids['Ферсман']}:person"],
+            "csrf_token": staff.csrf_token,
         },
     )
     org_id = saved_id(created)
@@ -317,7 +326,7 @@ def test_organization_with_members_and_alumni_can_be_deleted(staff, ids):
     assert "Горный институт" in staff.get(f"/view?type=person&id={ids['Обручев']}").text
     assert staff.get(f"/edit?type=org&id={org_id}").status_code == 200
 
-    assert staff.get(f"/delete?type=org&id={org_id}").status_code == 200
+    assert staff.post(f"/delete?type=org&id={org_id}", data={"csrf_token": staff.csrf_token}).status_code == 200
     assert staff.get(f"/view?type=org&id={org_id}").status_code == 404
     assert "Горный институт" not in staff.get(f"/view?type=person&id={ids['Обручев']}").text
 
@@ -326,7 +335,12 @@ def test_document_with_an_uploaded_file(staff, ids, tmp_path, monkeypatch):
     monkeypatch.setattr(main, "BASE_DIR", tmp_path)
     created = staff.post(
         "/save?type=doc",
-        data={"name": "Геохимия России", "doc_type": "книга", "connection": [f"person:{ids['Ферсман']}:person"]},
+        data={
+            "name": "Геохимия России",
+            "doc_type": "книга",
+            "connection": [f"person:{ids['Ферсман']}:person"],
+            "csrf_token": staff.csrf_token,
+        },
         files={"file": ("../../evil name.pdf", b"%PDF-1.4 test", "application/pdf")},
     )
     doc_id = saved_id(created)
@@ -340,7 +354,13 @@ def test_document_with_an_uploaded_file(staff, ids, tmp_path, monkeypatch):
     # Saving again without choosing a file keeps the stored one.
     edited = staff.post(
         "/save?type=doc",
-        data={"id": str(doc_id), "name": "Геохимия России", "doc_type": "книга", "year": "1922"},
+        data={
+            "id": str(doc_id),
+            "name": "Геохимия России",
+            "doc_type": "книга",
+            "year": "1922",
+            "csrf_token": staff.csrf_token,
+        },
         files={"file": ("", b"", "application/octet-stream")},
     )
     assert saved_id(edited) == doc_id
@@ -348,13 +368,21 @@ def test_document_with_an_uploaded_file(staff, ids, tmp_path, monkeypatch):
         document = session.get(db.Document, doc_id)
         assert (document.file, document.year) == (stored, "1922")
 
-    assert staff.get(f"/delete?type=doc&id={doc_id}").status_code == 200
+    assert staff.post(f"/delete?type=doc&id={doc_id}", data={"csrf_token": staff.csrf_token}).status_code == 200
 
 
 def test_save_rejects_bad_input(staff):
     assert staff.post("/save?type=bogus", data={"name": "x"}).status_code == 404
-    assert staff.post("/save?type=person", data={"id": "999999", "surname": "x", "name": "y"}).status_code == 404
-    bad_date = staff.post("/save?type=person", data={"surname": "x", "name": "y", "birth_date": "вчера"})
+    assert (
+        staff.post(
+            "/save?type=person", data={"id": "999999", "surname": "x", "name": "y", "csrf_token": staff.csrf_token}
+        ).status_code
+        == 404
+    )
+    bad_date = staff.post(
+        "/save?type=person",
+        data={"surname": "x", "name": "y", "birth_date": "вчера", "csrf_token": staff.csrf_token},
+    )
     assert bad_date.status_code == 400
     assert staff.get("/new").status_code == 501
     assert staff.get("/edit?type=person").status_code == 501
@@ -414,7 +442,7 @@ def test_field_of_study_comment(staff, client, ids):
     field_id = ids["Геохимия"]
     url = f"/view?type=field_of_study&id={field_id}"
     assert "Комментарий" not in client.get(url).text
-    form = {"id": str(field_id), "name": "Геохимия"}
+    form = {"id": str(field_id), "name": "Геохимия", "csrf_token": staff.csrf_token}
     saved = staff.post("/save?type=field_of_study", data={**form, "comment": "Заметка"})
     assert saved_id(saved) == field_id
     assert "Заметка" in client.get(url).text
@@ -430,17 +458,28 @@ def test_field_of_study_new_and_delete(staff, client, ids):
     form = staff.get("/new?type=field_of_study")
     assert form.status_code == 200 and 'name="name"' in form.text and 'name="comment"' in form.text
     assert "/new?type=field_of_study" in staff.get("/search").text
-    field_id = saved_id(staff.post("/save?type=field_of_study", data={"name": "Тестовая область", "comment": "temp"}))
+    field_id = saved_id(
+        staff.post(
+            "/save?type=field_of_study",
+            data={"name": "Тестовая область", "comment": "temp", "csrf_token": staff.csrf_token},
+        )
+    )
     assert "Тестовая область" in client.get(f"/view?type=field_of_study&id={field_id}").text
     person_id = saved_id(
         staff.post(
             "/save?type=person",
-            data={"surname": "Удаляемый", "name": "Тест", "connection": [f"field_of_study:{field_id}:field_of_study"]},
+            data={
+                "surname": "Удаляемый",
+                "name": "Тест",
+                "connection": [f"field_of_study:{field_id}:field_of_study"],
+                "csrf_token": staff.csrf_token,
+            },
         )
     )
     assert "Тестовая область" in client.get(f"/view?type=person&id={person_id}").text
-    assert staff.get(f"/delete?type=field_of_study&id={field_id}").status_code == 200
+    delete_data = {"csrf_token": staff.csrf_token}
+    assert staff.post(f"/delete?type=field_of_study&id={field_id}", data=delete_data).status_code == 200
     assert client.get(f"/view?type=field_of_study&id={field_id}").status_code == 404
     page = client.get(f"/view?type=person&id={person_id}")
     assert page.status_code == 200 and "Тестовая область" not in page.text
-    assert staff.get(f"/delete?type=person&id={person_id}").status_code == 200
+    assert staff.post(f"/delete?type=person&id={person_id}", data=delete_data).status_code == 200

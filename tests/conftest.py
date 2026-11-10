@@ -7,6 +7,7 @@ database whose name contains "test" and set HIGEO_TEST_DATABASE=configured, for 
 """
 
 import os
+import re
 import tempfile
 from datetime import datetime
 
@@ -27,7 +28,7 @@ from sqlalchemy.orm import Session
 
 import main
 from helper.db import initialise_database as db
-from helper.login import users
+from helper.login import throttle, users
 
 STAFF_EMAIL = "staff@example.com"
 STAFF_PASSWORD = "correct horse battery"
@@ -110,6 +111,12 @@ def database():
     db.engine.dispose()
 
 
+@pytest.fixture(autouse=True)
+def _reset_login_throttle():
+    """So that one test's failed logins don't lock out another test sharing the same (fake) client IP."""
+    throttle.reset()
+
+
 @pytest.fixture
 def client():
     """An anonymous visitor."""
@@ -119,9 +126,11 @@ def client():
 
 @pytest.fixture
 def staff(client):
-    """A logged in staff user."""
+    """A logged in staff user, with its CSRF token stashed on the client for convenience."""
     response = client.post("/login", data={"email": STAFF_EMAIL, "password": STAFF_PASSWORD})
     assert response.status_code == 303
+    page = client.get("/new?type=person")
+    client.csrf_token = re.search(r'name="csrf_token" value="([^"]+)"', page.text).group(1)
     return client
 
 

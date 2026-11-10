@@ -8,6 +8,7 @@
         <h1 class="d-flex justify-content-center fw-bold">{{ page.heading }}</h1>
     </div>
     <form id="edit-form" method="POST" enctype="multipart/form-data" action="/save?type={{ obj_type }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         {% for key, value in data1.items() %}
         <div class="row mt-3">
             <div class="col-lg-2 fw-bold">{{ key }}</div>

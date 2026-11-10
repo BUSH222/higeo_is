@@ -6,10 +6,10 @@ from collections import Counter
 from datetime import date, datetime
 from http import HTTPStatus
 from pathlib import Path
-from typing import NoReturn
+from typing import Annotated, NoReturn
 
 from dateutil.parser import parse
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, Form, HTTPException, Request
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -43,6 +43,7 @@ from helper.db.initialise_database import (
 from helper.i18n import LANGUAGES, LocaleMiddleware, get_locale
 from helper.i18n import gettext as _
 from helper.login.auth import LoginRequired, require_login
+from helper.login.csrf import verify_csrf_token
 from helper.login.login import router as login_router
 from helper.templating import render
 
@@ -763,12 +764,14 @@ async def save(request: Request):
     # Uploaded files are only readable while the form is open, so the saving happens inside this block.
     # It runs in a worker thread, because the database calls block.
     async with request.form(max_fields=100_000, max_part_size=MAX_CONTENT_LENGTH) as form:
+        csrf_token = form.get("csrf_token")
+        verify_csrf_token(request, csrf_token if isinstance(csrf_token, str) else "")
         formdata, uploads = {}, {}
         for key, value in form.multi_items():
             if isinstance(value, UploadFile):
                 if value.filename:  # a file input that was left empty is not an upload
                     uploads.setdefault(key, value)
-            elif key != "connection" and key not in FILE_FIELDS:  # a file field is only ever set by an upload
+            elif key not in ("connection", "csrf_token") and key not in FILE_FIELDS:
                 formdata.setdefault(key, value)
         connections = [value for value in form.getlist("connection") if isinstance(value, str)]
         obj_id = await run_in_threadpool(save_object, obj_type, formdata, uploads, connections)
@@ -863,8 +866,8 @@ def save_object(obj_type: str, formdata: dict, uploads: dict[str, UploadFile], c
     return obj_id
 
 
-@app.get("/delete", dependencies=[Depends(require_login)])
-def delete(request: Request):
+@app.post("/delete", dependencies=[Depends(require_login)])
+def delete(request: Request, csrf_token: Annotated[str, Form()] = ""):
     """
     Deletes an existing organization, person, or document.
 
@@ -881,6 +884,7 @@ def delete(request: Request):
     - Aborts with a 501 status code if the 'type' or 'id' parameter is missing or invalid.
     - Aborts with a 404 status code if the object to delete is not found.
     """
+    verify_csrf_token(request, csrf_token)
     if len(request.query_params) != 2 or not request.query_params.get("type") or not request.query_params.get("id"):
         abort(501)
     obj_type = request.query_params.get("type")

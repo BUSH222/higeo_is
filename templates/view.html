@@ -25,11 +25,12 @@
                 <div class="card-body">
                     {% if current_user.is_authenticated %}
                         <a name="" id="" class="btn mt-2 mb-2 higeo-color-1" href="/edit?type={{page.type}}&id={{page.id}}" role="button">{{ _('Edit') }}</a>
-                        <a name="" id="" class="btn mt-2 mb-2 bg-danger"
-                            href="/delete?type={{page.type}}&id={{page.id}}"
-                            role="button"
+                        <form class="d-inline" method="post" action="/delete?type={{page.type}}&id={{page.id}}"
                             data-confirm="{{ _('Вы действительно хотите стереть всю страницу?') }}"
-                            onclick="return confirm(this.dataset.confirm)">{{ _('Delete') }}</a>
+                            onsubmit="return confirm(this.dataset.confirm)">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <button type="submit" class="btn mt-2 mb-2 bg-danger">{{ _('Delete') }}</button>
+                        </form>
                     {% endif %}
                     {% for key, value in data.items() %}
                         {% if value is not none and (value is not iterable or (value is iterable and value|length > 0)) %}

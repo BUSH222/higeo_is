@@ -7,6 +7,7 @@ from fastapi.templating import Jinja2Templates
 
 from helper import i18n
 from helper.login.auth import get_current_user
+from helper.login.csrf import get_or_create_csrf_token
 
 if TYPE_CHECKING:
     from fastapi import Request
@@ -22,4 +23,5 @@ def render(request: Request, name: str, status_code: int = 200, **context) -> HT
     """Render a template, giving it the current user and locale."""
     context["current_user"] = get_current_user(request)
     context["current_locale"] = i18n.get_locale()
+    context["csrf_token"] = get_or_create_csrf_token(request)
     return templates.TemplateResponse(request, name, context, status_code=status_code)
