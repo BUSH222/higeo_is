@@ -49,6 +49,8 @@ def main():
     user_delete_parser = subparsers.add_parser("user_delete", help="Delete a user.")
     user_delete_parser.add_argument("email", type=str, help="Email of the user.")
 
+    subparsers.add_parser("user_list", help="List all users.")
+
     args = parser.parse_args()
 
     try:
@@ -139,6 +141,10 @@ def run_user_command(args, parser):
     elif args.command == "user_delete":
         with Session(engine) as session:
             users.delete(session, args.email)
+    elif args.command == "user_list":
+        with Session(engine) as session:
+            for user in users.list(session):
+                print(user.email)
 
 
 if __name__ == "__main__":

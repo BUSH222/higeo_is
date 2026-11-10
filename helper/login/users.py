@@ -83,3 +83,8 @@ def delete(session: Session, email: str) -> None:
         raise ValueError(f"No user with the email {email}.")
     session.delete(user)
     session.commit()
+
+
+def list(session: Session) -> list[User]:
+    """Return a list of all users."""
+    return session.scalars(select(User).order_by(User.email)).all()
