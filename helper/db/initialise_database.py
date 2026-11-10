@@ -1,15 +1,34 @@
-from datetime import datetime  # noqa: TC003 (needed at runtime by SQLAlchemy Mapped[])
+import html
+from datetime import datetime
 
 from sqlalchemy import URL, ForeignKey, String, Text, create_engine, event, text
 from sqlalchemy.dialects.mysql import LONGTEXT
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
-from helper import DATABASE_ENGINE, DATABASE_HOST, DATABASE_NAME, DATABASE_PASSWORD, DATABASE_PORT, DATABASE_USER
+from helper import (
+    ACADEMIC_DEGREE_TO_LIST,
+    DATABASE_ENGINE,
+    DATABASE_HOST,
+    DATABASE_NAME,
+    DATABASE_PASSWORD,
+    DATABASE_PORT,
+    DATABASE_USER,
+)
 from helper.cleanup.clean_dict import clean_dict
 
 DRIVERS = {"sqlite": "sqlite", "postgresql": "postgresql+psycopg2", "mysql": "mysql+pymysql"}
 # Collations that sort by code point, so that every engine orders names the same way.
 BYTE_ORDER_COLLATIONS = {"sqlite": "BINARY", "postgresql": "C", "mysql": "utf8mb4_bin"}
+
+
+def _academic_degree_link(degree: str | None) -> str | None:
+    """Render the degree as a link to its /list_custom page (plain escaped text if there is no such list)."""
+    if not degree:
+        return degree
+    list_type = ACADEMIC_DEGREE_TO_LIST.get(degree)
+    if list_type is None:
+        return html.escape(degree)
+    return f'<a href="/list_custom?type={list_type}">{html.escape(degree)}</a>'
 
 
 def _documents_by_year(authorships: list[DocumentAuthorship]) -> list[list]:
@@ -187,7 +206,7 @@ class Person(Timestamped, Base):
             "Место рождения": self.birth_place,
             "Дата смерти": self.death_date,
             "Место смерти": self.death_place,
-            "Академическое звание": self.academic_degree,
+            "Академическое звание": _academic_degree_link(self.academic_degree),
             "Область исследования": sorted(
                 [["field_of_study", f.field_of_study.id, str(f.field_of_study)] for f in self.field_of_study],
                 key=lambda x: x[2],
@@ -218,7 +237,7 @@ class Person(Timestamped, Base):
             "Birth place": self.birth_place,
             "Death date": self.death_date,
             "Death place": self.death_place,
-            "Academic degree": self.academic_degree,
+            "Academic degree": _academic_degree_link(self.academic_degree),
             "Field of study": sorted(
                 [["field_of_study", f.field_of_study.id, str(f.field_of_study)] for f in self.field_of_study],
                 key=lambda x: x[2],

@@ -21,15 +21,23 @@ DATABASE_PASSWORD = os.environ.get("DATABASE_PASSWORD") or None
 SECRET_KEY = os.environ.get("SECRET_KEY") or token_urlsafe(16)
 
 # Project constants
+# /list_custom?type=<key> page -> stored Person.academic_degree value (must match the DB exactly).
+# Long forms (e.g. "... АН АзСССР") are deliberately separate from the plain titles.
+ACADEMIC_DEGREE_LISTS = {
+    "acad_full_members": "действительный член",
+    "acad_foreign_members": "иностранный член",
+    "acad_honorary_members": "почётный член",
+    "acad_corresponding_members": "член-корреспондент",
+    "acad_professors": "профессор РАН",
+    "acad_foreign_correspondents": "иностранный корреспондент",
+    "acad_full_members_azssr": "Действительный член АН АзСССР",
+    "acad_corresponding_members_uassr": "Член-корреспондент АН Украинской ССР",
+    "acad_corresponding_members_azssr": "Член-корреспондент Академии наук Азербайджанской ССР",
+}
+ACADEMIC_DEGREE_TO_LIST = {degree: list_type for list_type, degree in ACADEMIC_DEGREE_LISTS.items()}
+
 MULTIPLE_CHOICE_FIELDS = {
-    "academic_degree": [
-        "",
-        "действительный член",
-        "иностранный член",
-        "почётный член",
-        "член-корреспондент",
-        "профессор РАН",
-    ],
+    "academic_degree": ["", *ACADEMIC_DEGREE_LISTS.values()],
     "org_type": [
         "Международные союзы",
         "",

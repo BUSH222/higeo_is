@@ -19,7 +19,14 @@ from starlette.datastructures import UploadFile
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
 
-from helper import CONNECTION_TYPE_MAPPING, FILE_FIELDS, MULTIPLE_CHOICE_FIELDS, SECRET_KEY, TITLE_CONVERTER_NEW_EDIT
+from helper import (
+    ACADEMIC_DEGREE_LISTS,
+    CONNECTION_TYPE_MAPPING,
+    FILE_FIELDS,
+    MULTIPLE_CHOICE_FIELDS,
+    SECRET_KEY,
+    TITLE_CONVERTER_NEW_EDIT,
+)
 from helper.cleanup.htmlcleaner import clean_html
 from helper.db.initialise_database import (
     Document,
@@ -528,14 +535,7 @@ def list_view(request: Request):
 @app.get("/list_custom")
 def list_view_custom(request: Request):
     obj_type = request.query_params.get("type")
-    if obj_type not in [
-        "geography",
-        "acad_full_members",  # действительный член
-        "acad_foreign_members",  # иностранный член
-        "acad_honorary_members",  # почётный член
-        "acad_corresponding_members",  # член-корреспондент
-        "acad_professors",  # профессор РАН
-    ]:
+    if obj_type != "geography" and obj_type not in ACADEMIC_DEGREE_LISTS:
         abort(404)
 
     if obj_type == "geography":
@@ -556,32 +556,13 @@ def list_view_custom(request: Request):
         ]
         use_pagination = False
     else:
-        # DB filter labels (do not translate; must match stored values)
-        degree_db_map = {
-            "acad_full_members": "действительный член",
-            "acad_foreign_members": "иностранный член",
-            "acad_honorary_members": "почётный член",
-            "acad_corresponding_members": "член-корреспондент",
-            "acad_professors": "профессор РАН",
-        }
-        # UI labels (translate for display)
-        degree_label_map = {
-            "acad_full_members": _("действительный член"),
-            "acad_foreign_members": _("иностранный член"),
-            "acad_honorary_members": _("почётный член"),
-            "acad_corresponding_members": _("член-корреспондент"),
-            "acad_professors": _("профессор РАН"),
-        }
-
-        query = (
-            select(Person)
-            .filter(Person.academic_degree == degree_db_map[obj_type])
-            .order_by(byte_order(Person.surname))
-        )
+        # DB filter value (must match the stored value exactly); the label is translated for display
+        degree_db = ACADEMIC_DEGREE_LISTS[obj_type]
+        query = select(Person).filter(Person.academic_degree == degree_db).order_by(byte_order(Person.surname))
         with Session(engine) as session:
             result = session.execute(query)
             results = [["person", person[0].id, str(person[0])] for person in result.fetchall()]
-        degree_label = degree_label_map[obj_type]
+        degree_label = _(degree_db)
         page_info = {
             "heading": _("Список академических степеней - %(degree)s", degree=degree_label),
             "title": _("Список академических степеней - %(degree)s", degree=degree_label),
