@@ -5,18 +5,10 @@ from sqlalchemy import URL, ForeignKey, String, Text, create_engine, event, text
 from sqlalchemy.dialects.mysql import LONGTEXT
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
-from helper import (
-    ACADEMIC_DEGREE_TO_LIST,
-    DATABASE_ENGINE,
-    DATABASE_HOST,
-    DATABASE_NAME,
-    DATABASE_PASSWORD,
-    DATABASE_PORT,
-    DATABASE_USER,
-)
+from helper import ACADEMIC_DEGREE_TO_LIST, DATABASE_ENGINE
 from helper.cleanup.clean_dict import clean_dict
+from helper.db.settings import DatabaseSettings
 
-DRIVERS = {"sqlite": "sqlite", "postgresql": "postgresql+psycopg2", "mysql": "mysql+pymysql"}
 # Collations that sort by code point, so that every engine orders names the same way.
 BYTE_ORDER_COLLATIONS = {"sqlite": "BINARY", "postgresql": "C", "mysql": "utf8mb4_bin"}
 
@@ -43,19 +35,9 @@ def _documents_by_year(authorships: list[DocumentAuthorship]) -> list[list]:
     ]
 
 
-def database_url(database: str | None = DATABASE_NAME) -> URL:
-    """Build the connection URL of the configured engine, for the given database."""
-    if DATABASE_ENGINE == "sqlite":
-        return URL.create(DRIVERS["sqlite"], database=database)
-    return URL.create(
-        DRIVERS[DATABASE_ENGINE],
-        username=DATABASE_USER,
-        password=DATABASE_PASSWORD,
-        host=DATABASE_HOST,
-        port=int(DATABASE_PORT) if DATABASE_PORT else None,
-        database=database,
-        query={"charset": "utf8mb4"} if DATABASE_ENGINE == "mysql" else {},
-    )
+def database_url(database: str | None = None) -> URL:
+    """Build the connection URL of the configured engine, for the given database (default: the configured one)."""
+    return DatabaseSettings.from_config().url(database)
 
 
 def byte_order(column):
@@ -63,9 +45,9 @@ def byte_order(column):
     return column.collate(BYTE_ORDER_COLLATIONS[DATABASE_ENGINE])
 
 
-def create_database():
+def create_database(settings: DatabaseSettings | None = None):
     """
-    Creates the configured database if it does not already exist.
+    Creates the database (the configured one, unless `settings` says otherwise) if it does not already exist.
 
     - sqlite: nothing to do, the file is created on the first connection.
     - postgresql: connects to the `postgres` maintenance database and creates a UTF8 database
@@ -73,23 +55,24 @@ def create_database():
     - mysql: connects to the server and creates a utf8mb4 database. Its collation is utf8mb4_bin, so that
       comparisons are exact, as they are on the other two engines.
     """
-    if DATABASE_ENGINE == "sqlite":
+    settings = settings or DatabaseSettings.from_config()
+    if settings.engine == "sqlite":
         print("SQLite creates the database file on first use. Skipping creation.")
         return
 
-    maintenance_database = "postgres" if DATABASE_ENGINE == "postgresql" else None
-    server = create_engine(database_url(maintenance_database), isolation_level="AUTOCOMMIT")
-    quoted_name = server.dialect.identifier_preparer.quote(DATABASE_NAME)
+    maintenance_database = "postgres" if settings.engine == "postgresql" else ""
+    server = create_engine(settings.url(maintenance_database), isolation_level="AUTOCOMMIT")
+    quoted_name = server.dialect.identifier_preparer.quote(settings.name)
     with server.connect() as conn:
-        if DATABASE_ENGINE == "postgresql":
-            exists = conn.execute(text("SELECT 1 FROM pg_database WHERE datname = :name"), {"name": DATABASE_NAME})
+        if settings.engine == "postgresql":
+            exists = conn.execute(text("SELECT 1 FROM pg_database WHERE datname = :name"), {"name": settings.name})
             create = (
                 f"CREATE DATABASE {quoted_name} WITH ENCODING = 'UTF8' TEMPLATE = template0"
                 " LC_COLLATE = 'ru_RU.UTF-8' LC_CTYPE = 'ru_RU.UTF-8'"
             )
         else:
             exists = conn.execute(
-                text("SELECT 1 FROM information_schema.schemata WHERE schema_name = :name"), {"name": DATABASE_NAME}
+                text("SELECT 1 FROM information_schema.schemata WHERE schema_name = :name"), {"name": settings.name}
             )
             create = f"CREATE DATABASE {quoted_name} CHARACTER SET utf8mb4 COLLATE utf8mb4_bin"
         if exists.first():
