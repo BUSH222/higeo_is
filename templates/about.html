@@ -30,44 +30,43 @@
     </div>
     <div class="row mt-5">
         <div class="col-12">
-            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-2 row-cols-xl-4 g-3 mt-2">
-                <div class="col">
+            <div class="row g-3 mt-2">
+                <div class="col-md-6 col-xl">
                     <div class="card h-100 d-flex flex-column px-0">
                         <div class="card-header higeo-color-2">{{ _('Поиск персоналии') }}</div>
                         <div class="card-body flex-grow-1">{% trans count=person_count %}Напишите в строке поиска (полностью или частично) фамилии, имена и отчества учёных. На странице персоналии показаны биографии, библиографии, документы и фото. В системе {{ count }} персоналий учёных из разных стран.{% endtrans %}<br><a href="/search?defaultopen=1">{{ _('Поиск') }}</a></div>
                     </div>
                 </div>
-                <div class="col">
+                <div class="col-md-6 col-xl">
                     <div class="card h-100 d-flex flex-column px-0">
                         <div class="card-header higeo-color-2">{{ _('Поиск организаций') }}</div>
                         <div class="card-body flex-grow-1">{% trans %}Для показа списка учёных связанных с организациями, напишите в строке поиска названия института, организации или общества (можно использовать сокращения и части названия).{% endtrans %}<br><a href="/search?defaultopen=2">{{ _('Поиск') }}</a></div>
                     </div>
                 </div>
-                <div class="col">
+                <div class="col-md-6 col-xl">
                     <div class="card h-100 d-flex flex-column px-0">
                         <div class="card-header higeo-color-2">{{ _('Поиск по библиографиям') }}</div>
                         <div class="card-body flex-grow-1">{% trans %}Система показывает списки персоналий у которых в перечне трудов встречаются слова поискового запроса.{% endtrans %}<br><a href="/search?defaultopen=1">{{ _('Поиск') }}</a></div>
                     </div>
                 </div>
-                <div class="col">
+                <div class="col-md-6 col-xl-4">
                     <div class="card h-100 d-flex flex-column px-0">
                         <div class="card-header higeo-color-2">{{ _('Просмотр общих списков') }}</div>
                         <div class="card-body flex-grow-1">
                             <p>{% trans %}Также можно воспользоваться выбором персоналии или организации из общего списка.{% endtrans %}</p>
                             <ul>
-                                <li><a href="/list?type=person">{{ _('Список персоналий') }}</a></li>
-                                <li><a href="/list?type=field_of_study">{{ _('Список научных направлений') }}</a></li>
-                                <li><a href="/list?type=org">{{ _('Список организаций') }}</a></li>
+                                <li><a href="/list?type=person">{{ _('Персоналии') }}</a></li>
+                                <li><a href="/list?type=field_of_study">{{ _('Научные направления') }}</a></li>
+                                <li><a href="/list?type=org">{{ _('Организации') }}</a></li>
                                 <li><a href="/list_custom?type=geography">{{ _('География исследований') }}</a></li>
-                                <li><a href="/list_custom?type=acad_full_members">{{ _('Список действительных членов') }}</a></li>
-                                <li><a href="/list_custom?type=acad_foreign_members">{{ _('Список иностранных членов') }}</a></li>
-                                <li><a href="/list_custom?type=acad_honorary_members">{{ _('Список почётных членов') }}</a></li>
-                                <li><a href="/list_custom?type=acad_corresponding_members">{{ _('Список членов-корреспондентов') }}</a></li>
-                                <li><a href="/list_custom?type=acad_professors">{{ _('Список профессоров РАН') }}</a></li>
-                                <li><a href="/list_custom?type=acad_foreign_correspondents">{{ _('Список иностранных корреспондентов') }}</a></li>
-                                <li><a href="/list_custom?type=acad_full_members_azssr">{{ _('Список действительных членов АН АзСССР') }}</a></li>
-                                <li><a href="/list_custom?type=acad_corresponding_members_uassr">{{ _('Список членов-корреспондентов АН Украинской ССР') }}</a></li>
-                                <li><a href="/list_custom?type=acad_corresponding_members_azssr">{{ _('Список членов-корреспондентов Академии наук Азербайджанской ССР') }}</a></li>
+                            </ul>
+                            <ul>
+                                <li><a href="/list_custom?type=acad_full_members">{{ _('Действительные члены АН') }}</a></li>
+                                <li><a href="/list_custom?type=acad_foreign_members">{{ _('Иностранные члены') }}</a></li>
+                                <li><a href="/list_custom?type=acad_honorary_members">{{ _('Почётные члены') }}</a></li>
+                                <li><a href="/list_custom?type=acad_corresponding_members">{{ _('Члены-корреспонденты') }}</a></li>
+                                <li><a href="/list_custom?type=acad_professors">{{ _('Профессора РАН') }}</a></li>
+                                <li><a href="/list_custom?type=acad_foreign_correspondents">{{ _('Иностранные корреспонденты') }}</a></li>
                             </ul>
                         </div>
                     </div>

@@ -20,24 +20,30 @@ DATABASE_PASSWORD = os.environ.get("DATABASE_PASSWORD") or None
 # Web application configuration
 SECRET_KEY = os.environ.get("SECRET_KEY") or token_urlsafe(16)
 
+
+def N_(message: str) -> str:
+    """Mark a string for `pybabel extract` without translating it; it is translated where it is shown."""
+    return message
+
+
 # Project constants
 # /list_custom?type=<key> page -> stored Person.academic_degree value (must match the DB exactly).
-# Long forms (e.g. "... АН АзСССР") are deliberately separate from the plain titles.
+# The list page translates the value for its heading.
 ACADEMIC_DEGREE_LISTS = {
-    "acad_full_members": "действительный член",
-    "acad_foreign_members": "иностранный член",
-    "acad_honorary_members": "почётный член",
-    "acad_corresponding_members": "член-корреспондент",
-    "acad_professors": "профессор РАН",
-    "acad_foreign_correspondents": "иностранный корреспондент",
-    "acad_full_members_azssr": "Действительный член АН АзСССР",
-    "acad_corresponding_members_uassr": "Член-корреспондент АН Украинской ССР",
-    "acad_corresponding_members_azssr": "Член-корреспондент Академии наук Азербайджанской ССР",
+    "acad_full_members": N_("действительный член"),
+    "acad_foreign_members": N_("иностранный член"),
+    "acad_honorary_members": N_("почётный член"),
+    "acad_corresponding_members": N_("член-корреспондент"),
+    "acad_professors": N_("профессор РАН"),
+    "acad_foreign_correspondents": N_("иностранный корреспондент"),
 }
 ACADEMIC_DEGREE_TO_LIST = {degree: list_type for list_type, degree in ACADEMIC_DEGREE_LISTS.items()}
+# Any other title, e.g. of the academies of the Soviet republics: it has no list page; the person is linked to the
+# academy as an organization and the exact title is written in the comment.
+ACADEMIC_DEGREE_OTHER = "другое"
 
 MULTIPLE_CHOICE_FIELDS = {
-    "academic_degree": ["", *ACADEMIC_DEGREE_LISTS.values()],
+    "academic_degree": ["", *ACADEMIC_DEGREE_LISTS.values(), ACADEMIC_DEGREE_OTHER],
     "org_type": [
         "Международные союзы",
         "",

@@ -609,11 +609,15 @@ def new(request: Request):
     mapper = inspect(obj)
     data_fin = {}
     for column in mapper.attrs:
-        if (
-            column.key
-            not in ["organizations", "documents", "members", "authors", "field_of_study", "education", "alumni"]
-            and column.key not in ("id", "last_updated")
-        ):
+        if column.key not in [
+            "organizations",
+            "documents",
+            "members",
+            "authors",
+            "field_of_study",
+            "education",
+            "alumni",
+        ] and column.key not in ("id", "last_updated"):
             data_fin[column.key] = ""
     data2 = {}
     if obj_type == "person":

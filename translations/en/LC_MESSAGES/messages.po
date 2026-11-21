@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-10 17:47+0300\n"
+"POT-Creation-Date: 2026-11-21 23:15+0300\n"
 "PO-Revision-Date: 2025-09-23 21:10+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -18,99 +18,107 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: main.py:203
+#: main.py:272
 #, python-format
 msgid "Географический регион: %(place)s"
 msgstr "Geographic region: %(place)s"
 
-#: main.py:204
+#: main.py:273
 #, python-format
 msgid "Geographic region: %(place)s"
 msgstr "Geographic region: %(place)s"
 
-#: main.py:235
+#: main.py:305
 msgid "Организация"
 msgstr "Organization"
 
-#: main.py:236
+#: main.py:306 main.py:343
 msgid "Персоналия"
 msgstr "Person"
 
-#: main.py:237
+#: main.py:307
 msgid "Документ"
 msgstr "Document"
 
-#: main.py:238
+#: main.py:308
 msgid "Область знаний"
 msgstr "Field of study"
 
-#: main.py:242
+#: main.py:318
 #, python-format
 msgid "View %(name)s"
 msgstr "View %(name)s"
 
-#: main.py:292 templates/about.html:37 templates/about.html:43
-#: templates/about.html:49 templates/base.html:31 templates/base.html:70
-#: templates/base.html:71 templates/search.html:92 templates/search.html:128
+#: main.py:348 templates/about.html:37 templates/about.html:43
+#: templates/about.html:49 templates/base.html:31 templates/base.html:69
+#: templates/base.html:70 templates/search.html:92 templates/search.html:128
 #: templates/search.html:163
 msgid "Поиск"
 msgstr "Search"
 
-#: main.py:292
+#: main.py:348
 msgid "Search"
 msgstr "Search"
 
-#: main.py:446 templates/base.html:40
+#: main.py:500 templates/about.html:60 templates/base.html:40
 msgid "Организации"
 msgstr "Organizations"
 
-#: main.py:447
+#: main.py:501 templates/about.html:58
 msgid "Персоналии"
 msgstr "Persons"
 
-#: main.py:448
+#: main.py:502
 msgid "Документы"
 msgstr "Documents"
 
-#: main.py:449
+#: main.py:503
 msgid "Области исследования"
 msgstr "Fields of study"
 
-#: main.py:510 main.py:511
+#: main.py:557 main.py:558
 msgid "Самые популярные географические регионы"
 msgstr "Most popular geographic regions"
 
-#: main.py:514
+#: main.py:561
 #, python-format
 msgid "%(place)s - %(count)s results"
 msgstr "%(place)s - %(count)s results"
 
-#: main.py:529
-msgid "действительный член"
-msgstr "full member"
-
-#: main.py:530
-msgid "иностранный член"
-msgstr "foreign member"
-
-#: main.py:531
-msgid "почётный член"
-msgstr "honorary member"
-
-#: main.py:532
-msgid "член-корреспондент"
-msgstr "corresponding member"
-
-#: main.py:533
-msgid "профессор РАН"
-msgstr "RAS professor"
-
-#: main.py:546 main.py:547
+#: main.py:574 main.py:575
 #, python-format
 msgid "Список академических степеней - %(degree)s"
 msgstr "List of academic degrees - %(degree)s"
 
-#: helper/login/login.py:37
+#: helper/__init__.py:33
+msgid "действительный член"
+msgstr "full member"
+
+#: helper/__init__.py:34
+msgid "иностранный член"
+msgstr "foreign member"
+
+#: helper/__init__.py:35
+msgid "почётный член"
+msgstr "honorary member"
+
+#: helper/__init__.py:36
+msgid "член-корреспондент"
+msgstr "corresponding member"
+
+#: helper/__init__.py:37
+msgid "профессор РАН"
+msgstr "RAS professor"
+
+#: helper/__init__.py:38
+msgid "иностранный корреспондент"
+msgstr "foreign correspondent"
+
+#: helper/login/login.py:38
+msgid "Слишком много неудачных попыток входа. Повторите попытку через 15 минут."
+msgstr "Too many failed login attempts. Please try again in 15 minutes."
+
+#: helper/login/login.py:45
 msgid "Неверный email или пароль."
 msgstr "Invalid email or password."
 
@@ -173,7 +181,7 @@ msgstr ""
 " RAS), where you can send additional bibliographies and documents on the "
 "history of geological and mining sciences."
 
-#: templates/about.html:23 templates/base.html:88 templates/index.html:32
+#: templates/about.html:23 templates/base.html:87 templates/index.html:32
 msgid "Группа истории геологии"
 msgstr "History of Geology Group"
 
@@ -233,77 +241,73 @@ msgid ""
 "списка."
 msgstr "You can also select a person or organization from the general list."
 
-#: templates/about.html:58
-msgid "Список персоналий"
-msgstr "List of persons"
-
 #: templates/about.html:59
-msgid "Список научных направлений"
-msgstr "List of fields of study"
-
-#: templates/about.html:60
-msgid "Список организаций"
-msgstr "List of organizations"
+msgid "Научные направления"
+msgstr "Fields of study"
 
 #: templates/about.html:61
 msgid "География исследований"
 msgstr "Geography of research"
 
-#: templates/about.html:62
-msgid "Список действительных членов"
-msgstr "List of full members"
-
-#: templates/about.html:63
-msgid "Список иностранных членов"
-msgstr "List of foreign members"
-
 #: templates/about.html:64
-msgid "Список почётных членов"
-msgstr "List of honorary members"
+msgid "Действительные члены АН"
+msgstr "Full members of the Academy of Sciences"
 
 #: templates/about.html:65
-msgid "Список членов-корреспондентов"
-msgstr "List of corresponding members"
+msgid "Иностранные члены"
+msgstr "Foreign members"
 
 #: templates/about.html:66
-msgid "Список профессоров РАН"
-msgstr "List of RAS professors"
+msgid "Почётные члены"
+msgstr "Honorary members"
 
-#: templates/about.html:78
+#: templates/about.html:67
+msgid "Члены-корреспонденты"
+msgstr "Corresponding members"
+
+#: templates/about.html:68
+msgid "Профессора РАН"
+msgstr "RAS professors"
+
+#: templates/about.html:69
+msgid "Иностранные корреспонденты"
+msgstr "Foreign correspondents"
+
+#: templates/about.html:81
 msgid "Дополнительная информация"
 msgstr "Additional information"
 
-#: templates/about.html:82
+#: templates/about.html:85
 msgid "Публикации о системе:"
 msgstr "Publications about the system:"
 
-#: templates/about.html:94
+#: templates/about.html:97
 msgid "Разработка программного обеспечения:"
 msgstr "Software development:"
 
-#: templates/about.html:99
+#: templates/about.html:102
 msgid "Поддержка и наполнение контента"
 msgstr "Content support and maintenance"
 
-#: templates/about.html:100
+#: templates/about.html:103
 msgid "Группа истории геологии, Геологический институт Российской академии наук."
 msgstr ""
 "History of Geology Group, Geological Institute of the Russian Academy of "
 "Sciences."
 
-#: templates/about.html:101
+#: templates/about.html:104
 msgid "Автор идеи и редактор содержания: И.Г. Малахова."
 msgstr "Initiator and content editor: I.G. Malakhova."
 
-#: templates/about.html:104
+#: templates/about.html:107
 msgid "Лицензии"
 msgstr "Licenses"
 
-#: templates/about.html:105
+#: templates/about.html:108
 msgid "Содержание ИС находится под лицензией"
 msgstr "The IS content is licensed under"
 
-#: templates/about.html:106
+#: templates/about.html:109
 msgid "Исходный код ИС находится под лицензией"
 msgstr "The IS source code is licensed under"
 
@@ -327,27 +331,27 @@ msgstr "Topics"
 msgid "География"
 msgstr "Geography"
 
-#: templates/base.html:49 templates/base.html:57
+#: templates/base.html:48 templates/base.html:56
 msgid "English"
 msgstr "English"
 
-#: templates/base.html:51 templates/base.html:62
+#: templates/base.html:50 templates/base.html:61
 msgid "Русский"
 msgstr "Russian"
 
-#: templates/base.html:70
+#: templates/base.html:69
 msgid "Общий поиск"
 msgstr "Global search"
 
-#: templates/base.html:85
+#: templates/base.html:84
 msgid "ГИН РАН"
 msgstr "GIN RAS"
 
-#: templates/base.html:89
+#: templates/base.html:88
 msgid "Геологический институт"
 msgstr "Geological Institute"
 
-#: templates/base.html:90
+#: templates/base.html:89
 msgid "Российская академия наук"
 msgstr "Russian Academy of Sciences"
 
@@ -371,17 +375,20 @@ msgstr "Objectives:"
 
 #: templates/index.html:22
 msgid ""
-"<a href=\"/about\">Систематизация</a> и удобный <a href=\"/search\">поиск "
-"информации</a> по истории геологии и горного дела."
+"<a href=\"/about\">Систематизация</a> и удобный <a href=\"/search\">поиск"
+" информации</a> по истории геологии и горного дела."
 msgstr ""
-"<a href=\"/about\">Systematization</a> and convenient <a href=\"/search\">search of information</a> on the history of geology and mining."
+"<a href=\"/about\">Systematization</a> and convenient <a "
+"href=\"/search\">search of information</a> on the history of geology and "
+"mining."
 
 #: templates/index.html:23
 msgid ""
-"Поддержка научных исследований за счёт актуальных и <a href=\"/list?"
-"type=field_of_study\">структурированных данных</a>."
+"Поддержка научных исследований за счёт актуальных и <a "
+"href=\"/list?type=field_of_study\">структурированных данных</a>."
 msgstr ""
-"Support for scientific research through up-to-date and <a href=\"/list?type=field_of_study\">structured data</a>."
+"Support for scientific research through up-to-date and <a "
+"href=\"/list?type=field_of_study\">structured data</a>."
 
 #: templates/index.html:25
 msgid "Функции:"
@@ -403,15 +410,15 @@ msgstr ""
 "Allows sorting of data; includes documents and links to additional "
 "materials."
 
-#: templates/list.html:10 templates/search.html:185
+#: templates/list.html:10 templates/search.html:186
 msgid "Поиск не дал результатов"
 msgstr "No results found"
 
-#: templates/list.html:12 templates/search.html:187
+#: templates/list.html:12 templates/search.html:188
 msgid "Найдено"
 msgstr "Found"
 
-#: templates/list.html:12 templates/search.html:187
+#: templates/list.html:12 templates/search.html:188
 msgid "результатов"
 msgstr "results"
 
@@ -427,25 +434,29 @@ msgstr "Password"
 msgid "Войти"
 msgstr "Log in"
 
-#: templates/new.html:23
+#: templates/new.html:24
 msgid "Current file:"
 msgstr "Current file:"
 
-#: templates/new.html:23
+#: templates/new.html:24
 msgid "Download"
 msgstr "Download"
 
-#: templates/new.html:38
+#: templates/new.html:39
 msgid "Поиск..."
 msgstr "Search..."
 
-#: templates/new.html:48
+#: templates/new.html:49
 msgid "Удалить"
 msgstr "Delete"
 
-#: templates/new.html:56
+#: templates/new.html:57
 msgid "Сохранить"
 msgstr "Save"
+
+#: templates/new.html:61 templates/view.html:102
+msgid "Последнее обновление"
+msgstr "Last updated"
 
 #: templates/redirect.html:4
 msgid "Success! you will soon be redirected"
@@ -539,27 +550,31 @@ msgstr "New document"
 msgid "New field of study"
 msgstr "New field of study"
 
-#: templates/search.html:179
+#: templates/search.html:180
 msgid "Результаты поиска"
 msgstr "Search results"
 
-#: templates/search.html:182
+#: templates/search.html:183
 msgid "Здесь будут показаны результаты поиска"
 msgstr "Search results will be displayed here"
 
-#: templates/view.html:16
+#: templates/view.html:17
+msgid "Печать"
+msgstr "Print"
+
+#: templates/view.html:27
 msgid "Edit"
 msgstr "Edit"
 
-#: templates/view.html:20
+#: templates/view.html:29
 msgid "Вы действительно хотите стереть всю страницу?"
 msgstr "Are you sure you want to delete this page?"
 
-#: templates/view.html:21
+#: templates/view.html:32
 msgid "Delete"
 msgstr "Delete"
 
-#: templates/view.html:78
+#: templates/view.html:90
 msgid "Скачать файл"
 msgstr "Download file"
 
@@ -582,10 +597,27 @@ msgstr "Download file"
 #~ " profiles of scholars from different "
 #~ "countries."
 
+#~ msgid "Список персоналий"
+#~ msgstr "List of persons"
 
-#: templates/view.html
-msgid "Печать"
-msgstr "Print"
+#~ msgid "Список научных направлений"
+#~ msgstr "List of fields of study"
 
-msgid "Последнее обновление"
-msgstr "Last updated"
+#~ msgid "Список организаций"
+#~ msgstr "List of organizations"
+
+#~ msgid "Список действительных членов"
+#~ msgstr "List of full members"
+
+#~ msgid "Список иностранных членов"
+#~ msgstr "List of foreign members"
+
+#~ msgid "Список почётных членов"
+#~ msgstr "List of honorary members"
+
+#~ msgid "Список членов-корреспондентов"
+#~ msgstr "List of corresponding members"
+
+#~ msgid "Список профессоров РАН"
+#~ msgstr "List of RAS professors"
+
