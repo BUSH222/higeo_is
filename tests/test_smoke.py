@@ -165,6 +165,15 @@ def test_bad_birth_year_is_not_a_server_error(client):
     assert client.get("/search?type=person&birthYear=abc").status_code == 404
 
 
+def test_home_page_title_and_about_link(client):
+    page = client.get("/?lang=ru").text
+    assert "<title>Информационная система «История геологии и горного дела» - HIGEO IS</title>" in page
+    assert '<a href="/about">Подробнее об Информационной системе</a>' in page
+    page = client.get("/?lang=en").text
+    assert "<title>The Information System ‘History of Geology and Mining’ - HIGEO IS</title>" in page
+    assert '<a href="/about">More about the Information System</a>' in page
+
+
 # --- language -------------------------------------------------------------------------------------------------
 
 

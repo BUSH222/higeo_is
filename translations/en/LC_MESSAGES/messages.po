@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-21 23:15+0300\n"
+"POT-Creation-Date: 2026-11-21 23:47+0300\n"
 "PO-Revision-Date: 2025-09-23 21:10+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -122,7 +122,7 @@ msgstr "Too many failed login attempts. Please try again in 15 minutes."
 msgid "Неверный email или пароль."
 msgstr "Invalid email or password."
 
-#: templates/about.html:2 templates/index.html:3
+#: templates/about.html:2
 msgid "About"
 msgstr "About"
 
@@ -181,11 +181,11 @@ msgstr ""
 " RAS), where you can send additional bibliographies and documents on the "
 "history of geological and mining sciences."
 
-#: templates/about.html:23 templates/base.html:87 templates/index.html:32
+#: templates/about.html:23 templates/base.html:87 templates/index.html:33
 msgid "Группа истории геологии"
 msgstr "History of Geology Group"
 
-#: templates/about.html:23 templates/index.html:32
+#: templates/about.html:23 templates/index.html:33
 msgid "ГИН РАН, Москва."
 msgstr "GIN RAS, Moscow."
 
@@ -355,6 +355,10 @@ msgstr "Geological Institute"
 msgid "Российская академия наук"
 msgstr "Russian Academy of Sciences"
 
+#: templates/index.html:3
+msgid "Информационная система «История геологии и горного дела»"
+msgstr "The Information System ‘History of Geology and Mining’"
+
 #: templates/index.html:11
 msgid "Информационная система"
 msgstr "Information system"
@@ -409,6 +413,10 @@ msgid ""
 msgstr ""
 "Allows sorting of data; includes documents and links to additional "
 "materials."
+
+#: templates/index.html:31
+msgid "Подробнее об Информационной системе"
+msgstr "More about the Information System"
 
 #: templates/list.html:10 templates/search.html:186
 msgid "Поиск не дал результатов"

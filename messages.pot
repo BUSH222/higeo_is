@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-21 23:15+0300\n"
+"POT-Creation-Date: 2026-11-21 23:47+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -121,7 +121,7 @@ msgstr ""
 msgid "Неверный email или пароль."
 msgstr ""
 
-#: templates/about.html:2 templates/index.html:3
+#: templates/about.html:2
 msgid "About"
 msgstr ""
 
@@ -161,11 +161,11 @@ msgid ""
 "по истории геологических и горных наук."
 msgstr ""
 
-#: templates/about.html:23 templates/base.html:87 templates/index.html:32
+#: templates/about.html:23 templates/base.html:87 templates/index.html:33
 msgid "Группа истории геологии"
 msgstr ""
 
-#: templates/about.html:23 templates/index.html:32
+#: templates/about.html:23 templates/index.html:33
 msgid "ГИН РАН, Москва."
 msgstr ""
 
@@ -324,6 +324,10 @@ msgstr ""
 msgid "Российская академия наук"
 msgstr ""
 
+#: templates/index.html:3
+msgid "Информационная система «История геологии и горного дела»"
+msgstr ""
+
 #: templates/index.html:11
 msgid "Информационная система"
 msgstr ""
@@ -367,6 +371,10 @@ msgstr ""
 msgid ""
 "Позволяет сортировать данные, содержит документы и ссылки на "
 "дополнительные материалы."
+msgstr ""
+
+#: templates/index.html:31
+msgid "Подробнее об Информационной системе"
 msgstr ""
 
 #: templates/list.html:10 templates/search.html:186
