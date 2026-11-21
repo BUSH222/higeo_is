@@ -105,11 +105,51 @@ def test_people_are_listed_in_code_point_order(client):
 
 
 def test_geography_counts(client):
-    page = client.get("/list_custom?type=geography&lang=en").text
-    assert "Урал - 3 results" in page
+    page = client.get("/list_custom?type=geography").text
+    assert "Урал - (3)" in page
     for place in ["Кольский полуостров", "Крым", "Сибирь"]:
-        assert f"{place} - 1 results" in page
-    assert page.index("Урал - 3") < page.index("Кольский полуостров - 1") < page.index("Крым - 1")
+        assert f"{place} - (1)" in page
+    assert page.index("Урал - (3)") < page.index("Кольский полуостров - (1)") < page.index("Крым - (1)")
+    assert "результат" not in page.split("</h6>", 1)[1]  # no word after the counts (the heading is separate)
+
+
+@pytest.fixture
+def overlapping_regions():
+    """People whose regions overlap as text, removed again afterwards since the database is shared."""
+    areas = ["США, Канада", "Юг США", "сша, Ёмкость", "Емкость, Канада, Канада"]
+    with Session(db.engine) as session:
+        people = [db.Person(surname=f"Регионов{i}", name="Тест", area_of_study=area) for i, area in enumerate(areas)]
+        session.add_all(people)
+        session.commit()
+        yield
+        for person in people:
+            session.delete(person)
+        session.commit()
+
+
+def geography_counts(client):
+    """{region: count} as the geography list shows them."""
+    page = client.get("/list_custom?type=geography").text
+    return {place: int(count) for place, count in re.findall(r">\s*([^<>]+?) - \((\d+)\)\s*<", page)}
+
+
+def people_on_region_page(client, place):
+    return len(re.findall(r'href="/view\?type=person&id=\d+"', client.get(f"/view?type=geography&id={place}").text))
+
+
+def test_geography_matches_whole_entries(client, overlapping_regions):
+    counts = geography_counts(client)
+    # "Юг США" is not counted under "США"; case and ё are ignored; a place listed twice counts the person once
+    assert (counts["США"], counts["Юг США"], counts["Ёмкость"], counts["Канада"]) == (2, 1, 2, 2)
+    assert people_on_region_page(client, "США") == 2
+    assert people_on_region_page(client, "юг сша") == 1
+
+
+def test_geography_list_counts_match_region_pages(client, overlapping_regions):
+    counts = geography_counts(client)
+    assert counts
+    for place, count in counts.items():
+        assert people_on_region_page(client, place) == count, place
 
 
 def test_academic_degree_list(client):

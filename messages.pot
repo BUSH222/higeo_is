@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-21 23:47+0300\n"
+"POT-Creation-Date: 2026-11-22 00:11+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,74 +17,69 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: main.py:272
+#: main.py:283
 #, python-format
 msgid "Географический регион: %(place)s"
 msgstr ""
 
-#: main.py:273
+#: main.py:284
 #, python-format
 msgid "Geographic region: %(place)s"
 msgstr ""
 
-#: main.py:305
+#: main.py:316
 msgid "Организация"
 msgstr ""
 
-#: main.py:306 main.py:343
+#: main.py:317 main.py:354
 msgid "Персоналия"
 msgstr ""
 
-#: main.py:307
+#: main.py:318
 msgid "Документ"
 msgstr ""
 
-#: main.py:308
+#: main.py:319
 msgid "Область знаний"
 msgstr ""
 
-#: main.py:318
+#: main.py:329
 #, python-format
 msgid "View %(name)s"
 msgstr ""
 
-#: main.py:348 templates/about.html:37 templates/about.html:43
+#: main.py:359 templates/about.html:37 templates/about.html:43
 #: templates/about.html:49 templates/base.html:31 templates/base.html:69
 #: templates/base.html:70 templates/search.html:92 templates/search.html:128
 #: templates/search.html:163
 msgid "Поиск"
 msgstr ""
 
-#: main.py:348
+#: main.py:359
 msgid "Search"
 msgstr ""
 
-#: main.py:500 templates/about.html:60 templates/base.html:40
+#: main.py:511 templates/about.html:60 templates/base.html:40
 msgid "Организации"
 msgstr ""
 
-#: main.py:501 templates/about.html:58
+#: main.py:512 templates/about.html:58
 msgid "Персоналии"
 msgstr ""
 
-#: main.py:502
+#: main.py:513
 msgid "Документы"
 msgstr ""
 
-#: main.py:503
+#: main.py:514
 msgid "Области исследования"
 msgstr ""
 
-#: main.py:557 main.py:558
-msgid "Самые популярные географические регионы"
+#: main.py:573 main.py:574
+msgid "Районы работ (число исследователей)"
 msgstr ""
 
-#: main.py:561
-#, python-format
-msgid "%(place)s - %(count)s results"
-msgstr ""
-
-#: main.py:574 main.py:575
+#: main.py:591 main.py:592
 #, python-format
 msgid "Список академических степеней - %(degree)s"
 msgstr ""

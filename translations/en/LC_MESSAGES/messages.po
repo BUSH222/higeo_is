@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-21 23:47+0300\n"
+"POT-Creation-Date: 2026-11-22 00:11+0300\n"
 "PO-Revision-Date: 2025-09-23 21:10+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -18,74 +18,69 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: main.py:272
+#: main.py:283
 #, python-format
 msgid "Географический регион: %(place)s"
 msgstr "Geographic region: %(place)s"
 
-#: main.py:273
+#: main.py:284
 #, python-format
 msgid "Geographic region: %(place)s"
 msgstr "Geographic region: %(place)s"
 
-#: main.py:305
+#: main.py:316
 msgid "Организация"
 msgstr "Organization"
 
-#: main.py:306 main.py:343
+#: main.py:317 main.py:354
 msgid "Персоналия"
 msgstr "Person"
 
-#: main.py:307
+#: main.py:318
 msgid "Документ"
 msgstr "Document"
 
-#: main.py:308
+#: main.py:319
 msgid "Область знаний"
 msgstr "Field of study"
 
-#: main.py:318
+#: main.py:329
 #, python-format
 msgid "View %(name)s"
 msgstr "View %(name)s"
 
-#: main.py:348 templates/about.html:37 templates/about.html:43
+#: main.py:359 templates/about.html:37 templates/about.html:43
 #: templates/about.html:49 templates/base.html:31 templates/base.html:69
 #: templates/base.html:70 templates/search.html:92 templates/search.html:128
 #: templates/search.html:163
 msgid "Поиск"
 msgstr "Search"
 
-#: main.py:348
+#: main.py:359
 msgid "Search"
 msgstr "Search"
 
-#: main.py:500 templates/about.html:60 templates/base.html:40
+#: main.py:511 templates/about.html:60 templates/base.html:40
 msgid "Организации"
 msgstr "Organizations"
 
-#: main.py:501 templates/about.html:58
+#: main.py:512 templates/about.html:58
 msgid "Персоналии"
 msgstr "Persons"
 
-#: main.py:502
+#: main.py:513
 msgid "Документы"
 msgstr "Documents"
 
-#: main.py:503
+#: main.py:514
 msgid "Области исследования"
 msgstr "Fields of study"
 
-#: main.py:557 main.py:558
-msgid "Самые популярные географические регионы"
-msgstr "Most popular geographic regions"
+#: main.py:573 main.py:574
+msgid "Районы работ (число исследователей)"
+msgstr "Areas of work (number of researchers)"
 
-#: main.py:561
-#, python-format
-msgid "%(place)s - %(count)s results"
-msgstr "%(place)s - %(count)s results"
-
-#: main.py:574 main.py:575
+#: main.py:591 main.py:592
 #, python-format
 msgid "Список академических степеней - %(degree)s"
 msgstr "List of academic degrees - %(degree)s"
@@ -628,4 +623,10 @@ msgstr "Download file"
 
 #~ msgid "Список профессоров РАН"
 #~ msgstr "List of RAS professors"
+
+#~ msgid "%(place)s - %(count)s results"
+#~ msgstr "%(place)s - %(count)s results"
+
+#~ msgid "Самые популярные географические регионы"
+#~ msgstr "Most popular geographic regions"
 

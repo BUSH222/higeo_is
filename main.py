@@ -64,6 +64,14 @@ def fold(column):
     return func.replace(func.lower(column), "ё", "е")
 
 
+def area_entries(area_of_study: str | None) -> set[str]:
+    """The places of a person's comma separated area_of_study, folded: "Урал, юг США" -> {"урал", "юг сша"}.
+
+    The geography list and the page of a region both match these whole entries, so their counts agree.
+    """
+    return {fold_text(place.strip()) for place in (area_of_study or "").split(",") if place.strip()}
+
+
 app = FastAPI(title="HIGEO IS", docs_url=None, redoc_url=None, openapi_url=None)
 # The middleware added last runs first: the session must be loaded before the locale is chosen.
 app.add_middleware(LocaleMiddleware)
@@ -233,13 +241,16 @@ def view(request: Request):
 
     if request.query_params.get("type") == "geography":
         place = request.query_params.get("id")
+        folded_place = fold_text(place.strip())
+        # The SQL filter narrows it down to the fields containing the text; only whole entries count, so that
+        # "США" does not also list the people of "Юг США" (who have a region of their own in the list).
         stmt = (
             select(Person)
-            .filter(fold(Person.area_of_study).contains(fold_text(place), autoescape=True))
+            .filter(fold(Person.area_of_study).contains(folded_place, autoescape=True))
             .order_by(Person.surname, Person.name)
         )
         with Session(engine) as session:
-            people = session.execute(stmt).scalars().all()
+            people = [person for person in session.scalars(stmt) if folded_place in area_entries(person.area_of_study)]
         # Localize keys for geography view
         if get_locale() == "en":
             data = {
@@ -546,21 +557,27 @@ def list_view_custom(request: Request):
         abort(404)
 
     if obj_type == "geography":
-        # area_of_study holds a comma separated list of places: count how many people worked in each.
+        # area_of_study holds a comma separated list of places: count how many people worked in each, matching
+        # whole entries as the page of a region does (ignoring case and ё, each person once).
         stmt = select(Person.area_of_study).where(Person.area_of_study.is_not(None))
         with Session(engine) as session:
-            places = Counter(
-                place.strip() for areas in session.scalars(stmt) for place in areas.split(",") if place.strip()
-            )
-        most_common = sorted(places.items(), key=lambda item: (-item[1], item[0]))[:100]
+            fields = session.scalars(stmt).all()
+        people = Counter(entry for field in fields for entry in area_entries(field))
+        spellings: dict[str, Counter] = {}  # entry -> how often each spelling of it is used
+        for field in fields:
+            for place in field.split(","):
+                if place.strip():
+                    spellings.setdefault(fold_text(place.strip()), Counter())[place.strip()] += 1
+        most_common = sorted(people.items(), key=lambda item: (-item[1], item[0]))[:100]
         page_info = {
-            "heading": _("Самые популярные географические регионы"),
-            "title": _("Самые популярные географические регионы"),
+            "heading": _("Районы работ (число исследователей)"),
+            "title": _("Районы работ (число исследователей)"),
         }
-        results = [
-            ["geography", place, _("%(place)s - %(count)s results", place=place, count=count)]
-            for place, count in most_common
-        ]
+        results = []
+        for entry, count in most_common:
+            # shown in its most common spelling; on a tie the first in code point order, i.e. the capitalised one
+            name = min(spellings[entry], key=lambda spelling: (-spellings[entry][spelling], spelling))
+            results.append(["geography", name, f"{name} - ({count})"])
         use_pagination = False
     else:
         # DB filter value (must match the stored value exactly); the label is translated for display
