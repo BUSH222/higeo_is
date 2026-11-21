@@ -39,6 +39,19 @@
                      <li>
                     	<a class="nav-link border-md-right fs-4 me-2" href="/list?type=org">{{ _('Организации') }}</a>
 					</li>
+					{% if current_user.is_authenticated %}
+					<li class="nav-item dropdown">  <!-- Creating records and logging out, for administrators -->
+						<a class="nav-link dropdown-toggle border-md-right fs-4 fw-bold me-2" href="#" id="adminMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">{{ _('Администрирование') }}</a>
+						<ul class="dropdown-menu" aria-labelledby="adminMenu">
+							<li><a class="dropdown-item" href="/new?type=person">{{ _('New person') }}</a></li>
+							<li><a class="dropdown-item" href="/new?type=org">{{ _('New organization') }}</a></li>
+							<li><a class="dropdown-item" href="/new?type=doc">{{ _('New document') }}</a></li>
+							<li><a class="dropdown-item" href="/new?type=field_of_study">{{ _('New field of study') }}</a></li>
+							<li><hr class="dropdown-divider"></li>
+							<li><a class="dropdown-item" href="/logout">{{ _('Выйти') }}</a></li>
+						</ul>
+					</li>
+					{% endif %}
 				</ul>
 
                 <div class="d-flex ms-auto align-items-center">

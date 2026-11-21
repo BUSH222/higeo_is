@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-22 00:11+0300\n"
+"POT-Creation-Date: 2026-11-22 00:31+0300\n"
 "PO-Revision-Date: 2025-09-23 21:10+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -50,8 +50,8 @@ msgid "View %(name)s"
 msgstr "View %(name)s"
 
 #: main.py:359 templates/about.html:37 templates/about.html:43
-#: templates/about.html:49 templates/base.html:31 templates/base.html:69
-#: templates/base.html:70 templates/search.html:92 templates/search.html:128
+#: templates/about.html:49 templates/base.html:31 templates/base.html:82
+#: templates/base.html:83 templates/search.html:92 templates/search.html:128
 #: templates/search.html:163
 msgid "Поиск"
 msgstr "Search"
@@ -176,7 +176,7 @@ msgstr ""
 " RAS), where you can send additional bibliographies and documents on the "
 "history of geological and mining sciences."
 
-#: templates/about.html:23 templates/base.html:87 templates/index.html:33
+#: templates/about.html:23 templates/base.html:100 templates/index.html:33
 msgid "Группа истории геологии"
 msgstr "History of Geology Group"
 
@@ -326,27 +326,51 @@ msgstr "Topics"
 msgid "География"
 msgstr "Geography"
 
-#: templates/base.html:48 templates/base.html:56
+#: templates/base.html:44
+msgid "Администрирование"
+msgstr "Administration"
+
+#: templates/base.html:46
+msgid "New person"
+msgstr "New person"
+
+#: templates/base.html:47
+msgid "New organization"
+msgstr "New organization"
+
+#: templates/base.html:48
+msgid "New document"
+msgstr "New document"
+
+#: templates/base.html:49
+msgid "New field of study"
+msgstr "New field of study"
+
+#: templates/base.html:51
+msgid "Выйти"
+msgstr "Log out"
+
+#: templates/base.html:61 templates/base.html:69
 msgid "English"
 msgstr "English"
 
-#: templates/base.html:50 templates/base.html:61
+#: templates/base.html:63 templates/base.html:74
 msgid "Русский"
 msgstr "Russian"
 
-#: templates/base.html:69
+#: templates/base.html:82
 msgid "Общий поиск"
 msgstr "Global search"
 
-#: templates/base.html:84
+#: templates/base.html:97
 msgid "ГИН РАН"
 msgstr "GIN RAS"
 
-#: templates/base.html:88
+#: templates/base.html:101
 msgid "Геологический институт"
 msgstr "Geological Institute"
 
-#: templates/base.html:89
+#: templates/base.html:102
 msgid "Российская академия наук"
 msgstr "Russian Academy of Sciences"
 
@@ -413,15 +437,15 @@ msgstr ""
 msgid "Подробнее об Информационной системе"
 msgstr "More about the Information System"
 
-#: templates/list.html:10 templates/search.html:186
+#: templates/list.html:10 templates/search.html:180
 msgid "Поиск не дал результатов"
 msgstr "No results found"
 
-#: templates/list.html:12 templates/search.html:188
+#: templates/list.html:12 templates/search.html:182
 msgid "Найдено"
 msgstr "Found"
 
-#: templates/list.html:12 templates/search.html:188
+#: templates/list.html:12 templates/search.html:182
 msgid "результатов"
 msgstr "results"
 
@@ -537,27 +561,11 @@ msgstr "Search by documents:"
 msgid "Название документа"
 msgstr "Document title"
 
-#: templates/search.html:172
-msgid "New person"
-msgstr "New person"
-
-#: templates/search.html:173
-msgid "New organization"
-msgstr "New organization"
-
 #: templates/search.html:174
-msgid "New document"
-msgstr "New document"
-
-#: templates/search.html:175
-msgid "New field of study"
-msgstr "New field of study"
-
-#: templates/search.html:180
 msgid "Результаты поиска"
 msgstr "Search results"
 
-#: templates/search.html:183
+#: templates/search.html:177
 msgid "Здесь будут показаны результаты поиска"
 msgstr "Search results will be displayed here"
 
@@ -629,4 +637,7 @@ msgstr "Download file"
 
 #~ msgid "Самые популярные географические регионы"
 #~ msgstr "Most popular geographic regions"
+
+#~ msgid "Создать"
+#~ msgstr "Create"
 

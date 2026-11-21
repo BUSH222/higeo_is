@@ -530,6 +530,21 @@ def test_field_of_study_comment(staff, client, ids):
     assert "Комментарий" not in client.get(url).text
 
 
+NEW_LINKS = ["/new?type=person", "/new?type=org", "/new?type=doc", "/new?type=field_of_study"]
+
+
+@pytest.mark.parametrize("url", ["/", "/about", "/search", "/list?type=person"])
+def test_admin_menu_is_in_the_navbar_for_staff_only(staff, url):
+    page = staff.get(url).text
+    assert 'id="adminMenu"' in page and "Администрирование" in page
+    for link in [*NEW_LINKS, "/logout"]:  # once each: in the menu, no longer also as buttons on the search page
+        assert page.count(f'href="{link}"') == 1 and f'class="dropdown-item" href="{link}"' in page
+    staff.cookies.clear()  # log out
+    anonymous = staff.get(url).text
+    assert 'id="adminMenu"' not in anonymous
+    assert not any(link in anonymous for link in [*NEW_LINKS, "/logout"])
+
+
 def test_field_of_study_save_needs_login(client):
     assert client.post("/save?type=field_of_study", data={"name": "X"}).status_code in (302, 303, 307)
 
