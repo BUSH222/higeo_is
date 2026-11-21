@@ -43,8 +43,19 @@ p.GIN{
 	color: black !important;
 }
 
+.hover-highlight {
+	margin-bottom: 3px;
+}
+
 .hover-highlight:hover {
 	background-color: #fff8f8;
+}
+
+/* Biography and bibliography: the same small gap between paragraphs whatever they were pasted from.
+   !important overrides the inline margins of pasted Word text; the left margins (hanging indents) are kept. */
+.person-text p {
+	margin-top: 0 !important;
+	margin-bottom: 3px !important;
 }
 
 .card-header {

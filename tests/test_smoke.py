@@ -93,6 +93,11 @@ def test_view_pages(client, ids):
     assert "Ёлкин" not in geography
 
 
+def test_bibliography_paragraphs_are_not_nested_in_a_paragraph(client, ids):
+    page = client.get(f"/view?type=person&id={ids['Вернадский']}").text
+    assert re.search(r'<div class="[^"]*person-text[^"]*">\s*<p>Очерки геохимии\. 1927\.</p>\s*</div>', page)
+
+
 def test_people_are_listed_in_code_point_order(client):
     page = client.get("/list?type=person").text
     positions = [page.index(name) for name in SEEDED_PEOPLE]
