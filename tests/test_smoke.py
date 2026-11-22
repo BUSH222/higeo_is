@@ -178,6 +178,7 @@ def test_academic_degree_list(client):
         ("type=person&birthYear=1863&lastName=в", ["Вернадский Владимир Иванович"]),
         ("type=person&content=ГЕОХИМИИ", ["Вернадский Владимир Иванович"]),
         ("type=org&name=геол", ["Геологический институт"]),
+        ("type=org&name=универ", ["Московский университет"]),  # a word inside the name, not its first word
         ("type=org", ["Геологический институт", "Московский университет"]),
         ("type=doc&name=БИО", ["Биосфера"]),
         ("type=field_of_study&name=гео", ["Геохимия"]),
@@ -187,6 +188,43 @@ def test_search_json(client, query, expected):
     response = client.get(f"/search?{query}")
     assert response.status_code == 200
     assert names(response) == expected
+
+
+def test_search_matches_abbreviations_and_hyphenated_words(staff):
+    created = {}
+    for name in ["Московский государственный университет (МГУ)", "Спорово-пыльцевая лаборатория"]:
+        response = staff.post(
+            "/save?type=org",
+            data={"name": name, "org_type": "Научные учреждения", "csrf_token": staff.csrf_token},
+        )
+        created[name] = saved_id(response)
+    try:
+        found = names(staff.get("/search", params={"type": "org", "name": "мгу"}))
+        assert found == ["Московский государственный университет (МГУ)"]
+        for query in ("Спорово-пыльцевая", "спорово пыльцевая", "пыльцев"):
+            found = names(staff.get("/search", params={"type": "org", "name": query}))
+            assert found == ["Спорово-пыльцевая лаборатория"]
+    finally:
+        for org_id in created.values():
+            deleted = staff.post(f"/delete?type=org&id={org_id}", data={"csrf_token": staff.csrf_token})
+            assert deleted.status_code == 200
+
+
+def test_whole_words_are_listed_before_word_prefixes(staff):
+    created = []
+    for name in ("Институт геологии", "Институтский переулок"):
+        response = staff.post(
+            "/save?type=org",
+            data={"name": name, "org_type": "Научные учреждения", "csrf_token": staff.csrf_token},
+        )
+        created.append(saved_id(response))
+    try:
+        found = names(staff.get("/search", params={"type": "org", "name": "институт"}))
+        assert found == ["Геологический институт", "Институт геологии", "Институтский переулок"]
+    finally:
+        for org_id in created:
+            deleted = staff.post(f"/delete?type=org&id={org_id}", data={"csrf_token": staff.csrf_token})
+            assert deleted.status_code == 200
 
 
 def test_search_in_english_uses_the_english_names(client):

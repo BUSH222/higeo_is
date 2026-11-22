@@ -47,6 +47,7 @@ from helper.i18n import gettext as _
 from helper.login.auth import LoginRequired, require_login
 from helper.login.csrf import verify_csrf_token
 from helper.login.login import router as login_router
+from helper.search import NO_MATCH, match_rank
 from helper.templating import render
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -470,24 +471,20 @@ def search(request: Request):
                 results.append(["person", row[0], display])
         return results
 
-    # Name-only search for org/doc/field_of_study — already compact (id, name)
+    # Name-only search for org/doc/field_of_study — already compact (id, name). The query may begin at any
+    # word of the name ("мгу" finds "... университет (МГУ)"); the tables are small, so the matching is in Python.
     elif request.query_params.get("type") in ["org", "doc", "field_of_study"]:
         obj_type = request.query_params.get("type")
         obj = {"org": Organization, "doc": Document, "field_of_study": FieldOfStudy}[obj_type]
-        query = request.query_params.get("name")
-        if query:
-            stmt = (
-                select(obj.id, obj.name)
-                .where(fold(obj.name).startswith(fold_text(query)))
-                .order_by(byte_order(func.lower(obj.name)))
-            )
-        else:
-            stmt = select(obj.id, obj.name).order_by(byte_order(func.lower(obj.name)))
-        results = []
+        query = (request.query_params.get("name") or "").strip()
+        stmt = select(obj.id, obj.name).order_by(byte_order(func.lower(obj.name)))
         with Session(engine) as session:
-            for row in session.execute(stmt):
-                results.append([obj_type, row[0], row[1]])
-        return results
+            rows = session.execute(stmt).all()
+        if query:
+            # Whole-word matches first, then word prefixes; the alphabetical order is kept inside each group.
+            ranked = [(match_rank(row[1], query), row) for row in rows]
+            rows = [row for rank, row in sorted(ranked, key=lambda pair: pair[0]) if rank != NO_MATCH]
+        return [[obj_type, row[0], row[1]] for row in rows]
 
     else:
         abort(404)
