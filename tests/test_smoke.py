@@ -82,7 +82,7 @@ def test_person_documents_sorted_by_year(client, ids):
 
 def test_view_pages(client, ids):
     person = client.get(f"/view?type=person&id={ids['Вернадский']}").text
-    for expected in ["Вернадский Владимир Иванович", "1863-03-12", "Геологический институт", "Биосфера", "Геохимия"]:
+    for expected in ["Вернадский Владимир Иванович", "12.03.1863", "Геологический институт", "Биосфера", "Геохимия"]:
         assert expected in person
     assert "Вернадский" in client.get(f"/view?type=org&id={ids['Геологический институт']}").text
     assert "Вернадский" in client.get(f"/view?type=org&id={ids['Московский университет']}").text  # alumni
@@ -332,7 +332,7 @@ def test_person_lifecycle(staff, ids):
     )
     person_id = saved_id(created)
     page = staff.get(f"/view?type=person&id={person_id}").text
-    for expected in ["Карпинский Александр", "1847-01-07", "Геологический институт", "Московский университет"]:
+    for expected in ["Карпинский Александр", "07.01.1847", "Геологический институт", "Московский университет"]:
         assert expected in page
     assert "Биосфера" in page and "Геохимия" in page
     assert "Карпинский" in staff.get(f"/view?type=org&id={ids['Московский университет']}").text
@@ -355,13 +355,44 @@ def test_person_lifecycle(staff, ids):
     )
     assert saved_id(edited) == person_id
     page = staff.get(f"/view?type=person&id={person_id}").text
-    assert "Карпинский Александр Петрович" in page and "1847-01-07" not in page
+    assert "Карпинский Александр Петрович" in page and "07.01.1847" not in page
     assert "Геологический институт" in page and "Московский университет" not in page and "Биосфера" not in page
 
     delete_data = {"csrf_token": staff.csrf_token}
     assert staff.post(f"/delete?type=person&id={person_id}", data=delete_data).status_code == 200
     assert staff.get(f"/view?type=person&id={person_id}").status_code == 404
     assert staff.post(f"/delete?type=person&id={person_id}", data=delete_data).status_code == 404
+
+
+def test_partial_dates_and_ranges_are_accepted_and_shown(staff):
+    partial = staff.post(
+        "/save?type=person",
+        data={"surname": "Страхов", "name": "Николай", "birth_date": "1860-3", "csrf_token": staff.csrf_token},
+    )
+    assert "03.1860" in staff.get(f"/view?type=person&id={saved_id(partial)}").text
+
+    ranged = staff.post(
+        "/save?type=person",
+        data={"surname": "Павлов", "name": "Алексей", "birth_date": "1910–1919", "csrf_token": staff.csrf_token},
+    )
+    ranged_id = saved_id(ranged)
+    assert "1910–1919" in staff.get(f"/view?type=person&id={ranged_id}").text
+    assert names(staff.get("/search?type=person&birthYear=1910")) == ["Павлов Алексей"]
+    with Session(db.engine) as session:
+        person = session.get(db.Person, ranged_id)
+        assert person is not None and person.birth_date == "1910-1919"  # stored with a plain hyphen
+
+    for person_id in (saved_id(partial), ranged_id):  # the other tests count the seeded people
+        deleted = staff.post(f"/delete?type=person&id={person_id}", data={"csrf_token": staff.csrf_token})
+        assert deleted.status_code == 200
+
+
+def test_the_date_field_shows_its_format(staff):
+    page = staff.get("/new?type=person").text
+    assert 'class="form-control date-input"' in page
+    assert r'pattern="\d{4}(-\d{2}-\d{2}|-\d{2}|-\d{4})?"' in page
+    assert "ГГГГ-ММ-ДД, ГГГГ-ММ, ГГГГ или ГГГГ-ГГГГ" in page  # the format, shown next to the field
+    assert "1863-03-12" not in page  # no made-up example date in the form
 
 
 def test_organization_with_members_and_alumni_can_be_deleted(staff, ids):
@@ -463,7 +494,8 @@ def test_save_rejects_bad_input(staff):
         "/save?type=person",
         data={"surname": "x", "name": "y", "birth_date": "вчера", "csrf_token": staff.csrf_token},
     )
-    assert bad_date.status_code == 400
+    assert bad_date.status_code == 422
+    assert "неверный формат" in bad_date.text and "Дата рождения" in bad_date.text
     assert staff.get("/new").status_code == 501
     assert staff.get("/edit?type=person").status_code == 501
     assert staff.get("/edit?type=person&id=999999").status_code == 404

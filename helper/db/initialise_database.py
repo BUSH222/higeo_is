@@ -7,6 +7,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from helper import ACADEMIC_DEGREE_TO_LIST, DATABASE_ENGINE
 from helper.cleanup.clean_dict import clean_dict
+from helper.dates import display_date_text
 from helper.db.settings import DatabaseSettings
 
 # Collations that sort by code point, so that every engine orders names the same way.
@@ -130,8 +131,8 @@ class Person(Timestamped, Base):
         name_en (str): First name in English.
         surname_en (str): Surname in English.
         patronymic_en (str): Patronymic in English.
-        birth_date (datetime): Birth date of the person.
-        death_date (datetime): Death date of the person.
+        birth_date (str): Birth date as YYYY[-MM[-DD]] or a YYYY-YYYY range (helper.dates).
+        death_date (str): Death date in the same form.
         birth_place (str): Birth place of the person.
         death_place (str): Death place of the person.
         academic_degree (str): Academic degree of the person.
@@ -158,8 +159,8 @@ class Person(Timestamped, Base):
     surname_en: Mapped[str] = mapped_column(nullable=True)
     patronymic_en: Mapped[str] = mapped_column(nullable=True)
 
-    birth_date: Mapped[datetime] = mapped_column(nullable=True)
-    death_date: Mapped[datetime] = mapped_column(nullable=True)
+    birth_date: Mapped[str] = mapped_column(nullable=True)
+    death_date: Mapped[str] = mapped_column(nullable=True)
     birth_place: Mapped[str] = mapped_column(nullable=True)
     death_place: Mapped[str] = mapped_column(nullable=True)
 
@@ -185,9 +186,9 @@ class Person(Timestamped, Base):
     def values_ru(self):
         values = {
             "Фамилия Имя Отчество": "<b>" + str(self) + "</b>",
-            "Дата рождения": self.birth_date,
+            "Дата рождения": display_date_text(self.birth_date),
             "Место рождения": self.birth_place,
-            "Дата смерти": self.death_date,
+            "Дата смерти": display_date_text(self.death_date),
             "Место смерти": self.death_place,
             "Академическое звание": _academic_degree_link(self.academic_degree),
             "Область исследования": sorted(
@@ -216,9 +217,9 @@ class Person(Timestamped, Base):
         """
         values = {
             "Full name": "<b>" + " ".join(filter(None, (self.surname_en, self.name_en, self.patronymic_en))) + "</b>",
-            "Birth date": self.birth_date,
+            "Birth date": display_date_text(self.birth_date),
             "Birth place": self.birth_place,
-            "Death date": self.death_date,
+            "Death date": display_date_text(self.death_date),
             "Death place": self.death_place,
             "Academic degree": _academic_degree_link(self.academic_degree),
             "Field of study": sorted(

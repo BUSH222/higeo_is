@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-22 00:31+0300\n"
+"POT-Creation-Date: 2026-11-22 02:53+0300\n"
 "PO-Revision-Date: 2025-09-23 20:44+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ru\n"
@@ -19,72 +19,91 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: main.py:283
+#: main.py:56
+msgid "Дата рождения"
+msgstr "Дата рождения"
+
+#: main.py:56
+msgid "Дата смерти"
+msgstr ""
+
+#: main.py:103
+msgid "Назад"
+msgstr ""
+
+#: main.py:291
 #, python-format
 msgid "Географический регион: %(place)s"
 msgstr "Географический регион: %(place)s"
 
-#: main.py:284
+#: main.py:292
 #, python-format
 msgid "Geographic region: %(place)s"
 msgstr "Географический регион: %(place)s"
 
-#: main.py:316
+#: main.py:324
 msgid "Организация"
 msgstr "Организация"
 
-#: main.py:317 main.py:354
+#: main.py:325 main.py:362
 msgid "Персоналия"
 msgstr "Персоналия"
 
-#: main.py:318
+#: main.py:326
 msgid "Документ"
 msgstr "Документ"
 
-#: main.py:319
+#: main.py:327
 msgid "Область знаний"
 msgstr "Область знаний"
 
-#: main.py:329
+#: main.py:337
 #, python-format
 msgid "View %(name)s"
 msgstr "Просмотр %(name)s"
 
-#: main.py:359 templates/about.html:37 templates/about.html:43
+#: main.py:367 templates/about.html:37 templates/about.html:43
 #: templates/about.html:49 templates/base.html:31 templates/base.html:82
 #: templates/base.html:83 templates/search.html:92 templates/search.html:128
 #: templates/search.html:163
 msgid "Поиск"
 msgstr "Поиск"
 
-#: main.py:359
+#: main.py:367
 msgid "Search"
 msgstr "Поиск"
 
-#: main.py:511 templates/about.html:60 templates/base.html:40
+#: main.py:519 templates/about.html:60 templates/base.html:40
 msgid "Организации"
 msgstr "Организации"
 
-#: main.py:512 templates/about.html:58
+#: main.py:520 templates/about.html:58
 msgid "Персоналии"
 msgstr "Персоналии"
 
-#: main.py:513
+#: main.py:521
 msgid "Документы"
 msgstr "Документы"
 
-#: main.py:514
+#: main.py:522
 msgid "Области исследования"
 msgstr "Области исследования"
 
-#: main.py:573 main.py:574
+#: main.py:581 main.py:582
 msgid "Районы работ (число исследователей)"
 msgstr "Районы работ (число исследователей)"
 
-#: main.py:591 main.py:592
+#: main.py:599 main.py:600
 #, python-format
 msgid "Список академических степеней - %(degree)s"
 msgstr "Список академических степеней - %(degree)s"
+
+#: main.py:816
+#, python-format
+msgid ""
+"%(field)s: неверный формат «%(value)s». Допустимо: %(examples)s. "
+"Приблизительные даты пишите в поле comment."
+msgstr ""
 
 #: helper/__init__.py:33
 msgid "действительный член"
@@ -465,19 +484,29 @@ msgstr "Текущий файл:"
 msgid "Download"
 msgstr "Скачать"
 
-#: templates/new.html:39
+#: templates/new.html:31
+msgid ""
+"Формат: ГГГГ-ММ-ДД, ГГГГ-ММ, ГГГГ или ГГГГ-ГГГГ. Приблизительные даты "
+"(«около 1930», «до 1916») пишите в поле comment."
+msgstr ""
+
+#: templates/new.html:32
+msgid "ГГГГ-ММ-ДД, ГГГГ-ММ, ГГГГ или ГГГГ-ГГГГ"
+msgstr ""
+
+#: templates/new.html:46
 msgid "Поиск..."
 msgstr "Поиск..."
 
-#: templates/new.html:49
+#: templates/new.html:56
 msgid "Удалить"
 msgstr "Удалить"
 
-#: templates/new.html:57
+#: templates/new.html:64
 msgid "Сохранить"
 msgstr "Сохранить"
 
-#: templates/new.html:61 templates/view.html:102
+#: templates/new.html:68 templates/view.html:102
 msgid "Последнее обновление"
 msgstr "Последнее обновление"
 
@@ -638,4 +667,25 @@ msgstr "Открыть файл"
 
 #~ msgid "Создать"
 #~ msgstr "Создать"
+
+#~ msgid ""
+#~ "%(field)s: неверный формат «%(value)s». "
+#~ "Допустимо: %(examples)s. Приблизительные даты "
+#~ "пишите в «Комментарии»."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Дата: ГГГГ-ММ-ДД, ГГГГ-ММ, ГГГГ или "
+#~ "ГГГГ-ГГГГ. Приблизительные даты («около 1930»,"
+#~ " «до 1916») пишите в «Комментарии»."
+#~ msgstr ""
+
+#~ msgid "Допустимо: 1863-03-12, 1863-03, 1863 или 1910-1919."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Дата: ГГГГ-ММ-ДД, ГГГГ-ММ, ГГГГ или "
+#~ "ГГГГ-ГГГГ. Приблизительные даты («около 1930»,"
+#~ " «до 1916») пишите в поле comment."
+#~ msgstr ""
 

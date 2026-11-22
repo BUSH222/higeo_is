@@ -1,3 +1,4 @@
+import html
 import os
 import re
 import shutil
@@ -8,12 +9,11 @@ from http import HTTPStatus
 from pathlib import Path
 from typing import Annotated, NoReturn
 
-from dateutil.parser import parse
 from fastapi import Depends, FastAPI, Form, HTTPException, Request
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import and_, extract, func, inspect, select
+from sqlalchemy import and_, func, inspect, select
 from sqlalchemy.orm import Session
 from starlette.datastructures import UploadFile
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -24,10 +24,12 @@ from helper import (
     CONNECTION_TYPE_MAPPING,
     FILE_FIELDS,
     MULTIPLE_CHOICE_FIELDS,
+    N_,
     SECRET_KEY,
     TITLE_CONVERTER_NEW_EDIT,
 )
 from helper.cleanup.htmlcleaner import clean_html
+from helper.dates import DATE_FIELDS, EXAMPLES, INPUT_PATTERN, InvalidDate, parse_date_text
 from helper.db.initialise_database import (
     Document,
     DocumentAuthorship,
@@ -50,6 +52,8 @@ from helper.templating import render
 BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_DIR = "static/uploads"  # relative to the project, and stored in the database in this form
 MAX_CONTENT_LENGTH = 32 * 1024 * 1024
+# The labels of the date fields, for the message about a wrong date format.
+DATE_LABELS = {"birth_date": N_("Дата рождения"), "death_date": N_("Дата смерти")}
 
 # The pages are HTML for people, so the generated API documentation is switched off.
 
@@ -92,7 +96,11 @@ def http_error(request: Request, exc: StarletteHTTPException):
         phrase = HTTPStatus(exc.status_code).phrase
     except ValueError:
         phrase = "Error"
+    detail = exc.detail if isinstance(exc.detail, str) and exc.detail != phrase else ""
     body = f"<!doctype html>\n<title>{exc.status_code} {phrase}</title>\n<h1>{exc.status_code} {phrase}</h1>\n"
+    if detail:
+        body += f"<p>{html.escape(detail)}</p>\n"
+    body += f'<p><a href="javascript:history.back()">{_("Назад")}</a></p>\n'
     return HTMLResponse(body, status_code=exc.status_code, headers=exc.headers)
 
 
@@ -446,7 +454,7 @@ def search(request: Request):
 
         year_query = request.query_params.get("birthYear")
         if year_query is not None:
-            where_stmt.append(extract("year", Person.birth_date) == to_int(year_query))
+            where_stmt.append(func.substr(Person.birth_date, 1, 4) == f"{to_int(year_query):04d}")
 
         final_where = and_(*where_stmt) if where_stmt else True
         stmt = (
@@ -654,6 +662,8 @@ def new(request: Request):
         file=FILE_FIELDS,
         multiple_choice=MULTIPLE_CHOICE_FIELDS,
         connection_types=CONNECTION_TYPE_MAPPING,
+        date_fields=DATE_FIELDS,
+        date_pattern=INPUT_PATTERN,
     )
 
 
@@ -706,8 +716,6 @@ def edit(request: Request):
             continue
         elif v is None:
             data_fin2[k] = ""
-        elif k.endswith("date"):
-            data_fin2[k] = parse(str(v)).date()
         else:
             data_fin2[k] = str(v)
 
@@ -755,6 +763,8 @@ def edit(request: Request):
         multiple_choice=MULTIPLE_CHOICE_FIELDS,
         file=FILE_FIELDS,
         connection_types=CONNECTION_TYPE_MAPPING,
+        date_fields=DATE_FIELDS,
+        date_pattern=INPUT_PATTERN,
     )
 
 
@@ -794,6 +804,22 @@ async def save(request: Request):
                     uploads.setdefault(key, value)
             elif key not in ("connection", "csrf_token") and key not in FILE_FIELDS:
                 formdata.setdefault(key, value)
+        for key in DATE_FIELDS:
+            value = formdata.get(key)
+            if value:
+                try:
+                    formdata[key] = parse_date_text(value)
+                except InvalidDate:
+                    raise HTTPException(
+                        HTTPStatus.UNPROCESSABLE_ENTITY,
+                        detail=_(
+                            "%(field)s: неверный формат «%(value)s». Допустимо: %(examples)s. "
+                            "Приблизительные даты пишите в поле comment.",
+                            field=_(DATE_LABELS[key]),
+                            value=value,
+                            examples=EXAMPLES,
+                        ),
+                    ) from None
         connections = [value for value in form.getlist("connection") if isinstance(value, str)]
         obj_id = await run_in_threadpool(save_object, obj_type, formdata, uploads, connections)
     return render(request, "redirect.html", url=f"/view?type={obj_type}&id={obj_id}")
@@ -804,12 +830,6 @@ def save_object(obj_type: str, formdata: dict, uploads: dict[str, UploadFile], c
     obj = {"org": Organization, "person": Person, "doc": Document, "field_of_study": FieldOfStudy}[obj_type]
     formdata = {key: (value if value not in ("", "None") else None) for key, value in formdata.items()}
     formdata.pop("last_updated", None)  # set by the server, never by the form
-    for key, value in formdata.items():
-        if key.endswith("date") and value is not None:
-            try:
-                formdata[key] = datetime.strptime(value, "%Y-%m-%d")
-            except ValueError:
-                abort(400)
     os.makedirs(BASE_DIR / UPLOAD_DIR, exist_ok=True)
     for key, upload in uploads.items():
         # basename: the name comes from the browser and must not be able to point outside the upload folder

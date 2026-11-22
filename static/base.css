@@ -51,6 +51,23 @@ p.GIN{
 	background-color: #fff8f8;
 }
 
+/* The date format is written inside the date field, on its right. On narrow screens the field keeps the full
+   width and the format moves to a line of its own below it. */
+@media (max-width: 767.98px) {
+	.input-group.flex-wrap > .date-input {
+		flex: 1 1 100%;
+		border-radius: var(--bs-border-radius) var(--bs-border-radius) 0 0;
+	}
+
+	.input-group.flex-wrap > .input-group-text {
+		flex: 1 1 100%;
+		margin-top: -1px;
+		margin-left: 0;
+		border-radius: 0 0 var(--bs-border-radius) var(--bs-border-radius);
+		justify-content: center;
+	}
+}
+
 /* Biography and bibliography: the same small gap between paragraphs whatever they were pasted from.
    !important overrides the inline margins of pasted Word text; the left margins (hanging indents) are kept. */
 .person-text p {

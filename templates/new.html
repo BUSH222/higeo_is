@@ -24,6 +24,13 @@
                         <div>{{ _('Current file:') }} <a href="{{ value }}" target="_blank">{{ _('Download') }}</a></div>
                     {% endif %}
                     <input type="file" class="form-control" id="{{ key }}" name="{{ key }}">
+                {% elif key in date_fields %}
+                    <div class="input-group flex-wrap">
+                        <input type="text" class="form-control date-input" id="{{ key }}" name="{{ key }}" value="{{ value }}"
+                            pattern="{{ date_pattern }}" maxlength="10" autocomplete="off"
+                            data-invalid-message="{{ _('Формат: ГГГГ-ММ-ДД, ГГГГ-ММ, ГГГГ или ГГГГ-ГГГГ. Приблизительные даты («около 1930», «до 1916») пишите в поле comment.') }}">
+                        <span class="input-group-text">{{ _('ГГГГ-ММ-ДД, ГГГГ-ММ, ГГГГ или ГГГГ-ГГГГ') }}</span>
+                    </div>
                 {% else %}
                     <textarea class="form-control" id="{{ key }}" name="{{ key }}">{{ value }}</textarea>
                 {% endif %}
@@ -124,6 +131,17 @@ document.addEventListener("DOMContentLoaded", function () {
             if (event.target.classList.contains("remove-connection")) {
                 event.target.closest("li").remove();
             }
+        });
+    });
+
+    // Dates: only digits and hyphens can be typed; a wrong shape is reported by the browser before submitting.
+    document.querySelectorAll(".date-input").forEach(input => {
+        input.addEventListener("input", function () {
+            input.value = input.value.replace(/[^0-9-]/g, "");
+            input.setCustomValidity("");
+        });
+        input.addEventListener("invalid", function () {
+            input.setCustomValidity(input.dataset.invalidMessage);
         });
     });
 });

@@ -9,7 +9,6 @@ database whose name contains "test" and set HIGEO_TEST_DATABASE=configured, for 
 import os
 import re
 import tempfile
-from datetime import datetime
 
 import pytest
 
@@ -48,7 +47,7 @@ def database():
             surname_en="Vernadsky",
             name_en="Vladimir",
             patronymic_en="Ivanovich",
-            birth_date=datetime(1863, 3, 12),
+            birth_date="1863-03-12",
             area_of_study="Урал, Крым",
             academic_degree="действительный член",
             bibliography="<p>Очерки геохимии. 1927.</p>",
@@ -57,7 +56,7 @@ def database():
             surname="Ферсман",
             name="Александр",
             patronymic="Евгеньевич",
-            birth_date=datetime(1883, 11, 8),
+            birth_date="1883-11-08",
             area_of_study="Урал , Кольский полуостров",
             academic_degree="действительный член",
         )
@@ -65,7 +64,7 @@ def database():
             surname="Обручев",
             name="Владимир",
             patronymic="Афанасьевич",
-            birth_date=datetime(1863, 10, 10),
+            birth_date="1863-10-10",
             area_of_study="Сибирь,Урал,",
         )
         yolkin = db.Person(surname="Ёлкин", name="Пётр")
